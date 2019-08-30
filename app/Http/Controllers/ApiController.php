@@ -1,0 +1,778 @@
+<?php
+
+namespace App\Http\Controllers;
+ 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator; 
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Images;
+use App\Lib\GoogleAuthenticator;
+use Denpa\Bitcoin\LaravelClient as BitcoinClient;
+
+use DB;
+use App\User;
+use App\State;
+use App\Currency;
+use App\PriceCrypto;
+use App\WalletAddress; 
+use App\Withdrawal; 
+use App\MenuTicket;
+use App\Messages; 
+use App\Ticket; 
+use App\Setting; 
+use App\Appver;
+
+class ApiController extends Controller
+{ 
+	
+	#################State #########################
+	public function state()
+	{
+		 $state = State::all();
+                 
+		$datamsg = response()->json( 
+			 $state
+		 );
+		 
+		return $datamsg->content();
+	}
+		
+	#################App version#########################
+	public function appversion()
+	{
+		$appver = Appver::where('id',1)->first();
+
+		$datamsg = response()->json([
+			'version' => $appver->version,
+			'iosversion' => $appver->ios_version,
+			'iosversion2' => $appver->ios_version2
+		]);
+
+		return $datamsg->content();
+	}
+	
+	#################SecretPin #########################
+	public function send_secretpin(Request $request)
+	{
+		$user = User::where('id',$request->uid)->where('secretpin',$request->secretpin)->first();
+		
+		$tokenORI = apiToken($user->id);
+		
+		if($request->tokenAPI==$tokenORI){
+			
+		if($user)
+		{ 
+			$msg = array("mesej"=>"jaya");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+			
+		}else{
+			$msg = array("mesej"=>"Sorry, wrong secret pin.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+		}
+		
+		}else{
+			$msg = array("mesej"=>"No Access");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+		}
+		
+	}
+	
+	
+	#################Login #########################
+	public function login(Request $request)
+	{
+		$userData = '';
+		$user = User::where('username',$request->username)->orWhere('email',$request->username)->first();
+
+		if($user)
+		{
+			if(!Hash::check($request->password, $user->password)){
+				
+				$msg = array("mesej"=>"Wrong Password.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+			}elseif($user->status=='block'){
+				
+				$msg = array("mesej"=>"Your account was blocked. Please contact with administrator.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+				
+			}elseif($user->email_verify=='0'){
+				
+				$msg = array("mesej"=>"Please verify your email.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+				
+			}else{
+				$tokenAPI = apiToken($user->id);
+				
+				$msg = array("id"=>$user->id,"label"=>$user->label,"username"=>$user->username,"tokenAPI"=>$tokenAPI,"mesej"=>"jaya");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+				
+			}
+			 
+		}else{
+			
+				$msg = array("mesej"=>"User does not exist.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+
+		}
+
+	} 
+		
+		/* ### User registration ### */	 
+		public function signup(Request $request) {
+			$fullname = $request->fullname;
+			$username = $request->username;
+			$email = $request->email;
+			$password = $request->password;
+			$cpassword = $request->cpassword;
+			$boxagree = $request->boxagree;
+			$secretpin = $request->secretpin;
+			  
+			$secret_pin2 = preg_match('/^[0-9]{6}$/', $secretpin);
+			$pword1 = preg_match("/[a-zA-Z0-9]/", $password); 
+			$pword2 = preg_match("/[^\da-zA-Z]/", $password); 
+			
+			if(!isValidUsername($username)) { echo '{"data":{"mesej":"Please enter valid username."}}'; }
+			elseif(strlen($username)<6) { echo '{"data":{"mesej":"Username must be more than 6 characters."}}'; }
+			elseif(strlen($secretpin)!=6) { echo '{"data":{"mesej":"Secret PIN must be 6 digits."}}'; }
+			elseif(!$secret_pin2) { echo '{"data":{"mesej":"Secret PIN must be digits only."}}'; }
+			elseif(!isValidEmail($email)) { echo '{"data":{"mesej":"Please enter valid email address."}}'; }
+			elseif(strlen($password)<8) { echo '{"data":{"mesej":"Password must be more than 8 characters."}}'; }
+			elseif(!$pword1) { echo '{"data":{"mesej":"Password must have at least one symbol, one capital letter,one number, one letter."}}'; }
+			elseif(!$pword2) { echo '{"data":{"mesej":"Password must have at least one symbol, one capital letter,one number, one letter."}}'; }
+			elseif($password !== $cpassword) { echo '{"data":{"mesej":"Password does not match with password for confirmation."}}'; } 
+			elseif($boxagree == false) { echo '{"data":{"mesej":"Please click checkbox for agree the term."}}'; } 
+			else
+			{  
+				$userData = '';
+				$mainCount = User::where('username',$username)->orWhere('email',$email)->count();
+				$created=time();
+				if($mainCount==0)
+				{
+					$ga = new GoogleAuthenticator();	  
+					$secret = $ga->createSecret();
+		
+					/*Inserting user values*/
+					$hash = sha1($email);
+					$email_msj = 'To activate your account, please click link below.<p><a href="'.settings('url').'verify/email/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
+					
+				 
+				send_email_basic($email, 'DORADO', settings('infoemail'), 'DORADO Account Verification', $email_msj);
+ 
+					$user = User::create([
+						'name' => $fullname,
+						'username' => $username,
+						'secretpin' => $secretpin,
+						'label' => 'usr_'.$username,
+						'password' => bcrypt($password),
+						'email' => $email,
+						'email_hash' => $hash,
+						'ip' => \Request::ip(),
+						'google_auth_code' => $secret,
+					]);
+					  
+					$userData = User::where('email',$request->email)->first();
+
+
+					$systemToken = apiToken($userData->id);
+					$msg = array("id"=>$userData->id, "name"=>$userData->name, "username"=>$userData->username, "secretpin"=>$userData->secretpin, "email"=>$userData->email,"token"=>$systemToken,'display_msj'=>'Registration Successfull!','mesej'=>'jaya');
+
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+
+					return $datamsg->content();
+
+				}
+				else {					 
+					$msg = array("mesej"=>"This username or email has already been used. Please enter another.");
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+
+					return $datamsg->content();
+				}
+			}
+			 
+		}
+
+	#################Change Password####################
+ 
+	public function change_password(Request $request){
+		$uid = $request->uid; 
+		$pwordold = $request->pwordold;
+		$pwordnew = $request->pwordnew;
+		$pwordconfirm = $request->pwordconfirm;
+		
+		$user = User::where('id',$uid)->first();
+		$pword1 = preg_match("/[a-zA-Z0-9]/", $request->pwordnew); 
+		$pword2 = preg_match("/[^\da-zA-Z]/", $request->pwordnew);
+		
+		$tokenORI = apiToken($user->id);
+		
+		if($request->tokenAPI==$tokenORI){
+			
+		if($pwordnew!=$pwordconfirm)
+		{  
+			$msg = array("mesej"=>"The password confirmation does not match");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		else if(strlen($pwordnew)<8)
+		{  
+			$msg = array("mesej"=>"Password must be more than 8 characters.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		else if(!$pword1)
+		{  
+			$msg = array("mesej"=>"Password must have at least one symbol, one capital letter,one number, one letter.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		else if(!$pword2)
+		{  
+			$msg = array("mesej"=>"Password must have at least one symbol, one capital letter,one number, one letter.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		else if(isset($user))
+		{
+			if(!Hash::check($pwordold, $user->password)){
+				
+				$msg = array("mesej"=>"Wrong Old Password");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+			}
+			else{
+				User::whereId($uid)
+				->update([
+					'password' => bcrypt($pwordnew), 
+				]);
+				
+				$msg = array("mesej"=>"Success, Password successfully changed.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+			}
+			
+		}else{
+			
+		$msg = array("mesej"=>"User does not exist.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		
+		}else{
+			$msg = array("mesej"=>"No Access");
+			$datamsg = response()->json([ 
+			'data' => $msg
+			]);
+		}
+		
+		return $datamsg->content();
+	}
+
+	#################Reset Password####################
+ 
+	public function reset_password(Request $request){
+		$email = $request->email; 
+		
+		$user = User::where('email',$email)->first();
+		
+		if(isset($user)){
+			$hash = $user->email_hash;
+ 
+		  $id = $user->id;
+ 
+		$email_msj = $user->username.'<p> We received a request to reset your DORADO password, please click link below.</p><p><a href="'.settings('url').'password/reset/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Pasword</a></p>';
+		
+		  send_email_basic($user->email, 'DORADO', settings('infoemail'), 'DORADO Account Reset Password', $message); 
+		 
+		$msg = array("display_msj"=>"Email with instructions to reset password was sent. Please check your inbox.","mesej"=>"jaya");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}else{
+			
+		$msg = array("mesej"=>"No such user with this email address.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		
+		return $datamsg->content();
+	}
+
+	#################Resend email####################
+
+	public function resendemail(Request $request){
+		$email = $request->email;
+		$username = $request->username;
+		
+		$users = User::where('username',$username)->orWhere('email',$email)->first();
+		
+		if($email == '' && $username==''){
+		$msg = array("mesej"=>"Please fill Username or Email");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+				
+		}else if(isset($users) && $users->email_verify=='0'){
+		$hash = $users->email_hash;
+		$email_msj = 'Hai {{username}} <p> To activate your account, please click link below.</p><p> <a href="{{url}}"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
+		$replace1 = str_replace("{{username}}",$username,$email_msj); 
+		$replace2 = str_replace("{{url}}",settings('url').'verify/email/'.$hash , $replace1);
+		 $email = $users->email;
+		  
+		send_email_basic($email, 'DORADO', settings('infoemail'), 'DORADO Account Verification', $replace2);
+		 
+		$msg = array("mesej"=>"jaya","display_msj"=>"The email has been resend to $email .Please verify the email to Activate yout account");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}elseif(isset($users) && $users->email_verify=='1'){ 
+		
+		$msg = array("mesej"=>"jaya","display_msj"=>"Your email has been verified. You can login now.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}else{
+			
+		$msg = array("mesej"=>"Email or Username does not exist");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+		}
+		
+		return $datamsg->content();
+	}
+
+
+	#################Private Key #########################
+	public function userPrivateKey($crypto,$uid,$tokenAPI)
+	{
+		$userData = '';
+		$user = User::where('id',$uid)->first();
+		$tokenORI = apiToken($uid);
+		
+		if($tokenAPI==$tokenORI){
+		$data = dumpkey($crypto, $user->label);  
+		
+		//$key_get = array_search($addressBTC,array_column($dataarr, 'address'));
+		
+	//	dd($dataarr,$addressBTC,$dataarr[$key_get]->key);
+		 
+			 
+				$datamsg = response()->json([
+					'mesej' => "jaya",
+					'info' => $data
+				]);
+		}else{ 
+				$datamsg = response()->json([
+					'mesej' => 'No Access'
+				]);
+		}
+				return $datamsg->content();
+			
+
+	} 
+
+
+	#################User Info #########################
+	public function userInfo(Request $request)
+	{
+		$userData = '';
+		$user = User::where('id',$request->uid)->first();
+		$tokenORI = apiToken($request->uid);
+		
+		if($request->tokenAPI==$tokenORI){
+		if($user)
+		{  
+		$city = Currency::where('id',$user->country)->first();
+		
+			 	$msg = array("id"=>$user->id,"name"=>$user->name,"email"=>$user->email,"username"=>$user->username,"secretpin"=>$user->secretpin,"google_auth_code"=>$user->google_auth_code,"mesej"=>"jaya"); 
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+				 
+			 
+		}else{
+			
+				$msg = array("mesej"=>"User does not exist.");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+
+		}
+		
+		
+		}else{
+			$msg = array("mesej"=>"No Access");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+
+				return $datamsg->content();
+		}
+
+	}  
+		 
+	#################Dashboard#########################
+	public function dashboard($userid,$tokenAPI)
+	{
+		$user = User::where('id',$userid)->first();
+		$tokenORI = apiToken($userid);
+		
+		if($tokenAPI==$tokenORI){
+		$priceBTC = PriceCrypto::where('crypto','BTC')->first();
+		$priceBCH = PriceCrypto::where('crypto','BCH')->first();
+		$priceDOGE = PriceCrypto::where('crypto','DOGE')->first();
+	 
+		$jumBTC = str_replace("\n","",getbalance('BTC',$user->label));
+		$jumBCH = str_replace("\n","",getbalance('BCH',$user->label));
+		$jumDOGE = str_replace("\n","",getbalance('DOGE',$user->label));
+		  
+		if($jumBTC<=0){ $totalBTC = 0; }else{ $totalBTC = $jumBTC; }
+		if($jumBCH<=0){ $totalBCH = 0; }else{ $totalBCH = $jumBCH; }
+		if($jumDOGE<=0){ $totalDOGE = 0; }else{ $totalDOGE = $jumDOGE; }		
+		 
+		$myrBTC = round($totalBTC * $priceBTC->price,'2');
+		$myrBCH = round($totalBCH * $priceBCH->price,'2');
+		$myrDOGE = round($totalDOGE * $priceDOGE->price,'2'); 
+		$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE,'2');
+	
+		$addressBTC = getaddress('BTC', $user->label);
+		$addressBCH = getaddress('BCH', $user->label);
+		$addressDOGE = getaddress('DOGE', $user->label);
+		 
+		$feesBTC = number_format(settings('fee_btc') + (settings('commission_btc')/$priceBTC->price),8);
+		$feesBCH = number_format(settings('fee_bch') + (settings('commission_bch')/$priceBCH->price),8);
+		$feesDOGE = number_format(settings('fee_doge') + (settings('commission_doge')/$priceDOGE->price),8);
+		
+		$datamsg = response()->json([
+			'totalMYR' => $totalMYR,
+			'priceBTC' => number_format($priceBTC->price,'2'),
+			'priceDOGE' => number_format($priceDOGE->price,'2'),
+			'priceBCH' => number_format($priceBCH->price,'2'),
+			'totalBTC' => number_format($totalBTC,'8'),
+			'totalBCH' => number_format($totalBCH,'8'),
+			'totalDOGE' => number_format($totalDOGE,'8'),
+			'myrBTC' => number_format($myrBTC,'2'),
+			'myrBCH' => number_format($myrBCH,'2'),
+			'myrDOGE' => number_format($myrDOGE,'2'),
+			'addressBTC' => $addressBTC,
+			'addressBCH' => $addressBCH,
+			'addressDOGE' => $addressDOGE,
+			'feesBTC' => $feesBTC,
+			'feesBCH' => $feesBCH,
+			'feesDOGE' => $feesDOGE,
+			'uid' => $user->id,
+			'email' => $user->email,
+			'username' => $user->username,
+			'fullname' => $user->name,
+			'label' => $user->label,
+			'mesej' => 'jaya',
+		]);
+		
+		}else{
+			$datamsg = response()->json([ 
+			'mesej' => 'No Access',
+			]);
+		}
+ 
+		return $datamsg->content();
+	}
+	
+	
+	#################User Info #########################
+	public function transaction($crypto,$usr_crypto,$tokenAPI)
+	{
+		$trans = listransaction($crypto,$usr_crypto);
+		$user = User::where('label',$usr_crypto)->first();
+		$tokenORI = apiToken($user->id);
+		if($tokenAPI==$tokenORI){
+			$datamsg = response()->json([ 
+				'mesej' => 'jaya',
+				'info' => $trans,
+			]);
+		}
+		else{
+			$datamsg = response()->json([ 
+			'mesej' => 'No Access',
+			]);	
+		}
+		return $datamsg->content();
+	}
+	
+	
+	#################Max Crypto #########################
+	public function maxCrypto($crypto,$uid)
+	{
+		$priceApi = PriceCrypto::where('crypto',$crypto)->first();
+		$user = User::where('id',$uid)->first();
+		
+		if($crypto=='BTC'){
+			$comm_fee = settings('commission_btc')/$priceApi->price;
+			$fee = round(settings('fee_btc')+$comm_fee,8);
+		}elseif($crypto=='BCH'){
+			$comm_fee = settings('commission_bch')/$priceApi->price;
+			$fee = round(settings('fee_bch')+$comm_fee,8);
+		}else{
+			$comm_fee = settings('commission_doge')/$priceApi->price;
+			$fee = round(settings('fee_doge')+$comm_fee,8);
+		}
+		
+		$userbalance = round(getbalance($crypto, $user->label),8);
+		$maxDraw = round($userbalance - $fee,8);
+		if($maxDraw<=0){ $maxWithdraw =0; }else{ $maxWithdraw =$maxDraw; }
+		$priceWithdraw = $maxWithdraw*$priceApi->price;
+		 
+			$datamsg = response()->json([
+				"totalMyr"=>number_format($priceWithdraw,'2'),
+				"totalCrypto"=>round($maxWithdraw,'8')
+			]);
+			
+		 return $datamsg->content();
+		
+		
+	}
+	
+		
+	#################Send Crypto #########################
+	public function sendCrypto(Request $request)
+	{ 
+		$crypto = $request->crypto;
+		$amount = $request->amountcrypto;
+		$label = $request->sendfrom; 
+		$recipient = $request->sendto;
+		$remarks = $request->remarks;
+		$secretpin = $request->secretpin;
+		$admin_label = 'usr_admin';
+	 
+		$useruid = User::where('label',$label)->first();   
+		$wuserF = getaddress($crypto,$label); //WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
+		$priceApi = PriceCrypto::where('crypto',$crypto)->first();
+		 
+		$tokenORI = apiToken($useruid->id);
+		
+		if($request->tokenAPI==$tokenORI){
+			if(!isset($wuserF)){
+			 	$msg = array("mesej"=>"Id Sender does not exist!");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+				
+			 	return $datamsg->content();
+			}
+			else if(isset($useruid) && $useruid->secretpin!=$secretpin){
+			 	$msg = array("mesej"=>"Wrong Secret Pin!");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+				
+			 	return $datamsg->content();	 
+			}
+			else{ 
+				if($crypto=='BTC'){
+					$comm_fee = round(settings('commission_withdraw')/$priceApi->price,8);
+					$fee = round(settings('fee_btc')+$comm_fee,8);
+				}
+				elseif($crypto=='BCH'){ 
+					$comm_fee = round(settings('commission_withdraw')/$priceApi->price,8);
+					$fee = round(settings('fee_bch')+$comm_fee,8);
+				}
+				else{ 
+					$comm_fee = round(settings('commission_withdraw')/$priceApi->price,8);
+					$fee = round(settings('fee_doge')+$comm_fee,8);
+				}
+				
+				$userbalance = round(getbalance($crypto, $label),8);
+				$getuserlabel = get_label_crypto($crypto, $recipient); 
+				$totalfunds = round($amount + $fee,8); 
+				$checkwalladdr=  $recipient;
+				
+
+				
+				dd(
+					"346t34auhy45y",
+					$getuserlabel,
+					$totalfunds,
+					$checkwalladdr,
+					$userbalance
+				);
+				//test
+				 
+				if($checkwalladdr == '3' || $checkwalladdr == '1' || $checkwalladdr == '0' || $checkwalladdr == 'd' || $checkwalladdr == 'D' || $checkwalladdr == 'q' || $checkwalladdr == 'X' || $checkwalladdr == 'L'){	 
+				$dashwall = 1;}
+				else{$dashwall =0;}
+
+				
+				if(round($userbalance,8) < round($totalfunds,8)) {   
+					$msg = array("mesej"=>"Sorry, you do not have enough funds for withdrawal!");
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+					
+					return $datamsg->content();
+				}
+				else{
+				//	if($getuserlabel == ""){ //external wallet
+					$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw'); 
+					move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees'); 
+					$myr_amount = $amount*$priceApi->price;
+			 
+					if($crypto_txid=='') { //failed withdraw
+						$withdraw = new Withdrawal;
+						$withdraw->uid = $useruid->id;
+						$withdraw->status = 'failed';
+						$withdraw->amount= $amount; 
+						$withdraw->before_bal = $userbalance;
+						$withdraw->after_bal = round($userbalance-$amount,8); 
+						$withdraw->recipient = $recipient;
+						$withdraw->netfee = round($fee-$comm_fee,8); 
+						$withdraw->walletfee = $comm_fee; 
+						$withdraw->txid = $crypto_txid;
+						$withdraw->crypto = $crypto;
+						$withdraw->remarks = $remarks;
+						$withdraw->rate = round($priceApi->price,2);
+						$withdraw->myr_amount = round($myr_amount,2);
+						$withdraw->type = 'external';
+						$withdraw->save();
+						  
+						$msg = array("mesej"=>"Failed widthdraw!");
+						$datamsg = response()->json([
+							'data' => $msg
+						]);
+						
+						return $datamsg->content();
+					}
+					else{
+						//success withdraw
+						$withdraw = new Withdrawal;
+						$withdraw->uid = $useruid->id;
+						$withdraw->status = 'success';
+						$withdraw->amount= $amount; 
+						$withdraw->before_bal = $userbalance;
+						$withdraw->after_bal = round($userbalance-$amount,8);
+						$withdraw->recipient = $recipient;
+						$withdraw->netfee = round($fee-$comm_fee,8); 
+						$withdraw->walletfee = $comm_fee; 
+						$withdraw->txid = $crypto_txid;
+						$withdraw->crypto = $crypto;
+						$withdraw->remarks = $remarks;
+						$withdraw->rate = round($priceApi->price,2);
+						$withdraw->myr_amount = round($myr_amount,2);
+						$withdraw->type = 'external';
+						$withdraw->save();
+							 
+						$msg = array("mesej"=>"jaya","display_msj"=>'Successfully widthdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient);
+						$datamsg = response()->json([
+							'data' => $msg
+						]);
+						
+						return $datamsg->content();
+					}	
+				}// end send /move crypto
+			}	
+		}
+		else{
+			$msg = array("mesej"=>"No Access");
+				$datamsg = response()->json([
+			'data' => $msg
+			]);
+				
+			return $datamsg->content();
+		}
+			 
+	}
+	 
+	public function convert(Request $request)
+	{
+		if($request->crypto=='BTC'){
+			$priceCrypto = PriceCrypto::where('crypto','BTC')->first();
+		}
+		elseif($request->crypto=='BCH'){
+			$priceCrypto = PriceCrypto::where('crypto','BCH')->first();
+		}
+		else{
+			$priceCrypto = PriceCrypto::where('crypto','DOGE')->first();
+		} 
+		$jum = round($request->nilai*$priceCrypto->price,2); 
+		
+		 $msg = array("mesej"=>"jaya","display_msj"=>$jum);
+		$datamsg = response()->json([ 
+			'data' => $msg
+		 ]);
+		 	 
+		return $datamsg->content();
+		
+	}
+	 
+	public function convert2(Request $request)
+	{
+		if($request->crypto=='BTC'){
+		$priceCrypto = PriceCrypto::where('crypto','BTC')->first();
+		}elseif($request->crypto=='BCH'){
+		$priceCrypto = PriceCrypto::where('crypto','BCH')->first();
+		}else{
+		$priceCrypto = PriceCrypto::where('crypto','DOGE')->first();
+		}
+		 
+			$jum = round($request->nilai/$priceCrypto->price,8);
+		  
+		 $msg = array("mesej"=>"jaya","display_msj"=>$jum);
+		$datamsg = response()->json([ 
+			'data' => $msg
+		 ]);
+		 	 
+		return $datamsg->content();
+		
+	}
+	
+	}  // tag
