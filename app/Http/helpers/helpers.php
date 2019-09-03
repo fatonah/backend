@@ -58,51 +58,6 @@ function send_email_basic($to, $from_name, $from_email, $subject, $message){
   mail($to, $subject, $template, $headers);
 }
 
-function send_email_toadmin($to, $subject,$name,$message,$orderid,$crypto){
-    $setting = Setting::first();
-    $headers = "From: ".$setting->name." <".$setting->infoemail."> \r\n";
-    $headers .= "Reply-To: ".$setting->title." <".$setting->infoemail."> \r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-    $template = $setting->template_sendtoadmin;
-    $mm = str_replace("{{name}}",$name,$template);
-    $supportemail = str_replace("{{supportemail}}",$setting->supportemail,$mm);
-    $url = str_replace("{{url}}",$setting->url.'admin/instant_buy/edit/'.$crypto.'/'.$orderid, $supportemail);
-    $message = str_replace("{{message}}",$message,$url);
-    $result = mail($to, $subject,$message, $headers);
-    return $result;
-}
-
-function send_email_touser($to, $subject,$name,$message,$orderid,$crypto){
-    $setting = Setting::first();
-    $headers = "From: ".$setting->name." <".$setting->infoemail."> \r\n";
-    $headers .= "Reply-To: ".$setting->title." <".$setting->infoemail."> \r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-    $template = $setting->template_sendtouser;
-    $mm = str_replace("{{name}}",$name,$template);
-    $supportemail = str_replace("{{supportemail}}",$setting->supportemail,$mm);
-    $url = str_replace("{{url}}",$setting->url.'admin/instant_buy/edit/'.$crypto.'/'.$orderid, $supportemail);
-    $message = str_replace("{{message}}",$message,$url);
-    $result = mail($to, $subject,$message, $headers);
-    return $result;
-}
-
-function send_email_ticket($to, $subject, $name, $message,$message2){
-    $setting = Setting::first();
-    //$img = 'https://colony.pinkexc.com/assets/homepage/images/logo-white.png';
-    $headers = "From: ".$setting->name." <".$setting->infoemail."> \r\n";
-    $headers .= "Reply-To: ".$setting->title." <".$setting->infoemail."> \r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-    $template = $setting->template_ticket;
-    $mm = str_replace("{{name}}",$name,$template);
-    $supportemail = str_replace("{{supportemail}}",$setting->supportemail,$mm);
-    $url = str_replace("{{url}}",$message2, $supportemail);
-    $message = str_replace("{{message}}",$message,$url);
-    mail($to, $subject, $message, $headers);
-}
-
  
 
 /////////////////////////////////////////////////////////////////////
