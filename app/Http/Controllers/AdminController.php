@@ -10,9 +10,18 @@ use App\Lib\GoogleAuthenticator;
 use App\User;
 use App\WalletAddress;
 use App\TransAdmin;
+use App\PriceCrypto;
 
 class AdminController extends Controller
 {
+    
+	public function testPage()
+	{
+ //get_label_crypto('BTC', '3BaJXxZismiTc8pfXnmsPDYuQ4A1AwYusb');getransaction('BTC', 'usr_admin');
+		 $label = getransaction('BTC','usr_princeofbitcoin');
+		 dd($label[999]);
+ 
+	}
     
 	public function authyAdmin()
 	{
@@ -113,18 +122,20 @@ class AdminController extends Controller
    }
 
    
-    public function sendSubmit(Request $request,$crypto)
+    public function sendSubmit(Request $request)
     {
 		 
 		$this->validate($request,[
 			'to'   => 'required',
-			'amount' => 'required|numeric'
+			'amount' => 'required|numeric',
+			'code' => 'required'
 		]);
 
 		$id = Auth::guard('admin')->user()->id;
 		$admin =  Admin::where('id',$id)->first();
 
 		$label = 'usr_admin';
+		$crypto = $request->crypto;
 
 		$fromaddress =  WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
 		$balance = getbalance($crypto, $label);
@@ -132,18 +143,34 @@ class AdminController extends Controller
 		$balance = sprintf('%f', $balance);
 		if($crypto=='BTC'){$fees_pay = settings('fee_btc');}elseif($crypto=='BCH'){$fees_pay = settings('fee_bch');}elseif($crypto=='DOGE'){$fees_pay = settings('fee_doge');}else{$fees_pay = 0;}
 		$amount = sprintf('%f', ($request->amount+$fees_pay));
+		
+		$ga = new GoogleAuthenticator();
 
-		//check
+		$secret = Auth::guard('admin')->user()->google_auth_code;
+		$oneCode = $ga->getCode($secret);
+		$userCode = $request->code;
 
-		if($balance < $amount){
-		   $msg = [
-			'error' => 'Insufficient Balance ',
-		];
-		return redirect()->back()->with($msg);
+		if ($oneCode != $userCode) {  
+		notify()->flash('Wrong Verification Code!', 'error', [
+			'timer' => 3000,
+			'text' => '',
+			'buttons' => true
+			]);
+             
+			return redirect()->back();
 
+		}else if($balance < $amount){
+			
+		notify()->flash('Insufficient Balance!', 'error', [
+			'timer' => 3000,
+			'text' => '',
+			'buttons' => true
+			]);
+             
+			return redirect()->back();
 
 		}else{ 
-        //$send = send_crypto_comment($crypto, $label, $request->to, $request->amount,'withdraw');
+        $send = send_crypto_comment($crypto, $label, $request->to, $request->amount,'withdraw');
 
         $send = 1;
 
@@ -164,6 +191,7 @@ class AdminController extends Controller
 			'buttons' => true
 			]);
              
+			return redirect()->back();
             } 
             else {
 
@@ -189,6 +217,7 @@ class AdminController extends Controller
 		}
     }
 	
+	 
 	
 
 }//

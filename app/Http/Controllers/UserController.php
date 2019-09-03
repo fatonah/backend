@@ -15,7 +15,7 @@ use App\User;
 
 class UserController extends Controller
 {
-	  
+	   
 	#################List Mmeber#########################
 	public function member_list()
 	{   
@@ -34,18 +34,18 @@ class UserController extends Controller
 		$mreceiver = $email; 
 		  
 		$ass = settings('url').'secretpin/reset/'.$row->email_hash;  
-		$link_reset = '<a href="'.$ass.'" target="_blank">Reset Secret Pin</a>';
+		$link_reset = '<a href="'.$ass.'" target="_blank"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Secret Pin</a>';
 		
 		$message = 'Hello, '.$row->username.'<p></p>
 		
-You use form to reset secret PIN in our website. To change it click on link below.<p></p>
+We received a request to reset secret PIN in our website. To change it click on link below.<p></p>
 '.$link_reset.'<p></p>
 
 If this email was not requested by you, please ignore it.<p></p>
 	
 If you have some problems please feel free to contact with us on '.settings('supportemail');
 		  
-		send_email_basic($mreceiver, 'FRIWALLET', settings('infoemail'), $msubject, $message);
+		send_email_basic($mreceiver, 'DORADO', settings('infoemail'), $msubject, $message);
 		
 		notify()->flash('Reset secret Pin!', 'success', [
 		'timer' => 3000,

@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+//use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 use App\Lib\GoogleAuthenticator;
+
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as Image;
 
 use DB;
 use App\User;  
@@ -131,6 +133,16 @@ class SupportController extends Controller
 		 
 		if($user){
 			
+			if ($request->hasFile('attachment')) {			
+            $image = $request->file('attachment'); 
+			 
+			$extensiondocs = strtolower($image->getClientOriginalExtension());
+			$file_name = hash('adler32',rand());
+			$file = file_get_contents($image);
+			$fileup = Storage::disk('spaces')->put('dolphinfish_pillar/OL_'.$user->id.'/'.$file_name.'.'.$extensiondocs, $file, 'public');
+			$filedir = 'dolphinfish_pillar/OL_'.$user->id.'/'.$file_name.'.'.$extensiondocs;
+			}
+			
 			$ticket = new Ticket;
 			$ticket->uid = $user->id;
 			$ticket->type = $request->type; 
@@ -196,23 +208,14 @@ class SupportController extends Controller
 			}
 			
 			
-			if ($request->hasFile('attachment')) {			
-            $image = $request->file('attachment'); 
-			$filename = time() . '.'.$image->getClientOriginalExtension();
-
-			$imagefile = file_get_contents($image);
-			$imup = Storage::disk('spaces')->put('dorado/support/'.$filename, $imagefile, 'public'); 
-			$location = 'dorado/support/'. $filename; 
-            $path2 = "https://parallel-stash.sgp1.digitaloceanspaces.com/"; 
-			//$image->move(realpath(base_path().$path2),$location);
-			
+			if ($request->hasFile('attachment')) {		 
 		 
 			$msj = new Messages;
 			$msj->uid = $user->id;
 			$msj->ticket_id = $ticket->id;
 			$msj->typeP = 'user';
 			$msj->contents = $request->content;
-			$msj->attachment = $location;
+			$msj->attachment = $filedir;
 			$msj->save();
 		
 			}else{		
@@ -252,7 +255,7 @@ class SupportController extends Controller
 			';        
 					  
 					 
-			//send_email_basic($to, 'FRIWALLET', $from_email, $subject, $message);
+			send_email_basic($to, 'DORADO', $from_email, $subject, $message);
 
 			
 		notify()->flash('Successfully Submit!', 'success', [
@@ -302,22 +305,20 @@ class SupportController extends Controller
 			
 			if ($request->hasFile('attachment')) {	 		
             $image = $request->file('attachment'); 
-			$filename = time() . '.'.$image->getClientOriginalExtension(); 
-
-            $imagefile = file_get_contents($image);
-			$imup = Storage::disk('spaces')->put('dorado/support/'.$filename, $imagefile, 'public'); 
-			$location = 'dorado/support/'. $filename; 
-            
-            $location = 'support/'. $filename; 
-            $path2 = '/../asset/support/';  
-			$image->move(realpath(base_path().$path2),$filename);
+			 
+			$extensiondocs = strtolower($image->getClientOriginalExtension());
+			$file_name = hash('adler32',rand());
+			$file = file_get_contents($image);
+			$fileup = Storage::disk('spaces')->put('dolphinfish_pillar/OL_'.$user->id.'/'.$file_name.'.'.$extensiondocs, $file, 'public');
+			$filedir = 'dolphinfish_pillar/OL_'.$user->id.'/'.$file_name.'.'.$extensiondocs;
+			 
 			 
 			$msj = new Messages;
 			$msj->uid = $user->id;
 			$msj->ticket_id = $request->id;
 			$msj->typeP = 'user';
 			$msj->contents = $request->content;
-			$msj->attachment = $location;
+			$msj->attachment = $filedir;
 			$msj->save();
 		
 			}else{	

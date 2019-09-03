@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
-use Intervention\Image\Facades\Image;
+//use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as Image;
 
 use DB;
 use App\Admin;  
@@ -35,7 +38,7 @@ class SupportAdminController extends Controller
 		$jum_waiting = Ticket::where('status','Awaiting Reply')->count();
 		$jum_answered = Ticket::where('status','Answered')->count();
 		$jum_closed = Ticket::where('status','Closed')->count();
-		  
+		 
 		return view('admin.support.index', compact('ticket_open','ticket_waiting','ticket_answered','ticket_closed','jum_open','jum_waiting','jum_answered','jum_closed'));
 		
 	}
@@ -69,18 +72,20 @@ class SupportAdminController extends Controller
 			$ticketU->save();
 			
 			if ($request->hasFile('attachment')) {	 		
-            $image = $request->file('attachment'); 
-			$filename = time() . '.'.$image->getClientOriginalExtension(); 
-            $location = 'support/'. $filename; 
-            $path2 = '/../asset/support/';  
-			$image->move(realpath(base_path().$path2),$filename);
+            $image = $request->file('attachment');  
+			
+			$extensiondocs = strtolower($image->getClientOriginalExtension());
+			$file_name = hash('adler32',rand());
+			$file = file_get_contents($image);
+			$fileup = Storage::disk('spaces')->put('dolphinfish_pillar/OL_admin/'.$file_name.'.'.$extensiondocs, $file, 'public');
+			$filedir = 'dolphinfish_pillar/OL_admin/'.$file_name.'.'.$extensiondocs;
 			 
 			$msj = new Messages;
 			$msj->uid = $user->id;
 			$msj->ticket_id = $request->id;
 			$msj->typeP = 'admin';
 			$msj->contents = $request->content;
-			$msj->attachment = $location;
+			$msj->attachment = $filedir;
 			$msj->save();
 		
 			}else{	

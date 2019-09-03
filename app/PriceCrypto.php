@@ -13,8 +13,7 @@ class PriceCrypto extends Model
 		'price',
 		'logo',
 		'percentage',
-		'price_pinkexcbuy',
-		'price_pinkexcsell',
+		'url_api',
 		'ip_getinfo',
 	];
 }

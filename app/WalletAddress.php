@@ -13,6 +13,5 @@ class WalletAddress extends Model
 		'address',
 		'balance',
 		'crypto', 
-		'private_key', 
 	];
 }

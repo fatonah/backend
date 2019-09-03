@@ -1,11 +1,10 @@
 <?php
- 
+
 use App\Setting;
 use App\PriceCrypto;
 use App\WalletAddress;
 use App\User;
- 
- 
+
 ///////////////////////////////////////////////////////////////
 /// SETTINGS /////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -103,7 +102,6 @@ function send_email_ticket($to, $subject, $name, $message,$message2){
     mail($to, $subject, $message, $headers);
 }
 
- 
 
 /////////////////////////////////////////////////////////////////////
 ///  CONN CRYPTO                     ///////////////////////////////////////
@@ -198,7 +196,6 @@ function getestimatefee_myr($crypto) {
 function getbalance($crypto, $label) {
     if ($crypto == 'BTC'){
         $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
-        $amt = null;
         foreach ($addressarr as $address) {
             $balacc = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
             $balance = 0;
@@ -214,26 +211,7 @@ function getbalance($crypto, $label) {
         return $wallet_balance;
     }
     elseif($crypto == 'BCH'){
-        $j = 0;
-        $balacc[] = bitcoind()->client('bitabc')->listunspent()->get();
-        $balance = 0;
-        foreach ($balacc as $acc) {
-            $ac[$j] = $acc;
-            foreach ($ac as $a) {
-                $i = 0;
-                foreach ($a as $x) {
-                    $labelret[$i] = $x['label'];
-                    if( $labelret[$i] == $label){
-                        $amt[$i] = number_format($x['amount'], 8, '.', '');
-                        $balance += $amt[$i];
-                        $i++; 
-                    }
-                }
-            }
-            $j++;
-        }
-       // dd($balacc,$labelret, $balance);
-        $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
+        $wallet_balance = (int)number_format(bitcoind()->client('bitabc')->getbalance($label)->get()*100000000, 8, '.', '');
         return $wallet_balance;
     }
     elseif($crypto == 'DASH'){
@@ -368,7 +346,6 @@ function getbalance_myr($crypto, $label) {
     else {return "invalid crypto";}
 }
 
-
 /////////////////////////////////////////////////////////////////////
 ///  ADDRESS                      ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -403,7 +380,7 @@ function addCrypto($crypto, $label) {
     }
    elseif($crypto == 'BCH') {
         $wallet_address = bitcoind()->client('bitabc')->getnewaddress($label)->get();
-        return substr($wallet_address,12);
+        return $wallet_address;
     }
    elseif($crypto == 'DASH') {
         $wallet_address = bitcoind()->client('dashcoin')->getnewaddress($label)->get();
@@ -464,7 +441,6 @@ function get_label_crypto($crypto, $address) {
     else {return "invalid crypto";}
 }
 
-
 /////////////////////////////////////////////////////////////////////
 ///  TRANSACTIONS                 ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -518,18 +494,17 @@ function gettransaction_crypto($crypto, $txid) {
     else {return "invalid crypto";}
 }
 
-
 /////////////////////////////////////////////////////////////////////
 ///  PAYMENT / WITHDRAW / SEND                       ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee) {
+function sendtoaddressRAW($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC'){
-        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbyaccount('usr_doradofees')->get())[0];
+        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbyaccount($label)->get())[0];
         $pxfee = $comm_fee;
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+        $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($sendlabel)->get());
         foreach ($addressarr as $address) {
             $j = 0;
             $balacc[] = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
@@ -556,7 +531,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
+        $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($sendlabel)->get())[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
                 $txin,
@@ -578,39 +553,47 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     } 
     elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get(),12);
+        $pxfeeaddr = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
         $pxfee = $comm_fee;
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $j = 0;
-        $balacc[] = bitcoind()->client('bitabc')->listunspent()->get();
-        $prevtxn[] = null;
-        $totalin = 0;
-        foreach ($balacc as $acc) {
-            $ac[$j] = $acc;
-            foreach ($ac as $a) {
+        $addressarr = bitcoind()->client('bitabc')->getaddressesbyaccount($sendlabel)->get();
+        dd(
+            $pxfeeaddr,
+            $pxfee,
+            $balance,
+            $estfee,
+            $total,
+            $addressarr
+        );
+        foreach ($addressarr as $address) {
+            $j = 0;
+            $balacc[] = bitcoind()->client('bitabc')->listunspent(1, 9999999, [$address])->get();
+            $prevtxn[] = null;
+            $totalin = 0;
+            foreach ($balacc as $acc) {
                 $i = 0;
-                foreach ($a as $x) {
-                    if(in_array('label', $x) == $label){
-                        $txid[$i] = $x['txid'];
-                        $vout[$i] = $x['vout'];
-                        $amt[$i] = number_format($x['amount'], 8, '.', '');
-                        $totalin += $amt[$i];
-                        $prevtxn[$i] = array(
-                            "txid"=>$txid[$i],
-                            "vout"=>$vout[$i],
-                        );
-                        $i++;
-                        if($totalin > $total){break;} 
-                    }
+                $ac[$j] = $acc;
+                foreach ($acc as $a) {
+                    $txid[$i] = $a['txid'];
+                    $vout[$i] = $a['vout'];
+                    $amt[$i] = $a['amount']; 
+                    $scriptPubKey[$i] = $a['scriptPubKey'];
+                    $totalin += $amt[$i];
+                    $prevtxn[$i] = array(
+                        "txid"=>$txid[$i],
+                        "vout"=>$vout[$i],
+                    );
+                    $i++; 
+                    if($totalin > $total){break;} 
                 }
+                $j++;
             }
-            $j++;
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0],12);
+        $changeaddr = array_keys(bitcoind()->client('bitabc')->getaddressesbylabel($sendlabel)->get())[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('bitabc')->createrawtransaction(
                 $txin,
@@ -622,7 +605,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             )->get();
             $signing = bitcoind()->client('bitabc')->signrawtransactionwithwallet($createraw)->get();
             $decode = bitcoind()->client('bitabc')->decoderawtransaction($signing['hex'])->get();
-            //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
+            dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitabc')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
@@ -634,10 +617,10 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
    elseif ($crypto == 'DASH') {
         $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
         $pxfee = "0.000024";
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('dashcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($label)->get());
+        $addressarr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($sendlabel)->get());
         foreach ($addressarr as $address) {
             $j = 0;
             $balacc[] = bitcoind()->client('dashcoin')->listunspent(1, 9999999, [$address])->get();
@@ -664,7 +647,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($label)->get())[0];
+        $changeaddr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($sendlabel)->get())[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('dashcoin')->createrawtransaction(
                 $txin,
@@ -688,10 +671,10 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
    elseif ($crypto == 'DOGE') {
         $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
         $pxfee = "0.000024";
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('dogecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get());
+        $addressarr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($sendlabel)->get());
         foreach ($addressarr as $address) {
             $j = 0;
             $balacc[] = bitcoind()->client('dogecoin')->listunspent(1, 9999999, [$address])->get();
@@ -718,7 +701,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get())[0];
+        $changeaddr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($sendlabel)->get())[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
                 $txin,
@@ -742,10 +725,10 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
    elseif ($crypto == 'LTC') {
         $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
         $pxfee = "0.000024";
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('litecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($label)->get());
+        $addressarr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($sendlabel)->get());
         foreach ($addressarr as $address) {
             $j = 0;
             $balacc[] = bitcoind()->client('litecoin')->listunspent(1, 9999999, [$address])->get();
@@ -772,7 +755,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($label)->get())[0];
+        $changeaddr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($sendlabel)->get())[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('litecoin')->createrawtransaction(
                 $txin,
@@ -897,7 +880,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
     }
    elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get(),12);;
+        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
         $pxfee = "0.000024";
         $bal = getbalance($crypto, $sendlabel);
         $estfee = number_format(bitcoind()->client('bitabc')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
@@ -1003,7 +986,6 @@ function dec2hex($number){
     }
     return $hexval;
 }
-
 
 /////////////////////////////////////////////////////////////////////
 ///  MOVE TO FEES WALLET                 ///////////////////////////////////////
@@ -1289,6 +1271,7 @@ function withdrawal_fees_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount
 }
 
 
+
 /////////////////////////////////////////////////////////////////////
 ///  GET BALANCE ALL          ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -1319,7 +1302,7 @@ function getbalanceAll($crypto) {
     }
     
 }
-
+     
 
 //////////////////////////////////////////
 /////NEW//////////////////

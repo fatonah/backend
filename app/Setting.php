@@ -15,12 +15,11 @@ class Setting extends Model
 		'infoemail',
 		'supportemail',
 		'url',
-		'commission_btc',
-		'commission_bch',
-		'commission_doge',
+		'commission_withdraw', 
 		'fee_btc',
 		'fee_bch',
 		'fee_doge',
 		'template_email',
+		'url_img_ocean',
 		];
 	}
