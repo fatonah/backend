@@ -19,7 +19,7 @@ class AdminController extends Controller
 	{
  //get_label_crypto('BTC', '3BaJXxZismiTc8pfXnmsPDYuQ4A1AwYusb');getransaction('BTC', 'usr_admin');
 		 $label = getransaction('BTC','usr_princeofbitcoin');
-		 dd($label[999]);
+		 dd('test');
  
 	}
     
