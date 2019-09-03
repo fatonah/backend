@@ -430,6 +430,7 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
+		dd("sdfsdfsdfsd");
 		$user = User::where('id',$userid)->first();
 		
 		if($user){

@@ -149,6 +149,7 @@ function getestimatefee_myr($crypto) {
 ////////////////////////////////////////////////////////////////////
 function getbalance($crypto, $label) {
     if ($crypto == 'BTC'){
+        //dd("sdfsdfsd");
         $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
         $amt = null;
         foreach ($addressarr as $address) {
