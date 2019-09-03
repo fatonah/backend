@@ -21,7 +21,6 @@ function send_email_verify($to, $subject, $name, $message, $hash){
     "emailhash" => $hash,
     "supportemail" => "supports@dorado.com"
   );
-  // dd($to, $msgData);
   Mail::to($to)->send(new verifyMail($msgData));
 }
 
@@ -32,7 +31,6 @@ function send_reset_password($to, $subject, $name, $message, $hash){
     "passhash" => $hash,
     "supportemail" => "supports@dorado.com"
   );
-  // dd($to, $msgData);
   Mail::to($to)->send(new resetPassword($msgData));
 }
 
@@ -42,7 +40,6 @@ function send_supports_email($to, $subject, $name, $message){
     "msg" => $message,
     "supportemail" => "supports@dorado.com"
   );
-  // dd($to, $msgData);
   Mail::to($to)->send(new supportMail($msgData));
 }
 
