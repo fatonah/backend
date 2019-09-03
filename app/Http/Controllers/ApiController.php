@@ -430,7 +430,6 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
-		dd("sdfsdfsdfsd");
 		$user = User::where('id',$userid)->first();
 		
 		if($user){
@@ -439,7 +438,7 @@ class ApiController extends Controller{
 				$priceBTC = PriceCrypto::where('crypto','BTC')->first();
 				$priceBCH = PriceCrypto::where('crypto','BCH')->first();
 				$priceDOGE = PriceCrypto::where('crypto','DOGE')->first();
-		 
+		
 				$jumBTC = str_replace("\n","",getbalance('BTC',$user->label)/100000000);
 				$jumBCH = str_replace("\n","",getbalance('BCH',$user->label)/100000000);
 				$jumDOGE = str_replace("\n","",getbalance('DOGE',$user->label)/100000000);

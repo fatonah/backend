@@ -149,7 +149,6 @@ function getestimatefee_myr($crypto) {
 ////////////////////////////////////////////////////////////////////
 function getbalance($crypto, $label) {
     if ($crypto == 'BTC'){
-        //dd("sdfsdfsd");
         $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
         $amt = null;
         foreach ($addressarr as $address) {
@@ -163,9 +162,33 @@ function getbalance($crypto, $label) {
                 foreach ($balacc as $acc) {$amt[] = (int)number_format($acc['amount']*100000000, 8, '.', '');}
             }
         }
-        $wallet_balance = array_sum($amt);
+        if($amt != null) {
+            $wallet_balance = array_sum($amt);
+        }
+        else {
+            $wallet_balance = 0;
+        }
         return $wallet_balance;
     }
+    //#======TESTNET==========#
+    // if ($crypto == 'BTC'){
+    //     $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+    //     dd($addressarr);
+    //     $amt = null;
+    //     foreach ($addressarr as $address) {
+    //         $balacc = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
+    //         $balance = 0;
+    //         if(in_array('txid', $balacc)){
+    //             $amt[] =  (int)number_format($balacc['amount']*100000000, 8, '.', '');
+    //             foreach ($amt as $a) {$balance += $a;}
+    //         }
+    //         else{
+    //             foreach ($balacc as $acc) {$amt[] = (int)number_format($acc['amount']*100000000, 8, '.', '');}
+    //         }
+    //     }
+    //     $wallet_balance = array_sum($amt);
+    //     return $wallet_balance;
+    // }
     elseif($crypto == 'BCH'){
         $j = 0;
         $balacc[] = bitcoind()->client('bitabc')->listunspent()->get();
