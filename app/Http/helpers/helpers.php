@@ -275,11 +275,11 @@ function getbalance_myr($crypto, $label) {
 ////////////////////////////////////////////////////////////////////
 function getaddress($crypto, $label) {
     if ($crypto == 'BTC'){
-        $wallet_address = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+        $wallet_address = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
         return $wallet_address;
     }
    elseif($crypto == 'BCH') {
-        $wallet_address = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get();
+        $wallet_address = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
         return $wallet_address;
     }
    elseif($crypto == 'DASH') {
@@ -287,7 +287,7 @@ function getaddress($crypto, $label) {
         return $wallet_address;
     }
    elseif($crypto == 'DOGE') {
-        $wallet_address = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get();
+        $wallet_address = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[0];
         return $wallet_address;
     }
    elseif($crypto == 'LTC') {
