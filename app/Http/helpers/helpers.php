@@ -279,7 +279,7 @@ function getaddress($crypto, $label) {
         return $wallet_address;
     }
    elseif($crypto == 'BCH') {
-        $wallet_address = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
+        $wallet_address = substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0],12);
         return $wallet_address;
     }
    elseif($crypto == 'DASH') {
