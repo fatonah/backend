@@ -503,7 +503,7 @@ class ApiController extends Controller{
 	
 	#################User Info #########################
 	public function transaction($crypto,$usr_crypto,$tokenAPI){ 
-		$transit = getransaction($crypto,$usr_crypto);
+		$trans = listransaction($crypto,$usr_crypto);
 		$user = User::where('label',$usr_crypto)->first();
 		$tokenORI = apiToken($user->id);
 		  
@@ -631,6 +631,14 @@ class ApiController extends Controller{
 		$getuserlabel = get_label_crypto($crypto, $recipient); 
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
+
+		dd(
+			$fee,
+			$userbalance,
+			$getuserlabel,
+			$totalfunds,
+			$after_bal
+		);
 		
 		/*
 		$checkwalladdr=  $recipient[0];
