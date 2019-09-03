@@ -563,7 +563,7 @@ class ApiController extends Controller{
 		return $datamsg->content();	
 	}
 	
-		
+	//	
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
 		$priceBTC = PriceCrypto::where('crypto','BTC')->first();
