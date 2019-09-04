@@ -34,10 +34,10 @@
 									 
 										$i=1; 
                                     foreach ( $trans as $key => $arr_datas) { 
-                                        $user_acc = $arr_datas->account;
+                                        $user_acc = $arr_datas['account'];
                                         /*
-									 if(substr($arr_datas->account,0,2)!='{"'){
-										 $user_acc = $arr_datas->account;
+									 if(substr($arr_datas['account'],0,2)!='{"'){
+										 $user_acc = $arr_datas['account'];
 									 }else{
 										 $user_acc = 'error';
                                      }
@@ -46,20 +46,20 @@
 											
                                             <tr>
                                                 <td><?php echo $i; ?></td>  
-												<td><a href="{{route('users.transactions',[$crypto,$user_acc])}}"><?php echo $arr_datas->account; ?></a></td>
-                                            <td><?php if(isset($arr_datas->label)){echo $arr_datas->label;}elseif(isset($arr_datas->otheraccount)){echo $arr_datas->otheraccount;}?></td>
-										  <td><?php if($arr_datas->category=='move'){echo 'fees';}else{echo $arr_datas->category;} ?></td>
-                                             <td><?php echo $arr_datas->amount; ?></td>
-                                             <td><?php if(isset($arr_datas->comment)){echo $arr_datas->comment;} ?></td>
-                                              <td><?php if(isset($arr_datas->confirmations)){echo $arr_datas->confirmations;} ?></td>
-                                               <td><?php if(isset($arr_datas->txid)){
+												<td><a href="{{route('users.transactions',[$crypto,$user_acc])}}"><?php echo $arr_datas['account']; ?></a></td>
+                                            <td><?php if(isset($arr_datas['label'])){echo $arr_datas['label'];}elseif(isset($arr_datas['otheraccount'])){echo $arr_datas['otheraccount'];}?></td>
+										  <td><?php if($arr_datas['category']=='move'){echo 'fees';}else{echo $arr_datas['category'];} ?></td>
+                                             <td><?php echo $arr_datas['amount']; ?></td>
+                                             <td><?php if(isset($arr_datas['comment'])){echo $arr_datas['comment'];} ?></td>
+                                              <td><?php if(isset($arr_datas['confirmations'])){echo $arr_datas['confirmations'];} ?></td>
+                                               <td><?php if(isset($arr_datas['txid'])){
 												     if($crypto!='BCH'){ ?>
-								  <a target="_blank" href="https://live.blockcypher.com/{{strtolower($crypto)}}/tx/{{ $arr_datas->txid }}">{{ $arr_datas->txid }}</a>
+								  <a target="_blank" href="https://live.blockcypher.com/{{strtolower($crypto)}}/tx/{{ $arr_datas['txid'] }}">{{ $arr_datas['txid'] }}</a>
 												<?php }else{ ?>
-								  <a target="_blank" href="https://www.blockchain.com/bch/tx/{{ $arr_datas->txid }}">{{ $arr_datas->txid }}</a>
+								  <a target="_blank" href="https://www.blockchain.com/bch/tx/{{ $arr_datas['txid'] }}">{{ $arr_datas['txid'] }}</a>
 												<?php } 
 												    } ?></td>
-                                               <td><?php if(isset($arr_datas->timereceived)){echo date('d-m-Y H:i:s',$arr_datas->timereceived);}elseif(isset($arr_datas->time)){echo date('d-m-Y H:i:s',$arr_datas->time);} ?></td>
+                                               <td><?php if(isset($arr_datas['timereceived'])){echo date('d-m-Y H:i:s',$arr_datas['timereceived']);}elseif(isset($arr_datas['time'])){echo date('d-m-Y H:i:s',$arr_datas['time']);} ?></td>
                                             </tr>
 									<?php $i++; 
 									} ?>
