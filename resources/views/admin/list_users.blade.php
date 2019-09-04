@@ -32,7 +32,9 @@
                                         <tbody>
               <?php 
 									 
-										$i=1; 
+                                        $i=1; 
+                                        if($trans!=null){
+
                                     foreach ( $trans as $key => $arr_datas) { 
                                         
 									 if($crypto!='BTC'){
@@ -61,7 +63,7 @@
                                                <td><?php if(isset($arr_datas['timereceived'])){echo date('d-m-Y H:i:s',$arr_datas['timereceived']);}elseif(isset($arr_datas['time'])){echo date('d-m-Y H:i:s',$arr_datas['time']);} ?></td>
                                             </tr>
 									<?php $i++; 
-									} ?>
+									}} ?>
                                         </tbody>
                                     </table>
                                 </div>

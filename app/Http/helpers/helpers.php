@@ -388,7 +388,11 @@ function listransactionall($crypto) {
     else {return "invalid crypto";}
     //GET all transaction
     $transaction = bitcoind()->client($crycode)->listtransactions()->get();
-    return $transaction;
+    if($transaction){
+        return $transaction;
+    }else{
+        return null;
+    }
 }
 function listransaction($crypto, $label) {
     if ($crypto == 'BTC'){$crycode = 'bitcoin';}
