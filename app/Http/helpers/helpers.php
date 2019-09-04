@@ -403,7 +403,11 @@ function listransactionall($crypto) {
     else {return "invalid crypto";}
     //GET all transaction
     $transaction = bitcoind()->client($crycode)->listtransactions()->get();
-    return $transaction;
+    if($transaction){
+        return $transaction;
+    }else{
+        return null;
+    }
 }
 function listransaction($crypto, $label) {
     if ($crypto == 'BTC'){$crycode = 'bitcoin';}
@@ -414,7 +418,11 @@ function listransaction($crypto, $label) {
     else {return "invalid crypto";}
     //GET all transaction
     $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-    return $transaction;
+    if($transaction){
+        return $transaction;
+    }else{
+        return null;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -427,6 +435,7 @@ function gettransaction_crypto($crypto, $txid) {
     }
     elseif($crypto == 'BCH'){
         $transaction = bitcoind()->client('bitabc')->gettransaction($txid)->get();
+        dd($transaction);
         return $transaction;
     }
     elseif($crypto == 'LTC'){
@@ -980,7 +989,7 @@ function dec2hex($number){
 /////////////////////////////////////////////////////////////////////
 ///  MOVE TO FEES WALLET                 ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function withdrawal_fees_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
+function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
     if ($crypto == 'BTC'){
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');

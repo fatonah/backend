@@ -18,7 +18,7 @@ class AdminController extends Controller
 	public function testPage()
 	{
  //get_label_crypto('BTC', '3BaJXxZismiTc8pfXnmsPDYuQ4A1AwYusb');getransaction('BTC', 'usr_admin');
-		 $label = getransaction('BTC','usr_princeofbitcoin');
+		 $label = listransaction('BTC','usr_princeofbitcoin');
 		 dd('test');
  
 	}
@@ -65,9 +65,9 @@ class AdminController extends Controller
          $addressBCH =  WalletAddress::where('label',$label)->where('crypto','BCH')->first()->address;
           $addressDOGE =  WalletAddress::where('label',$label)->where('crypto','DOGE')->first()->address;
 
-        $balanceBTC = getbalance('BTC', $label);
-       $balanceBCH = getbalance('BCH', $label);
-       $balanceDOGE = getbalance('DOGE', $label);
+        $balanceBTC = getbalance('BTC', $label)/100000000;
+       $balanceBCH = getbalance('BCH', $label)/100000000;
+       $balanceDOGE = getbalance('DOGE', $label)/100000000;
  
         return view('admin.home', Compact('admin','balanceBTC','balanceBCH','balanceDOGE','addressBTC','addressBCH','addressDOGE'));
 		 
@@ -79,11 +79,9 @@ class AdminController extends Controller
          $id = Auth::guard('admin')->user()->id;
         $admin =  Admin::where('id',$id)->first();
         
-        $label = 'usr_admin';
+        $label = 'usr_admin'; 
 
-     //   dd(getransaction($crypto, $label));
-
-       $trans = getransaction($crypto, $label);
+       $trans = listransaction($crypto, $label);
          return view('admin.transactions', Compact('admin','crypto','label','trans'));
 
     }
@@ -91,8 +89,8 @@ class AdminController extends Controller
 
   public function listUsers($crypto)
     { 
-		$trans = getransactionAll($crypto);	 
- 
+		$trans = listransactionall($crypto);	 
+ //dd($trans);
         return view('admin.list_users', compact('trans','crypto'));
 
     }
@@ -101,7 +99,8 @@ class AdminController extends Controller
   public function transactionsUsers($crypto,$label)
     {
    
-       $trans = getransaction($crypto, $label);
+	   $trans = listransaction($crypto, $label);
+	   dd($trans);
          return view('admin.transactions_users', Compact('users','crypto','label','trans'));
 
     }
@@ -115,7 +114,7 @@ class AdminController extends Controller
        $label = 'usr_admin';
 
        $fromaddress =  WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
-        $balance = getbalance($crypto, $label);
+        $balance = getbalance($crypto, $label)/100000000;
  //dd($balance);
        return view('admin.send', compact('admin','crypto','label','fromaddress','balance'));
 
@@ -138,7 +137,7 @@ class AdminController extends Controller
 		$crypto = $request->crypto;
 
 		$fromaddress =  WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
-		$balance = getbalance($crypto, $label);
+		$balance = getbalance($crypto, $label)/100000000;
 
 		$balance = sprintf('%f', $balance);
 		if($crypto=='BTC'){$fees_pay = settings('fee_btc');}elseif($crypto=='BCH'){$fees_pay = settings('fee_bch');}elseif($crypto=='DOGE'){$fees_pay = settings('fee_doge');}else{$fees_pay = 0;}
@@ -150,7 +149,7 @@ class AdminController extends Controller
 		$oneCode = $ga->getCode($secret);
 		$userCode = $request->code;
 
-		if ($oneCode != $userCode) {  
+		if ($oneCode != $userCode) { 
 		notify()->flash('Wrong Verification Code!', 'error', [
 			'timer' => 3000,
 			'text' => '',
@@ -170,9 +169,9 @@ class AdminController extends Controller
 			return redirect()->back();
 
 		}else{ 
-        $send = send_crypto_comment($crypto, $label, $request->to, $request->amount,'withdraw');
+        $send = withdrawal_admin_crypto($crypto, $label, $request->to, $request->amount,'withdraw');
 
-        $send = 1;
+       // $send = 1;
 
         if($send){
 
