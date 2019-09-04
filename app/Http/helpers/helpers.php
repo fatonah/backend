@@ -68,7 +68,7 @@ function getconnection($crypto){
     elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
     else {return "invalid crypto";}
     $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
-    return json_encode($conn, JSON_PRETTY_PRINT);
+    return $conn;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ function getestimatefee_myr($crypto) {
     }
     elseif($crypto == 'BCH'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bch&sparkline=false"));
+        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin-cash&sparkline=false"));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);

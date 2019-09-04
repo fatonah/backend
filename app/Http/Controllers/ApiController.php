@@ -36,9 +36,21 @@ class ApiController extends Controller{
 		$address = '3K97qigXj6TA1mEiAw47TSs5hdg6caHqcn';
 		$txid = 'b1c5dfef6ba6252e0497a904005417098e3fae6857019cfdf705d452f247569b';
 
+		//BCH//
+		$crypto = 'BCH';
+		$label = 'usr_bsod666';
+		$address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
+		$txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
+
+		//DOGE//
+		$crypto = 'DOGE';
+		$label = 'usr_bsod666';
+		$address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
+		$txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
+
 		//walletinfo
 
-		//$data = getconnection($crypto);
+		$data = getconnection($crypto);
 		//$data = getestimatefee($crypto);
 		//$data = getestimatefee_myr($crypto); 
 		//$data = getbalance($crypto, $label);
@@ -50,7 +62,7 @@ class ApiController extends Controller{
 		//$data = listransaction($crypto, $label);
 		//$data = gettransaction_crypto($crypto, $txid);
 		//$data = dumpkey($crypto, $label);
-		$data = getbalanceAll($crypto);
+		//$data = getbalanceAll($crypto);
 		dd($data);    
 		$datamsg = response()->json( 
 			 $data
