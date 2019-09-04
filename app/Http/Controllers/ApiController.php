@@ -543,7 +543,7 @@ class ApiController extends Controller{
 		}
 		
 		if($user){
-			$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+			$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
 			$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 			$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
 
