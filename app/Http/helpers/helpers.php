@@ -399,7 +399,11 @@ function listransaction($crypto, $label) {
     else {return "invalid crypto";}
     //GET all transaction
     $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-    return $transaction;
+    if($transaction){
+        return $transaction;
+    }else{
+        return null;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////

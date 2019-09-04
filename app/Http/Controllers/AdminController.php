@@ -81,7 +81,7 @@ class AdminController extends Controller
         
         $label = 'usr_admin';
 
-        dd(listransaction($crypto, $label));
+       // dd(listransaction($crypto, $label));
 
        $trans = listransaction($crypto, $label);
          return view('admin.transactions', Compact('admin','crypto','label','trans'));
