@@ -28,6 +28,15 @@ use App\Appver;
 
 class ApiController extends Controller{ 
 	
+	#################Debug #########################
+	public function debug(){
+		$data = dumpkey('BCH', 'usr_bsod666');     
+		$datamsg = response()->json( 
+			 $data
+		 );
+		return $datamsg->content();
+	}
+
 	#################State #########################
 	public function state(){
 		$state = State::all();       
