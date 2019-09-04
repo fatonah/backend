@@ -375,24 +375,24 @@ function get_label_crypto($crypto, $address) {
     }
    elseif($crypto == 'DASH') {
         $addrinfo = bitcoind()->client('dashcoin')->getaccount($address)->get();
-        if($addrinfo['account'] != null){
-            $label = $addrinfo['account'];
+        if($addrinfo != null){
+            $label = $addrinfo;
             return $label;
         }
         else{return $address;}
     }
    elseif($crypto == 'DOGE') {
         $addrinfo = bitcoind()->client('dogecoin')->getaccount($address)->get();
-        if($addrinfo['account'] != null){
-            $label = $addrinfo['account'];
+        if($addrinfo != null){
+            $label = $addrinfo;
             return $label;
         }
         else{return $address;}
     }
    elseif($crypto == 'LTC') {
         $addrinfo = bitcoind()->client('litecoin')->getaccount($address)->get();
-        if($addrinfo['account'] != null){
-            $label = $addrinfo['account'];
+        if($addrinfo != null){
+            $label = $addrinfo;
             return $label;
         }
         else{return $address;}
