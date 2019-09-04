@@ -34,7 +34,7 @@
                                         $i=1; 
                                         if($trans!=null){
                                         $balafter = $trans[0]->amount;
-                                        }
+                                      
                                     foreach ( $trans as $key => $arr_datas) {
 
 									if(isset($arr_datas->fee)){$fee = $arr_datas->fee;}else{$fee=0;}
@@ -89,7 +89,7 @@
                                                <td><?php if(isset($arr_datas->timereceived)){echo date('Y-m-d H:i:s',$arr_datas->timereceived);}elseif(isset($arr_datas->time)){echo date('Y-m-d H:i:s',$arr_datas->time);} ?></td>
                                             </tr>
 									<?php $i++; 
-									} ?> 
+									}} ?> 
                                         </tbody>
                                     </table>
                                 </div>
