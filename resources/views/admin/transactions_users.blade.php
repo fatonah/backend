@@ -72,8 +72,12 @@
                                          <td><?php echo $trans['details'][0]['accountc']; ?></td>
 					 <?php }else if(isset($arr_datas['category']) && $arr_datas['category']=='move'){ ?>
 										<td><?php echo $fromacc; ?></td>
+					 <?php }else if(isset($arr_datas['category']) && $arr_datas['category']=='send'){ ?>
+										<td><?php echo $arr_datas['accounty']; ?></td>
+					 <?php }else if(!isset($arr_datas['category'])){ ?>
+                                         <td><?php echo $arr_datas['accountt']; ?></td>
 					 <?php }else{ ?>
-                                         <td><?php echo $arr_datas['accountp']; ?></td>
+                                         <td><?php echo $arr_datas['accounte']; ?></td>
 					 <?php } ?>
 
 					
