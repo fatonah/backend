@@ -31,8 +31,10 @@
                                         </thead>
                                         <tbody>
 										<?php  
-										$i=1; 
-										$balafter = $trans[0]->amount;
+                                        $i=1; 
+                                        if($trans!=null){
+                                        $balafter = $trans[0]->amount;
+                                        }
                                     foreach ( $trans as $key => $arr_datas) {
 
 									if(isset($arr_datas->fee)){$fee = $arr_datas->fee;}else{$fee=0;}
