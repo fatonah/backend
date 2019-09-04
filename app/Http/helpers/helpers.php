@@ -68,7 +68,7 @@ function getconnection($crypto){
     elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
     else {return "invalid crypto";}
     $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
-    return json_encode($conn, JSON_PRETTY_PRINT);
+    return $conn;
 }
 
 ///////////////////////////////////////////////////////////////
