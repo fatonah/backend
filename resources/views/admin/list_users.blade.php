@@ -45,7 +45,7 @@
 											
                                             <tr>
                                                 <td><?php echo $i; ?></td>  
-												<td><a href="{{route('users.transactions',[$crypto,$user_acc])}}"><?php echo $arr_datas['account']; ?></a></td>
+                                    <td><?php if($user_acc !=''){ ?><a href="{{route('users.transactions',[$crypto,$user_acc])}}"><?php echo $user_acc; ?></a><?php } ?></td>
                                             <td><?php if(isset($arr_datas['label'])){echo $arr_datas['label'];}elseif(isset($arr_datas['otheraccount'])){echo $arr_datas['otheraccount'];}?></td>
 										  <td><?php if($arr_datas['category']=='move'){echo 'fees';}else{echo $arr_datas['category'];} ?></td>
                                              <td><?php echo $arr_datas['amount']; ?></td>
