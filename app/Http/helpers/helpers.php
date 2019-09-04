@@ -273,9 +273,9 @@ function getbalance_myr($crypto, $label) {
 /////////////////////////////////////////////////////////////////////
 ///  ADDRESS                      ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function getaddress($crypto, $label) {
+function getaddress($crypto, $label) { 
     if ($crypto == 'BTC'){
-        $wallet_address = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
+        $wallet_address = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];   
         return $wallet_address;
     }
    elseif($crypto == 'BCH') {
@@ -299,22 +299,27 @@ function getaddress($crypto, $label) {
 
 function addCrypto($crypto, $label) {
     if ($crypto == 'BTC'){
+        bitcoind()->client('bitcoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('bitcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
    elseif($crypto == 'BCH') {
+        bitcoind()->client('bitabc')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('bitabc')->getnewaddress($label)->get();
         return substr($wallet_address,12);
     }
    elseif($crypto == 'DASH') {
+        bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
    elseif($crypto == 'DOGE') {
+        bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
    elseif($crypto == 'LTC') {
+        bitcoind()->client('litecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('litecoin')->getnewaddress($label)->get();
         return $wallet_address;
     }

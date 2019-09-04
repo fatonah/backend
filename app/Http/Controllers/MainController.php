@@ -22,7 +22,7 @@ class MainController extends Controller
 		
 		$walletBTC = WalletAddress::where('label',$users->label)->where('crypto','BTC')->first();
 		if(!$walletBTC){
-		$crypto = 'BTC';
+		$crypto = 'BTC'; 
 		$addressBTC = addCrypto($crypto, $users->label);
 	 
 		$wallAddress = new WalletAddress;

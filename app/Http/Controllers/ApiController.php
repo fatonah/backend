@@ -430,8 +430,7 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
-		$user = User::where('id',$userid)->first();
-		
+		$user = User::where('id',$userid)->first(); 
 		if($user){
 			$tokenORI = apiToken($userid);
 			if($tokenAPI==$tokenORI){
@@ -451,8 +450,8 @@ class ApiController extends Controller{
 				$myrBCH = round($totalBCH * $priceBCH->price,'2');
 				$myrDOGE = round($totalDOGE * $priceDOGE->price,'2'); 
 				$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE,'2');
-			
-				$addressBTC = getaddress('BTC', $user->label);
+ 
+				$addressBTC = getaddress('BTC', $user->label); 
 				$addressBCH = getaddress('BCH', $user->label);
 				$addressDOGE = getaddress('DOGE', $user->label);
 
