@@ -914,7 +914,7 @@ function dec2hex($number){
 /////////////////////////////////////////////////////////////////////
 ///  MOVE TO FEES WALLET                 ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function withdrawal_fees_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
+function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
     if ($crypto == 'BTC'){
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
         $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
