@@ -47,8 +47,8 @@
 
 											if(isset($arr_datas['category']) && $arr_datas['category']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
-										  if($val=='-'){$fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
-										  else{$fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
+										  if($val=='-'){$fromacc = $arr_datas['accountx'] ; $toacc = $arr_datas['otheraccount'] ;}
+										  else{$fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['accountw']; }
 									   }
 									   
 										}else{
@@ -58,7 +58,7 @@
 										 $balafter = $balafter +($arr_datas['amount']) + $fee;  
 									   }elseif(isset($arr_datas['category']) && $arr_datas['category']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
-										  if($val=='-'){$balafter = $balafter +($arr_datas['amount']) + $fee; $fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
+										  if($val=='-'){$balafter = $balafter +($arr_datas['amount']) + $fee; $fromacc = $arr_datas['accountv'] ; $toacc = $arr_datas['otheraccount'] ;}
 										  else{$balafter = $balafter +($arr_datas['amount']) + $fee;  $fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
 									   }
 										}
@@ -69,7 +69,7 @@
                                           <?php if(isset($arr_datas['category']) && $arr_datas['category']=='receive'){ 
 					 $trans = gettransaction_crypto(strtoupper($crypto), $arr_datas['txid']); 
 					 ?>
-                                         <td><?php echo $trans['details'][0]['account']; ?></td>
+                                         <td><?php echo $trans['details'][0]['accountc']; ?></td>
 					 <?php }else if(isset($arr_datas['category']) && $arr_datas['category']=='move'){ ?>
 										<td><?php echo $fromacc; ?></td>
 					 <?php }else{ ?>
