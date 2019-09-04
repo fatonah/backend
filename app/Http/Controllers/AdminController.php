@@ -17,7 +17,7 @@ class AdminController extends Controller
     
 	public function testPage()
 	{
- //get_label_crypto('BTC', '3BaJXxZismiTc8pfXnmsPDYuQ4A1AwYusb');getransaction('BTC', 'usr_admin');
+ //get_label_crypto('BTC', '3BaJXxZismiTc8pfXnmsPDYuQ4A1AwYusb');getransaction('BTC', 'usr_doradofees');
 		 $label = listransaction('BTC','usr_princeofbitcoin');
 		 dd('test');
  
@@ -79,7 +79,7 @@ class AdminController extends Controller
          $id = Auth::guard('admin')->user()->id;
         $admin =  Admin::where('id',$id)->first();
         
-        $label = 'usr_admin'; 
+        $label = 'usr_doradofees'; 
 
        $trans = listransaction($crypto, $label);
          return view('admin.transactions', Compact('admin','crypto','label','trans'));
@@ -111,7 +111,7 @@ class AdminController extends Controller
        $id = Auth::guard('admin')->user()->id;
        $admin =  Admin::where('id',$id)->first();
 
-       $label = 'usr_admin';
+       $label = 'usr_doradofees';
 
        $fromaddress =  WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
         $balance = getbalance($crypto, $label)/100000000;
@@ -133,7 +133,7 @@ class AdminController extends Controller
 		$id = Auth::guard('admin')->user()->id;
 		$admin =  Admin::where('id',$id)->first();
 
-		$label = 'usr_admin';
+		$label = 'usr_doradofees';
 		$crypto = $request->crypto;
 
 		$fromaddress =  WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
