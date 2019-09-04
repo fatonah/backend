@@ -43,9 +43,9 @@
  
                                             
                                         if(isset($arr_datas[0])){
-                                            $balafter = $arr_datas[0]['amount'];
+                                            $balafter = $arr_datas[0]['amounta'];
                                         }else{
-                                            $balafter = $arr_datas['amount'];
+                                            $balafter = $arr_datas['amountx'];
                                         }
 
 											if($arr_datas['categoryx']=='move'){ 										   
