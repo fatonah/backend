@@ -36,6 +36,9 @@
                                         if($trans!=null){
                                             if(isset($trans[0])){
                                                 $balafter = $trans[0]['amount'];
+                                            }else{
+                                                $balafter = $trans['amount'];
+                                            }
                                            
                                     foreach ( $trans as $key => $arr_datas) {
  
@@ -90,52 +93,7 @@
                                                <td><?php if(isset($arr_datas['timereceived'])){echo date('Y-m-d H:i:s',$arr_datas['timereceived']);}elseif(isset($arr_datas['time'])){echo date('Y-m-d H:i:s',$arr_datas['time']);} ?></td>
                                             </tr>
 									<?php $i++; 
-                                    }
-                                    
-                                    }else{
-                                        $balafter = $trans['amount'];
-                                        
-									if(isset($trans['fee'])){$fee = $trans['fee'];}else{$fee=0;}
-								  
-/*
-											if($trans['category']=='move'){ 										   
-										  $val = substr($trans['amount'], 0, 1);  
-										  if($val=='-'){$fromacc = $trans['account'] ; $toacc = $trans['otheraccount'] ;}
-										  else{$fromacc = $trans['otheraccount'] ; $toacc = $trans['account']; }
-									   }
-									  */
-                                            ?>  
-											
-                                            <tr>
-                                                <td><?php echo $i; ?></td> 
-                                          <?php if(isset($trans['fee'])&&$trans['category']=='receive'){ 
-					 $trans = gettransaction_crypto(strtoupper($crypto), $trans['txid']); 
-					 ?>
-                                         <td><?php echo $trans['details'][0]['account']; ?></td>
-					 <?php }else if($trans['category']=='move'){ ?>
-										<td><?php echo $fromacc; ?></td>
-					 <?php }else{ ?>
-                                         <td><?php echo $trans['account']; ?></td>
-					 <?php } ?>
-
-					
-                                            <td><?php if($trans['category']=='move'){ echo $toacc;}else if(isset($trans['label'])){echo $trans['label'];}elseif(isset($trans['otheraccount'])){echo $trans['otheraccount'];}else{echo $trans['address'];} ?></td>
-                                            <td><?php echo $trans['category']; ?></td>
-                                             <td><?php echo $fee; ?></td>
-                                             <td><?php echo $trans['amount']; ?></td>
-                                             <td><?php echo $balafter; ?></td>
-                                              <td><?php if(isset($trans['confirmations'])){echo $trans['confirmations'];} ?></td>
-                                               <td><?php if(isset($trans['txid'])){
-												   if($crypto!='BCH'){ ?>
-								  <a target="_blank" href="https://live.blockcypher.com/{{strtolower($crypto)}}/tx/{{ $trans['txid'] }}">{{ $trans['txid'] }}</a>
-												<?php }else{ ?>
-								  <a target="_blank" href="https://www.blockchain.com/bch/tx/{{ $trans['txid'] }}">{{ $trans['txid'] }}</a>
-												<?php }  
-												   } ?></td>
-                                               <td><?php if(isset($trans['timereceived'])){echo date('Y-m-d H:i:s',$trans['timereceived']);}elseif(isset($trans['time'])){echo date('Y-m-d H:i:s',$trans['time']);} ?></td>
-                                            </tr>
-                                            <?php
-                                    }
+                                    } 
                                     } ?> 
                                         </tbody>
                                     </table>
