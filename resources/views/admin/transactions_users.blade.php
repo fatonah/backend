@@ -34,7 +34,12 @@
                                         $i=1;  
                                         
                                         if($trans!=null){
-										$balafter = $trans[0]['amount'];
+                                            if(isset($trans[0])){
+                                                $balafter = $trans[0]['amount'];
+                                            }else{
+                                                $balafter = $trans['amount'];
+                                            }
+									 
                                     foreach ( $trans as $key => $arr_datas) {
 
 									if(isset($arr_datas['fee'])){$fee = $arr_datas['fee'];}else{$fee=0;}
@@ -65,7 +70,7 @@
                                           <?php if($arr_datas['category']=='receive'){ 
 					 $trans = gettransaction_crypto(strtoupper($crypto), $arr_datas['txid']); 
 					 ?>
-                                         <td><?php echo $trans->details[0]->account; ?></td>
+                                         <td><?php echo $trans['details'][0]['account']; ?></td>
 					 <?php }else if($arr_datas['category']=='move'){ ?>
 										<td><?php echo $fromacc; ?></td>
 					 <?php }else{ ?>
