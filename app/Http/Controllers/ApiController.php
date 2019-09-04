@@ -439,10 +439,7 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
-		//dd(apiToken(9));
-		dd(getaddress('BTC','usr_raihan'));
-		$user = User::where('id',$userid)->first();
-		
+		$user = User::where('id',$userid)->first(); 
 		if($user){
 			$tokenORI = apiToken($userid);
 			if($tokenAPI==$tokenORI){
@@ -462,8 +459,8 @@ class ApiController extends Controller{
 				$myrBCH = round($totalBCH * $priceBCH->price,'2');
 				$myrDOGE = round($totalDOGE * $priceDOGE->price,'2'); 
 				$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE,'2');
-			
-				$addressBTC = getaddress('BTC', $user->label);
+ 
+				$addressBTC = getaddress('BTC', $user->label); 
 				$addressBCH = getaddress('BCH', $user->label);
 				$addressDOGE = getaddress('DOGE', $user->label);
 
@@ -516,8 +513,9 @@ class ApiController extends Controller{
 	public function transaction($crypto,$usr_crypto,$tokenAPI){ 
 		$trans = listransaction($crypto,$usr_crypto);
 		$user = User::where('label',$usr_crypto)->first();
-		$tokenORI = apiToken($user->id);
-		  
+        
+        if($user){
+		$tokenORI = apiToken($user->id);		  
 		if($tokenAPI==$tokenORI){
 			$datamsg = response()->json([ 
 				'mesej' => 'jaya',
@@ -529,27 +527,32 @@ class ApiController extends Controller{
 			'mesej' => 'No Access',
 			]);	
 		}
+            
+        }else{
+            $datamsg = response()->json([ 
+				'mesej' => 'User dooes not exist',
+				]);
+        }
+        
 		return $datamsg->content();
 	}
 	
 	
 	#################Max Crypto #########################
 	public function maxCrypto($crypto,$uid){
-		$priceBTC = PriceCrypto::where('crypto','BTC')->first();
-		$priceBCH = PriceCrypto::where('crypto','BCH')->first();
-		$priceDOGE = PriceCrypto::where('crypto','DOGE')->first();
+		$priceApi = PriceCrypto::where('crypto',$crypto)->first();
 		$user = User::where('id',$uid)->first();
 		
 		if($crypto=='BTC'){
-			$comm_fee = number_format(settings('commission_withdraw')/$priceBTC->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		elseif($crypto=='BCH'){
-			$comm_fee = number_format(settings('commission_withdraw')/$priceBCH->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		else{
-			$comm_fee = number_format(settings('commission_withdraw')/$priceDOGE->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		
@@ -577,13 +580,7 @@ class ApiController extends Controller{
 	//	
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
-		$priceBTC = PriceCrypto::where('crypto','BTC')->first();
-		$priceBCH = PriceCrypto::where('crypto','BCH')->first();
-		$priceDOGE = PriceCrypto::where('crypto','DOGE')->first();
-		// dd(
-		// 	number_format(settings('commission_withdraw')/$priceBTC->price, 8, '.', ''),
-		// 	number_format(settings('commission_withdraw')/$priceBCH->price, 8, '.', '')
-		// );
+	 
 		//dd(getbalance('BCH', 'usr_bsod666'));
 		$crypto = $request->crypto;
 		$amount = $request->amountcrypto;
@@ -596,7 +593,19 @@ class ApiController extends Controller{
 		$useruid = User::where('label',$label)->first();   
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first();
 		 
-		if(!isset($useruid)){
+		$amountset = 0.01;
+		$minwithdraw = $amountset/$priceApi->price;
+		  
+		if($amount<=$minwithdraw){
+			$m = 'Minimum withdraw must more than '.$minwithdraw;
+		 $msg = array("mesej"=>$m);
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			
+		 return $datamsg->content();
+			
+		}else if(!isset($useruid)){
 		 	$msg = array("mesej"=>"Id Sender does not exist!");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -625,15 +634,15 @@ class ApiController extends Controller{
 		$wuserF = getaddress($crypto,$label);
 		 
 		if($crypto=='BTC'){
-			$comm_fee = number_format(settings('commission_withdraw')/$priceBTC->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		elseif($crypto=='BCH'){
-			$comm_fee = number_format(settings('commission_withdraw')/$priceBCH->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		else{
-			$comm_fee = number_format(settings('commission_withdraw')/$priceDOGE->price, 8, '.', '');
+			$comm_fee = number_format(settings('commission_withdraw')/$priceApi->price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		}
 		
@@ -642,14 +651,6 @@ class ApiController extends Controller{
 		$getuserlabel = get_label_crypto($crypto, $recipient); 
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
-
-		dd(
-			$fee,
-			$userbalance,
-			$getuserlabel,
-			$totalfunds,
-			$after_bal
-		);
 		
 		/*
 		$checkwalladdr=  $recipient[0];
