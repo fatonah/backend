@@ -100,11 +100,6 @@ class AdminController extends Controller
     {
    
 	   $trans = listransaction($crypto, $label);
-	   if(isset($trans[0])){
-		dd('yes');
-	   }else{
-		dd('no');
-	   }
 	   
          return view('admin.transactions_users', Compact('users','crypto','label','trans'));
 
