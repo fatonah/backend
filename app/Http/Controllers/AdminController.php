@@ -150,7 +150,7 @@ class AdminController extends Controller
 		$oneCode = $ga->getCode($secret);
 		$userCode = $request->code;
 
-		if ($oneCode != $userCode) {  
+		if ($oneCode != $userCode) { 
 		notify()->flash('Wrong Verification Code!', 'error', [
 			'timer' => 3000,
 			'text' => '',
