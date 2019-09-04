@@ -35,7 +35,7 @@
                                         
                                         if($trans!=null){
                                             if(isset($trans[0])){
-                                                $balafter = $trans[0]['amounta'];
+                                                $balafter = $trans[0]['amount'];
                                            
                                     foreach ( $trans as $key => $arr_datas) {
  
@@ -98,7 +98,7 @@
 									if(isset($trans['fee'])){$fee = $trans['fee'];}else{$fee=0;}
 								  
 
-											if($trans['category']=='move'){ 										   
+											if($trans['categoryx']=='move'){ 										   
 										  $val = substr($trans['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $trans['account'] ; $toacc = $trans['otheraccount'] ;}
 										  else{$fromacc = $trans['otheraccount'] ; $toacc = $trans['account']; }
