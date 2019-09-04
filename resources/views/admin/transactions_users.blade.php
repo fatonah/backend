@@ -108,7 +108,7 @@
 											
                                             <tr>
                                                 <td><?php echo $i; ?></td> 
-                                          <?php if($trans['category']=='receive'){ 
+                                          <?php if(isset($trans['fee'])&&$trans['category']=='receive'){ 
 					 $trans = gettransaction_crypto(strtoupper($crypto), $trans['txid']); 
 					 ?>
                                          <td><?php echo $trans['details'][0]['account']; ?></td>
