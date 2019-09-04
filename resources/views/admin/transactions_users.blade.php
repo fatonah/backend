@@ -40,12 +40,12 @@
                                                 $balafter = $trans['amount'];
                                             }
                                            
-                                    foreach ( $trans as $key => $arr_datas) {
+                                  ///  foreach ( $trans as $key => $arr_datas) {
  ?>
- <tr><td colspan="10">{{$arr_datas['category']}}</td></tr>
+ <tr><td colspan="10">{{$trans['category']}}</td></tr>
 									 
 									<?php $i++; 
-                                    } 
+                                   // } 
                                     } ?> 
                                         </tbody>
                                     </table>
