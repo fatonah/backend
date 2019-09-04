@@ -59,7 +59,7 @@
 									   }elseif(isset($arr_datas['category']) && $arr_datas['category']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
 										  if($val=='-'){$balafter = $balafter +($arr_datas['amount']) + $fee; $fromacc = $arr_datas['accountv'] ; $toacc = $arr_datas['otheraccount'] ;}
-										  else{$balafter = $balafter +($arr_datas['amount']) + $fee;  $fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
+										  else{$balafter = $balafter +($arr_datas['amount']) + $fee;  $fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['accountm']; }
 									   }
 										}
                                             ?>  
@@ -73,7 +73,7 @@
 					 <?php }else if(isset($arr_datas['category']) && $arr_datas['category']=='move'){ ?>
 										<td><?php echo $fromacc; ?></td>
 					 <?php }else{ ?>
-                                         <td><?php echo $arr_datas['account']; ?></td>
+                                         <td><?php echo $arr_datas['accountp']; ?></td>
 					 <?php } ?>
 
 					
