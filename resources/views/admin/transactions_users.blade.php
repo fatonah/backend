@@ -35,14 +35,14 @@
                                         
                                         if($trans!=null){
                                             if(isset($trans[0])){
-                                                $balafter = $trans[0]['amounta'];
+                                                $balafter = $trans[0]['amount'];
                                            
                                     foreach ( $trans as $key => $arr_datas) {
  
 									if(isset($arr_datas['fee'])){$fee = $arr_datas['fee'];}else{$fee=0;}
 									if($i==1){  
 
-											if($arr_datas['categoryx']=='move'){ 										   
+											if($arr_datas['category']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
 										  else{$fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
@@ -96,25 +96,14 @@
                                         $balafter = $trans['amount'];
                                         
 									if(isset($trans['fee'])){$fee = $trans['fee'];}else{$fee=0;}
-									if($i==1){  
+								  
 
 											if($trans['categoryx']=='move'){ 										   
 										  $val = substr($trans['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $trans['account'] ; $toacc = $trans['otheraccount'] ;}
 										  else{$fromacc = $trans['otheraccount'] ; $toacc = $trans['account']; }
 									   }
-									   
-										}else{
-                                       if($trans['category']=='send'){
-										$balafter = $balafter +($trans['amount']) + $fee;
-									   }elseif($trans['category']=='receive'){
-										 $balafter = $balafter +($trans['amount']) + $fee;  
-									   }elseif($trans['category']=='move'){ 										   
-										  $val = substr($trans['amount'], 0, 1);  
-										  if($val=='-'){$balafter = $balafter +($trans['amount']) + $fee; $fromacc = $trans['account'] ; $toacc = $trans['otheraccount'] ;}
-										  else{$balafter = $balafter +($trans['amount']) + $fee;  $fromacc = $trans['otheraccount'] ; $toacc = $trans['account']; }
-									   }
-										}
+									  
                                             ?>  
 											
                                             <tr>
