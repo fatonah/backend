@@ -109,35 +109,40 @@ function getestimatefee_myr($crypto) {
         $fee = getestimatefee($crypto);
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $fee_myr = bcdiv(($current_price * $fee)*100,1,0);
+        $fee_myr = $fee * $current_price;
+        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
         return $fee_myr;
     }
     elseif($crypto == 'BCH'){
         $fee = getestimatefee($crypto);
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bch&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $fee_myr = bcdiv(($current_price * $fee)*100,1,0);
+        $fee_myr = $fee * $current_price;
+        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
         return $fee_myr;
     }
     elseif($crypto == 'DASH'){
         $fee = getestimatefee($crypto);
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=dash&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $fee_myr = bcdiv(($current_price * $fee)*100,1,0);
+        $fee_myr = $fee * $current_price;
+        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
         return $fee_myr;
     }
     elseif($crypto == 'DOGE'){
         $fee = getestimatefee($crypto);
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=doge&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $fee_myr = bcdiv(($current_price * $fee)*100,1,0);
+        $fee_myr = $fee * $current_price;
+        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
         return $fee_myr;
     }
     elseif($crypto == 'LTC'){
         $fee = getestimatefee($crypto);
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=ltc&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $fee_myr = bcdiv(($current_price * $fee)*100,1,0);
+        $fee_myr = $fee * $current_price;
+        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
         return $fee_myr;
     }
     else {return "invalid crypto";}
@@ -235,21 +240,21 @@ function getbalance_myr($crypto, $label) {
         $wallet_balance = getbalance($crypto,$label)/100000000;
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
+        $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'BCH'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bch&sparkline=false"));
+        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin-cash&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
+        $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'DASH'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
         $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=dash&sparkline=false"));
         $current_price = $data[0]->current_price;
-        $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
+        $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'DOGE'){

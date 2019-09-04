@@ -28,6 +28,15 @@ use App\Appver;
 
 class ApiController extends Controller{ 
 	
+	#################Debug #########################
+	public function debug(){
+		$data = getbalance_myr('BCH', 'usr_bsod666');     
+		$datamsg = response()->json( 
+			 $data
+		 );
+		return $datamsg->content();
+	}
+
 	#################State #########################
 	public function state(){
 		$state = State::all();       
@@ -430,6 +439,8 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
+		//dd(apiToken(9));
+		dd(getaddress('BTC','usr_raihan'));
 		$user = User::where('id',$userid)->first();
 		
 		if($user){
@@ -543,7 +554,7 @@ class ApiController extends Controller{
 		}
 		
 		if($user){
-			$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+			$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
 			$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 			$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
 

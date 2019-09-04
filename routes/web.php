@@ -8,6 +8,7 @@ header('Access-Control-Allow-Headers: Content-Type, x-xsrf-token, x_csrftoken');
 ////////////////////////////////////////////////
  
 Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
+	Route::get('debug','ApiController@debug');
 	Route::post('login','ApiController@login');
 	Route::get('appversion','ApiController@appversion');
 	Route::post('signup','ApiController@signup');
