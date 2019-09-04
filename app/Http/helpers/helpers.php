@@ -554,7 +554,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0],12);
+        $changeaddr = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('bitabc')->createrawtransaction(
                 $txin,
@@ -576,12 +576,13 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     }
    elseif ($crypto == 'DASH') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
+        //$wallet_balance = bitcoind()->client('dogecoin')->getbalance($label)->get()*100000000;
+        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get();
+        $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-        $estfee = number_format(bitcoind()->client('dashcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($label)->get());
+        $addressarr = bitcoind()->client('dashcoin')->getaddressesbylabel($label)->get();
         foreach ($addressarr as $address) {
             $j = 0;
             $balacc[] = bitcoind()->client('dashcoin')->listunspent(1, 9999999, [$address])->get();

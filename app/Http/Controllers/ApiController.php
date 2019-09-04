@@ -55,7 +55,7 @@ class ApiController extends Controller{
 		//$data = getestimatefee_myr($crypto); 
 		//$data = getbalance($crypto, $label);
 		//$data = getbalance_myr($crypto, $label);
-		//$data = getaddress($crypto, $label); 
+		$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
 		//$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
