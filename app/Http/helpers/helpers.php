@@ -434,8 +434,7 @@ function gettransaction_crypto($crypto, $txid) {
         return $transaction;
     }
     elseif($crypto == 'BCH'){
-        $transaction = bitcoind()->client('bitabc')->gettransaction($txid)->get(); 
-        dd($transaction);
+        $transaction = bitcoind()->client('bitabc')->gettransaction($txid)->get();  
         return $transaction;
     }
     elseif($crypto == 'LTC'){

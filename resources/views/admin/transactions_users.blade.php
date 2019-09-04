@@ -70,7 +70,7 @@
                                           <?php if($arr_datas['category']=='receive'){ 
 					 $trans = gettransaction_crypto(strtoupper($crypto), $arr_datas['txid']); 
 					 ?>
-                                         <td><?php echo $trans['account']; ?></td>
+                                         <td><?php echo $trans['details'][0]['account']; ?></td>
 					 <?php }else if($arr_datas['category']=='move'){ ?>
 										<td><?php echo $fromacc; ?></td>
 					 <?php }else{ ?>
