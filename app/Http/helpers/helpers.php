@@ -883,22 +883,68 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
 /// DUMP PRIVATE KEY             ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function dumpkey($crypto, $label){
-    if ($crypto == 'BTC'){$crycode = 'bitcoin';}
-    elseif($crypto == 'BCH'){$crycode = 'bitabc';}
-    elseif($crypto == 'DASH'){$crycode = 'dashcoin';}
-    elseif($crypto == 'DOGE'){$crycode = 'dogecoin';}
-    elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
-    else {return "invalid crypto";}
+    if ($crypto == 'BTC'){
+        $crycode = 'bitcoin';
+        $addressarr = array_keys(bitcoind()->client($crycode)->getaddressesbylabel($label)->get());
+        foreach ($addressarr as $addr){
+            $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
+            $data[] = array(
+                "address"=>$addr,
+                "key"=>$priv
+            );
+        }
+        return $data;
 
-    $addressarr = array_keys(bitcoind()->client($crycode)->getaddressesbylabel($label)->get());
-    foreach ($addressarr as $addr){
-        $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
-        $data[] = array(
-            "address"=>$addr,
-            "key"=>$priv
-        );
     }
-    return $data;
+    elseif($crypto == 'BCH'){
+        $crycode = 'bitabc';
+        $addressarr = bitcoind()->client($crycode)->getaddressesbyaccount($label)->get();
+        foreach ($addressarr as $addr){
+            $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
+            $data[] = array(
+                "address"=>$addr,
+                "key"=>$priv
+            );
+        }
+        return $data;
+    }
+    elseif($crypto == 'DASH'){
+        $crycode = 'dashcoin';
+        $addressarr = bitcoind()->client($crycode)->getaddressesbyaccount($label)->get();
+        foreach ($addressarr as $addr){
+            $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
+            $data[] = array(
+                "address"=>$addr,
+                "key"=>$priv
+            );
+        }
+        return $data;
+    }
+    elseif($crypto == 'DOGE'){
+        $crycode = 'dogecoin';
+        $addressarr = bitcoind()->client($crycode)->getaddressesbyaccount($label)->get();
+        foreach ($addressarr as $addr){
+            $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
+            $data[] = array(
+                "address"=>$addr,
+                "key"=>$priv
+            );
+        }
+        return $data;
+    }
+    elseif($crypto == 'LTC'){
+        $crycode = 'bitcoin';
+        $addressarr = bitcoind()->client($crycode)->getaddressesbyaccount($label)->get();
+        foreach ($addressarr as $addr){
+            $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
+            $data[] = array(
+                "address"=>$addr,
+                "key"=>$priv
+            );
+        }
+        return $data;
+    }
+    else {return "invalid crypto";}
 }
 
 
