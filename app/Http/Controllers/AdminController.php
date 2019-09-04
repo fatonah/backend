@@ -90,7 +90,7 @@ class AdminController extends Controller
   public function listUsers($crypto)
     { 
 		$trans = listransactionall($crypto);	 
- dd($trans[0]);
+ dd($trans[0]['address']);
         return view('admin.list_users', compact('trans','crypto'));
 
     }
