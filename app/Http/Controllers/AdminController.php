@@ -79,9 +79,7 @@ class AdminController extends Controller
          $id = Auth::guard('admin')->user()->id;
         $admin =  Admin::where('id',$id)->first();
         
-        $label = 'usr_admin';
-
-      //  dd(listransaction($crypto, $label));
+        $label = 'usr_admin'; 
 
        $trans = listransaction($crypto, $label);
          return view('admin.transactions', Compact('admin','crypto','label','trans'));
@@ -92,7 +90,7 @@ class AdminController extends Controller
   public function listUsers($crypto)
     { 
 		$trans = listransactionall($crypto);	 
- 
+ dd($trans);
         return view('admin.list_users', compact('trans','crypto'));
 
     }
