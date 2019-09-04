@@ -1302,32 +1302,6 @@ function getbalanceAll($crypto) {
 }
 
 
-//////////////////////////////////////////
-/////NEW//////////////////
-//////////////////////////////////////////
-function walletinfo($uid,$value){
-    $verify = WalletAddress::where('uid',$uid)->first();
-    return $verify->$value;
-}
-
-function verificationinfo($uid,$value){
-    $verify = Verification::where('uid',$uid)->first();
-    return $verify->$value;
-}
-
-function formatBytes($bytes, $precision = 2) { 
-    if ($bytes > pow(1024,3)) return round($bytes / pow(1024,3), $precision)."GB";
-    elseif ($bytes > pow(1024,2)) return round($bytes / pow(1024,2), $precision)."MB";
-    elseif ($bytes > 1024) return round($bytes / 1024, $precision)."KB";
-    else return ($bytes)."B";
-} 
-
-function idinfo($uid,$value){
-    $verify = User::where('id',$uid)->first();
-    return $verify->$value;
-}
-
-
 /////////////////////////////////////////////////////////////////////
 ///  API FUNCTION          ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////

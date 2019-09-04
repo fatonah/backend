@@ -30,7 +30,28 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		$data = getbalance('DOGE', 'usr_bsod666');     
+		//BTC//
+		$crypto = 'BTC';
+		$label = 'usr_bsod666';
+		$address = '3K97qigXj6TA1mEiAw47TSs5hdg6caHqcn';
+		$txid = 'b1c5dfef6ba6252e0497a904005417098e3fae6857019cfdf705d452f247569b';
+
+		//walletinfo
+
+		//$data = getconnection($crypto);
+		//$data = getestimatefee($crypto);
+		//$data = getestimatefee_myr($crypto); 
+		//$data = getbalance($crypto, $label);
+		//$data = getbalance_myr($crypto, $label);
+		//$data = getaddress($crypto, $label); 
+		//$data = addCrypto($crypto, $label);
+		//$data = get_label_crypto($crypto, $address);
+		//$data = listransactionall($crypto, $label); 
+		//$data = listransaction($crypto, $label);
+		//$data = gettransaction_crypto($crypto, $txid);
+		//$data = dumpkey($crypto, $label);
+		$data = getbalanceAll($crypto);
+		dd($data);    
 		$datamsg = response()->json( 
 			 $data
 		 );
