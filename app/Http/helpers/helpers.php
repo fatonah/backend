@@ -107,7 +107,8 @@ function getestimatefee($crypto) {
 function getestimatefee_myr($crypto) {
     if ($crypto == 'BTC'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
@@ -115,7 +116,8 @@ function getestimatefee_myr($crypto) {
     }
     elseif($crypto == 'BCH'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin-cash&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
@@ -123,7 +125,8 @@ function getestimatefee_myr($crypto) {
     }
     elseif($crypto == 'DASH'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=dash&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
@@ -131,7 +134,8 @@ function getestimatefee_myr($crypto) {
     }
     elseif($crypto == 'DOGE'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=doge&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
@@ -139,7 +143,8 @@ function getestimatefee_myr($crypto) {
     }
     elseif($crypto == 'LTC'){
         $fee = getestimatefee($crypto);
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=ltc&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $fee_myr = $fee * $current_price;
         //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
