@@ -35,7 +35,7 @@
 										$i=1; 
                                     foreach ( $trans as $key => $arr_datas) { 
                                         
-									 if(isset($arr_datas['account'])){
+									 if($crypto!='BTC'){
 										 $user_acc = $arr_datas['account'];
 									 }else{
 										 $user_acc = '';
