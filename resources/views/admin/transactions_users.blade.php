@@ -42,13 +42,13 @@
 									if($i==1){ 
  
                                             
-                                        if(isset($trans[0])){
-                                            $balafter = $trans[0]['amount'];
+                                        if(isset($arr_datas[0])){
+                                            $balafter = $arr_datas[0]['amount'];
                                         }else{
-                                            $balafter = $trans['amount'];
+                                            $balafter = $arr_datas['amount'];
                                         }
 
-											if($arr_datas['category']=='move'){ 										   
+											if($arr_datas['categoryx']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
 										  else{$fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
