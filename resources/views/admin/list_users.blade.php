@@ -34,14 +34,13 @@
 									 
 										$i=1; 
                                     foreach ( $trans as $key => $arr_datas) { 
-                                        $user_acc = $arr_datas['account'];
-                                        /*
-									 if(substr($arr_datas['account'],0,2)!='{"'){
+                                        
+									 if(isset($arr_datas['account'])){
 										 $user_acc = $arr_datas['account'];
 									 }else{
-										 $user_acc = 'error';
+										 $user_acc = '';
                                      }
-                                     */
+                                      
                                             ?>  
 											
                                             <tr>
