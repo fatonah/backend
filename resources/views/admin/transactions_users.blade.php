@@ -45,18 +45,18 @@
 									if(isset($arr_datas['fee'])){$fee = $arr_datas['fee'];}else{$fee=0;}
 									if($i==1){  
 
-											if(isset($arr_datas['category']) && $arr_datas['category']=='move'){ 										   
+											if(isset($arr_datas['category']) && $arr_datas['category1']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
 										  else{$fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
 									   }
 									   
 										}else{
-                                       if(isset($arr_datas['category']) && $arr_datas['category']=='send'){
+                                       if(isset($arr_datas['category']) && $arr_datas['category2']=='send'){
 										$balafter = $balafter +($arr_datas['amount']) + $fee;
-									   }elseif(isset($arr_datas['category']) && $arr_datas['category']=='receive'){
+									   }elseif(isset($arr_datas['category']) && $arr_datas['category3']=='receive'){
 										 $balafter = $balafter +($arr_datas['amount']) + $fee;  
-									   }elseif(isset($arr_datas['category']) && $arr_datas['category']=='move'){ 										   
+									   }elseif(isset($arr_datas['category']) && $arr_datas['category4']=='move'){ 										   
 										  $val = substr($arr_datas['amount'], 0, 1);  
 										  if($val=='-'){$balafter = $balafter +($arr_datas['amount']) + $fee; $fromacc = $arr_datas['account'] ; $toacc = $arr_datas['otheraccount'] ;}
 										  else{$balafter = $balafter +($arr_datas['amount']) + $fee;  $fromacc = $arr_datas['otheraccount'] ; $toacc = $arr_datas['account']; }
