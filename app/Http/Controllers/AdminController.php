@@ -99,7 +99,8 @@ class AdminController extends Controller
   public function transactionsUsers($crypto,$label)
     {
    
-       $trans = listransaction($crypto, $label);
+	   $trans = listransaction($crypto, $label);
+	   dd($trans);
          return view('admin.transactions_users', Compact('users','crypto','label','trans'));
 
     }
