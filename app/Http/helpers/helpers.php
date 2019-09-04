@@ -253,35 +253,40 @@ function getbalance($crypto, $label) {
 function getbalance_myr($crypto, $label) {
     if ($crypto == 'BTC'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'BCH'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=bitcoin-cash&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'DASH'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=dash&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $myr_balance = $wallet_balance * $current_price;
         return $myr_balance;
     }
    elseif($crypto == 'DOGE'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=doge&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
         return $myr_balance;
     }
    elseif($crypto == 'LTC'){
         $wallet_balance = getbalance($crypto,$label)/100000000;
-        $data = json_decode(file_get_contents("https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&ids=ltc&sparkline=false"));
+        $price = PriceCrypto::where('crypto', $crypto)->first();
+        $data = json_decode(file_get_contents($price->url_api));
         $current_price = $data[0]->current_price;
         $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
         return $myr_balance;
@@ -369,7 +374,7 @@ function get_label_crypto($crypto, $address) {
         else{return $address;}
     }
    elseif($crypto == 'DASH') {
-        $addrinfo = bitcoind()->client('dashcoin')->getaddressinfo($address)->get();
+        $addrinfo = bitcoind()->client('dashcoin')->getaccount($address)->get();
         if($addrinfo['account'] != null){
             $label = $addrinfo['account'];
             return $label;
@@ -377,7 +382,7 @@ function get_label_crypto($crypto, $address) {
         else{return $address;}
     }
    elseif($crypto == 'DOGE') {
-        $addrinfo = bitcoind()->client('dogecoin')->getaddressinfo($address)->get();
+        $addrinfo = bitcoind()->client('dogecoin')->getaccount($address)->get();
         if($addrinfo['account'] != null){
             $label = $addrinfo['account'];
             return $label;
@@ -385,7 +390,7 @@ function get_label_crypto($crypto, $address) {
         else{return $address;}
     }
    elseif($crypto == 'LTC') {
-        $addrinfo = bitcoind()->client('litecoin')->getaddressinfo($address)->get();
+        $addrinfo = bitcoind()->client('litecoin')->getaccount($address)->get();
         if($addrinfo['account'] != null){
             $label = $addrinfo['account'];
             return $label;

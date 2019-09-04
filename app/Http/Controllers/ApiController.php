@@ -36,7 +36,7 @@ class ApiController extends Controller{
 		$address = '3K97qigXj6TA1mEiAw47TSs5hdg6caHqcn';
 		$txid = 'b1c5dfef6ba6252e0497a904005417098e3fae6857019cfdf705d452f247569b';
 
-		//BCH//
+		// //BCH//
 		$crypto = 'BCH';
 		$label = 'usr_bsod666';
 		$address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
@@ -45,8 +45,8 @@ class ApiController extends Controller{
 		//DOGE//
 		$crypto = 'DOGE';
 		$label = 'usr_bsod666';
-		$address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
-		$txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
+		$address = 'DKzRr2pUGLVQRe2Csr7Y1znDhGtB1eBZLw';
+		$txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
 
 		//walletinfo
 
@@ -54,10 +54,10 @@ class ApiController extends Controller{
 		//$data = getestimatefee($crypto);
 		//$data = getestimatefee_myr($crypto); 
 		//$data = getbalance($crypto, $label);
-		$data = getbalance_myr($crypto, $label);
+		//$data = getbalance_myr($crypto, $label);
 		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
-		//$data = get_label_crypto($crypto, $address);
+		$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
 		//$data = listransaction($crypto, $label);
 		//$data = gettransaction_crypto($crypto, $txid);
