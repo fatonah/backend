@@ -79,7 +79,7 @@ class AdminController extends Controller
          $id = Auth::guard('admin')->user()->id;
         $admin =  Admin::where('id',$id)->first();
         
-        $label = 'usr_bsod666';
+        $label = 'usr_admin';
 
         dd(listransaction($crypto, $label));
 
