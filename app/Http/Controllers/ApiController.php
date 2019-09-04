@@ -30,7 +30,7 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		$data = dumpkey('BCH', 'usr_bsod666');     
+		$data = getbalance('DOGE', 'usr_bsod666');     
 		$datamsg = response()->json( 
 			 $data
 		 );
