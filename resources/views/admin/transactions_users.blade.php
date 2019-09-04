@@ -98,7 +98,7 @@
 									if(isset($trans['fee'])){$fee = $trans['fee'];}else{$fee=0;}
 								  
 
-											if($trans['categoryx']=='move'){ 										   
+											if($trans['category']=='move'){ 										   
 										  $val = substr($trans['amount'], 0, 1);  
 										  if($val=='-'){$fromacc = $trans['account'] ; $toacc = $trans['otheraccount'] ;}
 										  else{$fromacc = $trans['otheraccount'] ; $toacc = $trans['account']; }
