@@ -146,7 +146,7 @@
 												   } ?></td>
                                                <td><?php if(isset($trans['timereceived'])){echo date('Y-m-d H:i:s',$trans['timereceived']);}elseif(isset($trans['time'])){echo date('Y-m-d H:i:s',$trans['time']);} ?></td>
                                             </tr>
-
+                                <?php
                                 }
                                 
                                 } ?> 
