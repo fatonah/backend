@@ -59,7 +59,7 @@ class AdminController extends Controller
         $id = Auth::guard('admin')->user()->id;
         $admin =  Admin::where('id',$id)->first();
         
-        $label = 'usr_admin';
+        $label = 'usr_doradofees';
  
         $addressBTC =  WalletAddress::where('label',$label)->where('crypto','BTC')->first()->address;
          $addressBCH =  WalletAddress::where('label',$label)->where('crypto','BCH')->first()->address;
