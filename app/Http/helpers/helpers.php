@@ -13,35 +13,10 @@ function settings($value){
     $setting = Setting::first();
     return $setting->$value;
 }
-
-function send_email_verify($to, $subject, $name, $message, $hash){
-  $msgData = array(
-    "uname" => $name,
-    "msg" => $message,
-    "emailhash" => $hash,
-    "supportemail" => "supports@dorado.com"
-  );
-  Mail::to($to)->send(new verifyMail($msgData));
-}
-
-function send_reset_password($to, $subject, $name, $message, $hash){
-  $msgData = array(
-    "uname" => $name,
-    "msg" => $message,
-    "passhash" => $hash,
-    "supportemail" => "supports@dorado.com"
-  );
-  Mail::to($to)->send(new resetPassword($msgData));
-}
-
-function send_supports_email($to, $subject, $name, $message){
-  $msgData = array(
-    "uname" => $name,
-    "msg" => $message,
-    "supportemail" => "supports@dorado.com"
-  );
-  Mail::to($to)->send(new supportMail($msgData));
-}
+ 
+///////////////////////////////////////////////////////////////
+/// SEND EMAIL /////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 
 function send_email_basic($to, $from_name, $from_email, $subject, $message){
   $headers = "From: ".$from_name." <".$from_email."> \r\n"; 
@@ -103,56 +78,7 @@ function getestimatefee($crypto) {
     }
     else {return "invalid crypto";}
 }
-
-function getestimatefee_myr($crypto) {
-    if ($crypto == 'BTC'){
-        $fee = getestimatefee($crypto);
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $fee_myr = $fee * $current_price;
-        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
-        return $fee_myr;
-    }
-    elseif($crypto == 'BCH'){
-        $fee = getestimatefee($crypto);
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $fee_myr = $fee * $current_price;
-        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
-        return $fee_myr;
-    }
-    elseif($crypto == 'DASH'){
-        $fee = getestimatefee($crypto);
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $fee_myr = $fee * $current_price;
-        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
-        return $fee_myr;
-    }
-    elseif($crypto == 'DOGE'){
-        $fee = getestimatefee($crypto);
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $fee_myr = $fee * $current_price;
-        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
-        return $fee_myr;
-    }
-    elseif($crypto == 'LTC'){
-        $fee = getestimatefee($crypto);
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $fee_myr = $fee * $current_price;
-        //$fee_myr = bcdiv(($current_price * $fee)*100,1,0);
-        return $fee_myr;
-    }
-    else {return "invalid crypto";}
-}
-
+ 
 
 /////////////////////////////////////////////////////////////////////
 ///  BALANCE                    ///////////////////////////////////////
@@ -249,51 +175,7 @@ function getbalance($crypto, $label) {
         return $wallet_balance;
     }
 }
-
-function getbalance_myr($crypto, $label) {
-    if ($crypto == 'BTC'){
-        $wallet_balance = getbalance($crypto,$label)/100000000;
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $myr_balance = $wallet_balance * $current_price;
-        return $myr_balance;
-    }
-   elseif($crypto == 'BCH'){
-        $wallet_balance = getbalance($crypto,$label)/100000000;
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $myr_balance = $wallet_balance * $current_price;
-        return $myr_balance;
-    }
-   elseif($crypto == 'DASH'){
-        $wallet_balance = getbalance($crypto,$label)/100000000;
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $myr_balance = $wallet_balance * $current_price;
-        return $myr_balance;
-    }
-   elseif($crypto == 'DOGE'){
-        $wallet_balance = getbalance($crypto,$label)/100000000;
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
-        return $myr_balance;
-    }
-   elseif($crypto == 'LTC'){
-        $wallet_balance = getbalance($crypto,$label)/100000000;
-        $price = PriceCrypto::where('crypto', $crypto)->first();
-        $data = json_decode(file_get_contents($price->url_api));
-        $current_price = $data[0]->current_price;
-        $myr_balance = bcdiv(($current_price * $wallet_balance)*100,1,0);
-        return $myr_balance;
-    }
-    else {return "invalid crypto";}
-}
-
+ 
 
 /////////////////////////////////////////////////////////////////////
 ///  ADDRESS                      ///////////////////////////////////////
@@ -326,6 +208,11 @@ function getaddress($crypto, $label) {
     }
     else {return "invalid crypto";}
 }
+ 
+
+/////////////////////////////////////////////////////////////////////
+///  ADD CRYPTO              ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 function addCrypto($crypto, $label) {
     if ($crypto == 'BTC'){
@@ -363,7 +250,7 @@ function get_label_crypto($crypto, $address) {
             $label = $addrinfo['label'];
             return $label;
         }
-        else{return $address;}
+        else{return null;}
     }
    elseif($crypto == 'BCH') {
         $addrinfo = bitcoind()->client('bitabc')->getaddressinfo($address)->get();
@@ -371,7 +258,7 @@ function get_label_crypto($crypto, $address) {
             $label = $addrinfo['account'];
             return $label;
         }
-        else{return $address;}
+        else{return null;}
     }
    elseif($crypto == 'DASH') {
         $addrinfo = bitcoind()->client('dashcoin')->getaccount($address)->get();
@@ -379,7 +266,7 @@ function get_label_crypto($crypto, $address) {
             $label = $addrinfo;
             return $label;
         }
-        else{return $address;}
+        else{return null;}
     }
    elseif($crypto == 'DOGE') {
         $addrinfo = bitcoind()->client('dogecoin')->getaccount($address)->get();
@@ -387,7 +274,7 @@ function get_label_crypto($crypto, $address) {
             $label = $addrinfo;
             return $label;
         }
-        else{return $address;}
+        else{return null;}
     }
    elseif($crypto == 'LTC') {
         $addrinfo = bitcoind()->client('litecoin')->getaccount($address)->get();
@@ -395,7 +282,7 @@ function get_label_crypto($crypto, $address) {
             $label = $addrinfo;
             return $label;
         }
-        else{return $address;}
+        else{return null;}
     }
     else {return "invalid crypto";}
 }
@@ -997,7 +884,7 @@ function dec2hex($number){
 
 
 /////////////////////////////////////////////////////////////////////
-///  MOVE TO FEES WALLET                 ///////////////////////////////////////
+///  WITHDRAWAL WITHOUT OWNER FEES        ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
     if ($crypto == 'BTC'){
@@ -1318,13 +1205,5 @@ function getbalanceAll($crypto) {
 function apiToken($session_uid){
     $key=md5('Dorado2019'.$session_uid);
     return hash('sha256', $key);
-}
-
-function isValidUsername($str) {
-    return preg_match('/^[a-zA-Z0-9-_]+$/',$str);
-}
-
-function isValidEmail($str) {
-    return filter_var($str, FILTER_VALIDATE_EMAIL);
-}
+} 
 
