@@ -625,95 +625,16 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     }
-    elseif ($crypto == 'ETH') {
-        $converter = new \Bezhanov\Ethereum\Converter();
-        $user = WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
-        $admin = WalletAddress::where('label',$label2)->where('crypto',$crypto)->first();
-        $from = $user->address;
-        $to = $admin->address;
-        $gas = '0x'.dec2hex('100000');
-        $gasprice = Gasprice::where('id',1)->first();
-        $normal = $gasprice->rapid;
-        if($normal == '0' || $normal == ''){$normal = 50;}
-        $gasPriceData = $converter->toWei($normal, 'gwei');
-        $gasPrice = '0x'.dec2hex($gasPriceData);
-        $value = '0x'.dec2hex($converter->toWei($amount, 'ether'));
-        $transaction = new EthereumTransaction($from, $to, $value, $gas, $gasPrice);
-        $txid =  Ethereum::personal_sendTransaction($transaction,'Pinkexc@22');
-        getbalance($crypto, $label);
-        getbalance($crypto, $label2);
-        if($txid != ''){return $txid;}
-        else{return null;}
-    } 
-    elseif ($crypto == 'XLM') {
-        $result = '';
-        return $result;
-    } 
-    elseif ($crypto == 'XRP') {
-        //$client = new Client('https://s.altnet.rippletest.net:51234');
-        $client = new \FOXRP\Rippled\Client('http://178.128.105.75:5005');
-        $amount_conv = strval(floatval($amount)*1000000); //1000000 equivalent to 1XRP
-        $tx_type = "Payment";
-        $account = WalletAddress::where('label',$label)->where('crypto',$crypto)->first()->address; //rippleuser1 
-        $acc_secret = WalletAddress::where('label',$label)->where('crypto',$crypto)->first()->secret;
-        $destination = WalletAddress::where('label',$label2)->where('crypto',$crypto)->first()->address; //ripple admin address
-        $currency = "XRP";
-        //-------------------Payment Submission-----------------------------------
-        $txParams = [
-          'TransactionType' => $tx_type,
-          'Account' => $account,
-          'Destination' => $destination,
-          'Amount' => $amount_conv,
-          'Fee' => '10'
-        ];
-        $transaction = new \FOXRP\Rippled\Api\Transaction($txParams, $client);
-        $responsePay = $transaction->submit(base64_decode($acc_secret));
-        if ($responsePay->isSuccess()) {
-            $dataSubmit = $responsePay->getResult();
-            $txid = $dataSubmit['tx_json']['hash'];
-            getbalance($crypto, $label);
-            getbalance($crypto, $label2);
-            if($txid != ''){ return $txid;}
-            else{return null;}
-        }    
-    }
-    elseif ($crypto == 'LIFE') {
-        //$pari = new EthereumRPC('blappONE:bR4k82xIvhU7uI13E123n4ng2xIvTepiY417@bapp1.pinkexc.com', 443);
-        //$erc20 = new ERC20($pari);
-        $contract = "0xce61f5e6D1fE5a86E246F68AFF956f7757282eF0"; // ERC20 contract address
-        $user = WalletAddress::where('label',$label)->where('crypto',$crypto)->first()->address; // Sender's Ethereum account
-        $admin =  WalletAddress::where('label',$label2)->where('crypto',$crypto)->first()->address; // Recipient's Ethereum account
-        //$amountLIFE = strval(floatval($amount)+0.00001);
-        $amountLIFE = $amount;
-        // Grab instance of ERC20_Token class
-        $token = $erc20->token($contract);
-        // First argument is admin/recipient of this transfer
-        // Second argument is the amount of tokens that will be sent
-        $data = $token->encodedTransferData($admin, $amountLIFE);
-        $transaction = $pari->personal()->transaction($user, $contract) // from $payer to $contract address
-            ->amount("0") // Amount should be ZERO
-            ->data($data); // Our encoded ERC20 token transfer data from previous step
-        // Send transaction with ETH account passphrase
-        $txId = $transaction->send("Pinkexc@22"); // Replace "secret" with actual passphrase of SENDER's ethereum account
-        getbalance($crypto, $label);
-        getbalance($crypto, $label2);
-        if ($txId != '') {
-            $id = WalletAddress::where('label',$label)->where('crypto',$crypto)->first()->uid;
-            $update_bal1 = life_getbalance($id);
-            return $txId;
-        }
-        else{return null;}
-    }  
     else {
         $result = null;
         return $result;
     }
 }
 
-function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo) {
+function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
+        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get();
+        $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
         $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
@@ -1142,24 +1063,6 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     }
-    elseif ($crypto == 'XLM') {$add_crypto = '';}
-    elseif ($crypto == 'XRP') {$add_crypto = '';} 
-    elseif ($crypto == 'ETH') {
-        $converter = new \Bezhanov\Ethereum\Converter();
-        $user = WalletAddress::where('label',$label)->where('crypto',$crypto)->first();
-        $admin = WalletAddress::where('label','usr_pinkexc_fees')->where('crypto',$crypto)->first();
-        $from = $user->address;
-        $to = $admin->address;
-        $gas = '0x'.dec2hex('100000');
-        $gasPrice = '0x'.dec2hex('5000000000');
-        $value = '0x'.dec2hex($converter->toWei($amount, 'ether'));
-        $transaction = new EthereumTransaction($from, $to, $value, $gas, $gasPrice);
-        $txid =  Ethereum::personal_sendTransaction($transaction,'Pinkexc@22');
-
-        if($txid != ''){return true;}
-        else{return null;}
-    } 
-    elseif ($crypto == 'LIFE') {$add_crypto = '';} 
     else {
         $add_crypto = null;
         return $add_crypto;
