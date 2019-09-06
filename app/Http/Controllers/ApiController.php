@@ -704,7 +704,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = 1;//sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
+				$crypto_txid = sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
 				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$priceApi->price;
 					 
