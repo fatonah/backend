@@ -612,7 +612,7 @@ class ApiController extends Controller{
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
 	 
-		//dd(getbalance('BCH', 'usr_bsod666'));
+		//dd(getbalance('BTC', 'usr_doradofees'));
 		$crypto = $request->crypto;
 		$amount = $request->amountcrypto;
 		$label = $request->sendfrom; 

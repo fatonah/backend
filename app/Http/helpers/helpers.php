@@ -246,7 +246,7 @@ function addCrypto($crypto, $label) {
 function get_label_crypto($crypto, $address) {
     if ($crypto == 'BTC'){
         $addrinfo = bitcoind()->client('bitcoin')->getaddressinfo($address)->get();
-        if($addrinfo['label'] != null){
+        if($addrinfo['labels'] != null){
             $label = $addrinfo['label'];
             return $label;
         }
@@ -633,7 +633,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
 
 function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC') {
-        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get();
+        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
         $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
         $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
@@ -645,6 +645,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
                     $pxfeeaddr => $pxfee
                 )
             )->get();
+            getbalance($crypto, $sendlabel);
             return $txid;
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
@@ -662,6 +663,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
                     $pxfeeaddr => $pxfee
                 )
             )->get();
+            getbalance($crypto, $sendlabel);
             return $txid;
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
@@ -679,6 +681,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
                     $pxfeeaddr => $pxfee
                 )
             )->get();
+            getbalance($crypto, $sendlabel);
             return $txid;
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
@@ -696,6 +699,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
                     $pxfeeaddr => $pxfee
                 )
             )->get();
+            getbalance($crypto, $sendlabel);
             return $txid;
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
@@ -713,6 +717,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
                     $pxfeeaddr => $pxfee
                 )
             )->get();
+            getbalance($crypto, $sendlabel);
             return $txid;
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
