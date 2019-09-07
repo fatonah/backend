@@ -300,11 +300,8 @@ function listransactionall($crypto) {
     else {return "invalid crypto";}
     //GET all transaction
     $transaction = bitcoind()->client($crycode)->listtransactions()->get();
-    if($transaction){
-        return $transaction;
-    }else{
-        return null;
-    }
+    if($transaction){return $transaction;}
+    else{return null;}
 }
 function listransaction($crypto, $label) {
     if ($crypto == 'BTC'){$crycode = 'bitcoin';}
@@ -314,12 +311,16 @@ function listransaction($crypto, $label) {
     elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
     else {return "invalid crypto";}
     //GET all transaction
-    $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+    //$transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+    $transaction = listransactionall($crypto);
     if($transaction){
-        return $transaction;
-    }else{
-        return null;
+        foreach ($transaction as $tx) {
+            if($tx['label'] == $label){$usrtx[] = $tx;}
+            if($tx['account'] == $label){$usrtx[] = $tx;}
+        }
+        return $usrtx;
     }
+    else{return null;}
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -358,7 +359,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbyaccount('usr_doradofees')->get())[0];
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-        $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
         $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
         foreach ($addressarr as $address) {
@@ -402,6 +403,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
+                getbalance($crypto, $label);
                 return $txid;
             }
             else{return "Signing Failed. ".$decode;}
@@ -456,15 +458,70 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitabc')->sendrawtransaction($signing['hex'])->get();
+                getbalance($crypto, $label);
                 return $txid;
             }
             else{return "Signing Failed. ".$decode;}
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     }
-   elseif ($crypto == 'DASH') {
-        //$wallet_balance = bitcoind()->client('dogecoin')->getbalance($label)->get()*100000000;
-        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get();
+    elseif ($crypto == 'DOGE') {
+        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfee = $comm_fee;
+        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+        $estfee = getestimatefee($crypto);
+        $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
+        $addressarr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get());
+        foreach ($addressarr as $address) {
+            $j = 0;
+            $balacc[] = bitcoind()->client('dogecoin')->listunspent(1, 9999999, [$address])->get();
+            $prevtxn[] = null;
+            $totalin = 0;
+            foreach ($balacc as $acc) {
+                $i = 0;
+                $ac[$j] = $acc;
+                foreach ($acc as $a) {
+                    $txid[$i] = $a['txid'];
+                    $vout[$i] = $a['vout'];
+                    $amt[$i] = $a['amount']; 
+                    $scriptPubKey[$i] = $a['scriptPubKey'];
+                    $totalin += $amt[$i];
+                    $prevtxn[$i] = array(
+                        "txid"=>$txid[$i],
+                        "vout"=>$vout[$i],
+                    );
+                    $i++; 
+                    if($totalin > $total){break;} 
+                }
+                $j++;
+            }
+            $txin = array_filter($prevtxn);
+        }
+        $change = number_format($totalin-$total, 8, '.', '');
+        $changeaddr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get())[0];
+        if($balance >= $total){  
+            $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
+                $txin,
+                array(
+                    $recvaddress=>number_format($cryptoamount, 8, '.', ''),
+                    $changeaddr=>$change,
+                    $pxfeeaddr => $pxfee
+                )
+            )->get();
+            $signing = bitcoind()->client('dogecoin')->signrawtransactionwithwallet($createraw)->get();
+            $decode = bitcoind()->client('dogecoin')->decoderawtransaction($signing['hex'])->get();
+            //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
+            if($signing['complete'] == true){
+                $txid = bitcoind()->client('dogecoin')->sendrawtransaction($signing['hex'])->get();
+                getbalance($crypto, $label);
+                return $txid;
+            }
+            else{return "Signing Failed. ".$decode;}
+        }
+        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+    }
+    elseif ($crypto == 'DASH') {
+        $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -511,71 +568,18 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('dashcoin')->sendrawtransaction($signing['hex'])->get();
+                getbalance($crypto, $label);
                 return $txid;
             }
             else{return "Signing Failed. ".$decode;}
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     }
-   elseif ($crypto == 'DOGE') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
+    elseif ($crypto == 'LTC') {
+        $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-        $estfee = number_format(bitcoind()->client('dogecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
-        $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get());
-        foreach ($addressarr as $address) {
-            $j = 0;
-            $balacc[] = bitcoind()->client('dogecoin')->listunspent(1, 9999999, [$address])->get();
-            $prevtxn[] = null;
-            $totalin = 0;
-            foreach ($balacc as $acc) {
-                $i = 0;
-                $ac[$j] = $acc;
-                foreach ($acc as $a) {
-                    $txid[$i] = $a['txid'];
-                    $vout[$i] = $a['vout'];
-                    $amt[$i] = $a['amount']; 
-                    $scriptPubKey[$i] = $a['scriptPubKey'];
-                    $totalin += $amt[$i];
-                    $prevtxn[$i] = array(
-                        "txid"=>$txid[$i],
-                        "vout"=>$vout[$i],
-                    );
-                    $i++; 
-                    if($totalin > $total){break;} 
-                }
-                $j++;
-            }
-            $txin = array_filter($prevtxn);
-        }
-        $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get())[0];
-        if($balance >= $total){  
-            $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
-                $txin,
-                array(
-                    $recvaddress=>number_format($cryptoamount, 8, '.', ''),
-                    $changeaddr=>$change,
-                    $pxfeeaddr => $pxfee
-                )
-            )->get();
-            $signing = bitcoind()->client('dogecoin')->signrawtransactionwithwallet($createraw)->get();
-            $decode = bitcoind()->client('dogecoin')->decoderawtransaction($signing['hex'])->get();
-            //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
-            if($signing['complete'] == true){
-                $txid = bitcoind()->client('dogecoin')->sendrawtransaction($signing['hex'])->get();
-                return $txid;
-            }
-            else{return "Signing Failed. ".$decode;}
-        }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
-    }
-   elseif ($crypto == 'LTC') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
-        $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-        $estfee = number_format(bitcoind()->client('litecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
         $addressarr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($label)->get());
         foreach ($addressarr as $address) {
@@ -619,6 +623,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('litecoin')->sendrawtransaction($signing['hex'])->get();
+                getbalance($crypto, $label);
                 return $txid;
             }
             else{return "Signing Failed. ".$decode;}
@@ -636,7 +641,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
         $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
-        $estfee = number_format(bitcoind()->client('bitcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
         if ($bal >= $txcost){
             $txid = bitcoind()->client('bitcoin')->sendmany("",
@@ -651,11 +656,18 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
     }
    elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get(),12);;
-        $pxfee = "0.000024";
+        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
+        $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
-        $estfee = number_format(bitcoind()->client('bitabc')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
+        // dd(
+        //     $pxfee,
+        //     $bal,
+        //     $estfee,
+        //     $txcost,
+        //     $bal >= $txcost  
+        // );
         if ($bal >= $txcost){
             $txid = bitcoind()->client('bitabc')->sendmany("",
                 array(
@@ -668,11 +680,37 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
     }
-   elseif ($crypto == 'DASH') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
+   elseif ($crypto == 'DOGE') {
+        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
-        $estfee = number_format(bitcoind()->client('dashcoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
+        $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
+        // dd(
+        //     $pxfeeaddr,
+        //     $pxfee,
+        //     $bal,
+        //     $estfee,
+        //     $txcost,
+        //     $bal >= $txcost  
+        // );
+        if ($bal >= $txcost){
+            $txid = bitcoind()->client('dogecoin')->sendmany("",
+                array(
+                    $recvaddress => $cryptoamount,
+                    $pxfeeaddr => $pxfee
+                )
+            )->get();
+            getbalance($crypto, $sendlabel);
+            return $txid;
+        }
+        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+    }
+    elseif ($crypto == 'DASH') {
+        $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfee = $comm_fee;
+        $bal = getbalance($crypto, $sendlabel);
+        $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
         if ($bal >= $txcost){
             $txid = bitcoind()->client('dashcoin')->sendmany("",
@@ -686,29 +724,11 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         }
         else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
     }
-   elseif ($crypto == 'DOGE') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
+    elseif ($crypto == 'LTC') {
+        $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfee = $comm_fee;
         $bal = getbalance($crypto, $sendlabel);
-        $estfee = number_format(bitcoind()->client('dogecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
-        $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
-        if ($bal >= $txcost){
-            $txid = bitcoind()->client('dogecoin')->sendmany("",
-                array(
-                    $recvaddress => $cryptoamount,
-                    $pxfeeaddr => $pxfee
-                )
-            )->get();
-            getbalance($crypto, $sendlabel);
-            return $txid;
-        }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
-    }
-   elseif ($crypto == 'LTC') {
-        $pxfeeaddr = "2Mz21u7pztWWjpFdp4wt1pEbeBqoTXMrF59";
-        $pxfee = "0.000024";
-        $bal = getbalance($crypto, $sendlabel);
-        $estfee = number_format(bitcoind()->client('litecoin')->estimatesmartfee(6)->get()['feerate'], 8, '.', '');
+        $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
         if ($bal >= $txcost){
             $txid = bitcoind()->client('litecoin')->sendmany("",
