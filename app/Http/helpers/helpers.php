@@ -311,14 +311,17 @@ function listransaction($crypto, $label) {
     elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
     else {return "invalid crypto";}
     //GET all transaction
-    //$transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-    $transaction = listransactionall($crypto);
+    $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+    //$transactionsend = listransactionall($crypto);
     if($transaction){
-        foreach ($transaction as $tx) {
-            if($tx['label'] == $label){$usrtx[] = $tx;}
-            if($tx['account'] == $label){$usrtx[] = $tx;}
-        }
-        return $usrtx;
+        // foreach ($transaction as $tx) {
+        //     if($tx['label'] == $label){$usrtx[] = $tx;}
+        //     if($tx['account'] == $label){$usrtx[] = $tx;}
+        // }
+        // dd($usrtx);
+        // // return $usrtx;
+        // dd($transaction);
+        return $transaction;
     }
     else{return null;}
 }
@@ -662,7 +665,10 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
         // dd(
+        //     $pxfeeaddr,
         //     $pxfee,
+        //     $recvaddress,
+        //     $cryptoamount,
         //     $bal,
         //     $estfee,
         //     $txcost,
