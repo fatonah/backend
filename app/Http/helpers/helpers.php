@@ -413,8 +413,63 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
     } 
+    // elseif ($crypto == 'BCH') {
+    //     $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
+    //     $pxfee = $comm_fee;
+    //     $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+    //     $estfee = getestimatefee($crypto);
+    //     $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
+    //     $j = 0;
+    //     $balacc[] = bitcoind()->client('bitabc')->listunspent()->get();
+    //     $prevtxn[] = null;
+    //     $totalin = 0;
+    //     foreach ($balacc as $acc) {
+    //         $ac[$j] = $acc;
+    //         foreach ($ac as $a) {
+    //             $i = 0;
+    //             foreach ($a as $x) {
+    //                 if(in_array('label', $x) == $label){
+    //                     $txid[$i] = $x['txid'];
+    //                     $vout[$i] = $x['vout'];
+    //                     $amt[$i] = number_format($x['amount'], 8, '.', '');
+    //                     $totalin += $amt[$i];
+    //                     $prevtxn[$i] = array(
+    //                         "txid"=>$txid[$i],
+    //                         "vout"=>$vout[$i],
+    //                     );
+    //                     $i++;
+    //                     if($totalin > $total){break;} 
+    //                 }
+    //             }
+    //         }
+    //         $j++;
+    //         $txin = array_filter($prevtxn);
+    //     }
+    //     $change = number_format($totalin-$total, 8, '.', '');
+    //     $changeaddr = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
+    //     if($balance >= $total){  
+    //         $createraw = bitcoind()->client('bitabc')->createrawtransaction(
+    //             $txin,
+    //             array(
+    //                 $recvaddress=>number_format($cryptoamount, 8, '.', ''),
+    //                 $changeaddr=>$change,
+    //                 $pxfeeaddr => $pxfee
+    //             )
+    //         )->get();
+    //         $signing = bitcoind()->client('bitabc')->signrawtransactionwithwallet($createraw)->get();
+    //         $decode = bitcoind()->client('bitabc')->decoderawtransaction($signing['hex'])->get();
+    //         //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
+    //         if($signing['complete'] == true){
+    //             $txid = bitcoind()->client('bitabc')->sendrawtransaction($signing['hex'])->get();
+    //             getbalance($crypto, $label);
+    //             return $txid;
+    //         }
+    //         else{return "Signing Failed. ".$decode;}
+    //     }
+    //     else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+    // }
     elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get(),12);
+        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);

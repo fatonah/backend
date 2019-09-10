@@ -704,7 +704,8 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
+				//$crypto_txid = sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);
+				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
 				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$priceApi->price;
 					 
@@ -752,7 +753,7 @@ class ApiController extends Controller{
 						 
 					$msg = array(
 						"mesej"=>"jaya",
-						"display_msj"=>'Successfully widthdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
+						"display_msj"=>'Successfully withdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
 					);
 					$datamsg = response()->json([
 						'data' => $msg
