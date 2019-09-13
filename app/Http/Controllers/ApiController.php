@@ -1178,7 +1178,7 @@ class ApiController extends Controller{
 		 
 		$amountset = 0.01;
 		$minwithdraw = number_format($amountset/$price, 8, '.', '');
-		  
+	
 		if($amount<=$minwithdraw){
 			$m = 'Minimum withdraw must more than '.$minwithdraw;
 		 $msg = array("mesej"=>$m);
@@ -1218,7 +1218,7 @@ class ApiController extends Controller{
 		  
 			$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
-	 
+		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
 		$getuserlabel = get_label_crypto($crypto, $recipient); 
@@ -1246,7 +1246,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
+				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);   
 				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$price;
 					 

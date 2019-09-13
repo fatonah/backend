@@ -359,7 +359,7 @@ function gettransaction_crypto($crypto, $txid) {
 ////////////////////////////////////////////////////////////////////
 function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC'){
-        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbyaccount('usr_doradofees')->get())[0];
+        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
