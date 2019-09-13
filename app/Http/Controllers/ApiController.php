@@ -677,9 +677,9 @@ class ApiController extends Controller{
 								
 						$jumCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
 					
-						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = $jumCrypto; } 	
+						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
 						
-						$myrCrypto = round($totalCrypto * $price,'2');  
+						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label);  
 
 						$feesCrypto = number_format(getestimatefee($row['crypto']) + settings('commission_withdraw')/$price, 8, '.', ''); 
@@ -743,7 +743,7 @@ class ApiController extends Controller{
 					
 						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = $jumCrypto; } 	
 						
-						$myrCrypto = round($totalCrypto * $price,'2');  
+						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($priceapi->crypto, $user->label);   
 						$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
 			 
@@ -801,10 +801,10 @@ class ApiController extends Controller{
 				if($jumBCH<=0){ $totalBCH = 0; }else{ $totalBCH = $jumBCH; }
 				if($jumDOGE<=0){ $totalDOGE = 0; }else{ $totalDOGE = $jumDOGE; }		
 				 
-				$myrBTC = round($totalBTC * $priceBTC->price,'2');
-				$myrBCH = round($totalBCH * $priceBCH->price,'2');
-				$myrDOGE = round($totalDOGE * $priceDOGE->price,'2'); 
-				$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE,'2');
+				$myrBTC = number_format($totalBTC * $priceBTC->price, 2, '.', '');
+				$myrBCH = number_format($totalBCH * $priceBCH->price, 2, '.', '');
+				$myrDOGE = number_format($totalDOGE * $priceDOGE->price, 2, '.', ''); 
+				$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE, 2, '.', '');
  
 				$addressBTC = getaddress('BTC', $user->label); 
 				$addressBCH = getaddress('BCH', $user->label);
@@ -1121,7 +1121,7 @@ class ApiController extends Controller{
 
 			$priceWithdraw = $maxWithdraw*$price;
 			$datamsg = response()->json([
-				"totalMyr"=>number_format($priceWithdraw,'2'),
+				"totalMyr"=>number_format($priceWithdraw, 2, '.', ''),
 				"totalCrypto"=>$maxWithdraw
 			]);
 		}
@@ -1242,8 +1242,8 @@ class ApiController extends Controller{
 					$withdraw->txid = $crypto_txid;
 					$withdraw->crypto = $crypto;
 					$withdraw->remarks = $remarks;
-					$withdraw->rate = round($price,2);
-					$withdraw->myr_amount = round($myr_amount,2);
+					$withdraw->rate = number_format($price, 2, '.', '');
+					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
 					$withdraw->save();
 					  
@@ -1266,8 +1266,8 @@ class ApiController extends Controller{
 					$withdraw->txid = $crypto_txid;
 					$withdraw->crypto = $crypto;
 					$withdraw->remarks = $remarks;
-					$withdraw->rate = round($price,2);
-					$withdraw->myr_amount = round($myr_amount,2);
+					$withdraw->rate = number_format($price, 2, '.', '');
+					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
 					$withdraw->save();
 						 
@@ -1294,7 +1294,7 @@ class ApiController extends Controller{
 					$withdraw->status = 'success';
 					$withdraw->amount= $amount; 
 					$withdraw->before_bal = $userbalance;
-					$withdraw->after_bal = round(getbalance($crypto, $label),8);
+					$withdraw->after_bal = number_format(getbalance($crypto, $label), 8, '.', '');
 					$withdraw->recipient_id = $userR->id;
 					$withdraw->recipient = $recipient;
 					$withdraw->netfee = 0; 
@@ -1349,10 +1349,10 @@ class ApiController extends Controller{
 		$priceCrypto = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 		  
 		if($request->type=='crypto'){ 
-			$jum = round($request->nilai*$priceCrypto,2);  
+			$jum = number_format($request->nilai*$priceCrypto, 2, '.', '');  
 		}
 		else{
-			$jum = round($request->nilai/$priceCrypto,8);
+			$jum = number_format($request->nilai/$priceCrypto, 8, '.', '');
 		}
 		
 		$msg = array("mesej"=>"jaya","display_msj"=>$jum);
