@@ -36,24 +36,24 @@ class ApiController extends Controller{
 		$address = '3K97qigXj6TA1mEiAw47TSs5hdg6caHqcn';
 		$txid = 'b1c5dfef6ba6252e0497a904005417098e3fae6857019cfdf705d452f247569b';
 
-		// //BCH//
-		$crypto = 'BCH';
-		$label = 'usr_bsod666';
-		$address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
-		$txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
+		// // //BCH//
+		// $crypto = 'BCH';
+		// $label = 'usr_bsod666';
+		// $address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
+		// $txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
 
-		//DOGE//
-		$crypto = 'DOGE';
-		$label = 'usr_bsod666';
-		$address = 'DKzRr2pUGLVQRe2Csr7Y1znDhGtB1eBZLw';
-		$txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
+		// //DOGE//
+		// $crypto = 'DOGE';
+		// $label = 'usr_bsod666';
+		// $address = 'DKzRr2pUGLVQRe2Csr7Y1znDhGtB1eBZLw';
+		// $txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
 
 		//walletinfo
 
 		//$data = getconnection($crypto);
 		//$data = getestimatefee($crypto);  
-		//$data = getbalance($crypto, $label);
-		$data = getaddress($crypto, $label); 
+		$data = getbalance($crypto, $label);
+		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
 		//$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
@@ -1137,7 +1137,7 @@ class ApiController extends Controller{
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
 	 
-		//dd(getbalance('BCH', 'usr_bsod666'));
+		//dd(getbalance('BTC', 'usr_doradofees'));
 		$crypto = $request->crypto;
 		$amount = $request->amountcrypto;
 		$label = $request->sendfrom; 
@@ -1225,7 +1225,12 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
+<<<<<<< HEAD
 				$crypto_txid = 1;//sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
+=======
+				//$crypto_txid = sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);
+				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
+>>>>>>> fada8e9893d1e32d508a512729e2be749c0a49a5
 				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$price;
 					 
@@ -1273,7 +1278,7 @@ class ApiController extends Controller{
 						 
 					$msg = array(
 						"mesej"=>"jaya",
-						"display_msj"=>'Successfully widthdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
+						"display_msj"=>'Successfully withdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
 					);
 					$datamsg = response()->json([
 						'data' => $msg
