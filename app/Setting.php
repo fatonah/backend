@@ -21,5 +21,6 @@ class Setting extends Model
 		'fee_doge',
 		'template_email',
 		'url_img_ocean',
+		'url_gecko',
 		];
 	}

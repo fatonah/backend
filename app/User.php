@@ -29,9 +29,12 @@ class User extends Authenticatable
 		'secretpin',
 		'email_verify',
 		'phone_verify',
-		'country',
+		'currency',
 		'status',
 		'google_auth_code',
+		'power_pin',
+		'power_auth',
+		'power_fp',
     ];
 
     /**

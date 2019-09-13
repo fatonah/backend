@@ -8,6 +8,6 @@ class Currency extends Model
 {
     protected $table = 'currency';
 	protected $fillable = [
-	'country', 'currency', 'code', 'symbol', 'ccode'
+	'country', 'currency', 'code', 'symbol', 'code'
 	];
 }

@@ -19,61 +19,7 @@ class MainController extends Controller
 		$user = User::findorFail($users->id);
 		$user->email_verify = '1';
 		$user->save();
-		
-		$walletBTC = WalletAddress::where('label',$users->label)->where('crypto','BTC')->first();
-		if(!$walletBTC){
-		$crypto = 'BTC'; 
-		$addressBTC = addCrypto($crypto, $users->label);
-	 
-		$wallAddress = new WalletAddress;
-		$wallAddress->uid = $users->id;
-		$wallAddress->label = $users->label;
-		$wallAddress->address = $addressBTC; 
-		$wallAddress->balance = '0.00000000';
-		$wallAddress->crypto = $crypto;
-		$wallAddress->save();
-		
-		getbalance($crypto, $users->label);
-		getaddress($crypto, $users->label);
-		}
-		
-		
-		$walletBCH = WalletAddress::where('label',$users->label)->where('crypto','BCH')->first();
-		if(!$walletBCH){
-		$crypto = 'BCH';
-		$addressBCH = addCrypto($crypto, $users->label);
-	 
-		$wallAddress = new WalletAddress;
-		$wallAddress->uid = $users->id;
-		$wallAddress->label = $users->label;
-		$wallAddress->address = $addressBCH; 
-		$wallAddress->balance = '0.00000000';
-		$wallAddress->crypto = $crypto;
-		$wallAddress->save();
-		
-		getbalance($crypto, $users->label);
-		getaddress($crypto, $users->label);
-		}
-		
-		
-		$walletDOGE = WalletAddress::where('label',$users->label)->where('crypto','DOGE')->first();
-		if(!$walletDOGE){
-		$crypto = 'DOGE';
-		$addressDOGE = addCrypto($crypto, $users->label);
-	 
-		$wallAddress = new WalletAddress;
-		$wallAddress->uid = $users->id;
-		$wallAddress->label = $users->label;
-		$wallAddress->address = $addressDOGE;
-		$wallAddress->balance = '0.00000000';
-		$wallAddress->crypto = $crypto;
-		$wallAddress->save();
-		
-		getbalance($crypto, $users->label);
-		getaddress($crypto, $users->label);
-		}
-		
-		
+		 		
 		$mesej = "Congratulations!! Successfully Active your account...";
 		
 		return view('verifyEmail',compact('mesej'));

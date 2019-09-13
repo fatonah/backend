@@ -19,11 +19,21 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::get('state','ApiController@state');
 	Route::post('users','ApiController@userInfo'); 
 	Route::get('trans/{crypto}/{label}/{tokenAPI}','ApiController@transaction');
+	Route::get('dashView/{crypto}/{uid}/{tokenAPI}','ApiController@dash_view');
 	Route::get('dashboard/{uid}/{tokenAPI}','ApiController@dashboard');
 	Route::get('maxCrypto/{crypto}/{uid}','ApiController@maxCrypto');
 	Route::post('sendCrypto','ApiController@sendCrypto');
 	Route::post('convert','ApiController@convert');
 	Route::post('send_secretpin','ApiController@send_secretpin');
+	Route::post('edit_powerpin','ApiController@send_powerpin');
+	Route::post('edit_powerauth','ApiController@send_powerauth');
+	Route::post('edit_powerfp','ApiController@send_powerfp');
+	Route::post('edit_secretpin','ApiController@edit_secretpin');
+	Route::get('remarkTrans/{txid}/{crypto}/{uid}/{token}','ApiController@remark_trans');
+	Route::get('currency/{uid}/{token}','ApiController@getcurrency');
+	Route::post('edit_currency','ApiController@update_currency');
+	Route::get('crypto/{uid}/{token}','ApiController@getcrypto');
+	Route::post('add_crypto','ApiController@create_asset');
 });
   
 

@@ -66,8 +66,13 @@ class LoginController extends Controller
 				return redirect()->back()->with('error','Wrong Password.');
 			} 
 			else{
-				Auth::login($users);
+                Auth::login($users);
+                    if($users->power_auth=='1'){
                     return redirect('authy');
+                    }else{
+                    return redirect('home');
+                    }
+                    
 			} 
 		}else{
 			return redirect()->back()->with('error','Wrong Email or Username.'); 

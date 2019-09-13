@@ -12,8 +12,11 @@ class PriceCrypto extends Model
 		'crypto',
 		'price',
 		'logo',
+		'appear',
 		'percentage',
 		'url_api',
+		'url_img',
 		'ip_getinfo',
+		'id_gecko',
 	];
 }
