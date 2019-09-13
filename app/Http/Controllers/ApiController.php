@@ -761,7 +761,7 @@ class ApiController extends Controller{
 								
 						$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
 					
-						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = $jumCrypto; } 	
+						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
 						
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($priceapi->crypto, $user->label);   
@@ -967,6 +967,7 @@ class ApiController extends Controller{
 	public function getcrypto($uid,$tokenAPI){  
 		 
 		$user = User::where('id',$uid)->first();
+		$results = null;
         
         if($user){
 			$tokenORI = apiToken($user->id);		  
