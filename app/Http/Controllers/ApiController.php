@@ -1225,12 +1225,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-<<<<<<< HEAD
-				$crypto_txid = 1;//sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
-=======
-				//$crypto_txid = sendtomanyaddress($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);
 				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);  
->>>>>>> fada8e9893d1e32d508a512729e2be749c0a49a5
 				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$price;
 					 
