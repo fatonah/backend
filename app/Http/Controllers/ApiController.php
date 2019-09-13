@@ -119,6 +119,16 @@ class ApiController extends Controller{
 	}
 	
 	
+	#################Login2 #########################
+	public function login2(Request $request){
+		$msg = array("mesej"=>"This service currently unavailable.");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			return $datamsg->content();
+	}
+
+	
 	#################Login #########################
 	public function login(Request $request){
 		$userData = '';
@@ -609,6 +619,16 @@ class ApiController extends Controller{
 			]);
 			return $datamsg->content();
 		}
+	} 
+
+	
+	#################User Info2 #########################
+	public function userInfo2(Request $request){
+		$msg = array("mesej"=>"This service currently unavailable.");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			return $datamsg->content();
 	}
 
 
