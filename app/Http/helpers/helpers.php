@@ -364,30 +364,56 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
-        foreach ($addressarr as $address) {
-            $j = 0;
-            $balacc[] = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
-            $prevtxn[] = null;
-            $totalin = 0;
-            foreach ($balacc as $acc) {
+        // $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+        // foreach ($addressarr as $address) {
+        //     $j = 0;
+        //     $balacc[] = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
+        //     $prevtxn[] = null;
+        //     $totalin = 0;
+        //     foreach ($balacc as $acc) {
+        //         $i = 0;
+        //         $ac[$j] = $acc;
+        //         foreach ($acc as $a) {
+        //             $txid[$i] = $a['txid'];
+        //             $vout[$i] = $a['vout'];
+        //             $amt[$i] = $a['amount']; 
+        //             $scriptPubKey[$i] = $a['scriptPubKey'];
+        //             $totalin += $amt[$i];
+        //             $prevtxn[$i] = array(
+        //                 "txid"=>$txid[$i],
+        //                 "vout"=>$vout[$i],
+        //             );
+        //             $i++; 
+        //             if($totalin > $total){break;} 
+        //         }
+        //         $j++;
+        //     }
+        //     $txin = array_filter($prevtxn);
+        // }
+        $j = 0;
+        $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
+        $prevtxn[] = null;
+        $totalin = 0;
+        foreach ($balacc as $acc) {
+            $ac[$j] = $acc;
+            foreach ($ac as $a) {
                 $i = 0;
-                $ac[$j] = $acc;
-                foreach ($acc as $a) {
-                    $txid[$i] = $a['txid'];
-                    $vout[$i] = $a['vout'];
-                    $amt[$i] = $a['amount']; 
-                    $scriptPubKey[$i] = $a['scriptPubKey'];
-                    $totalin += $amt[$i];
-                    $prevtxn[$i] = array(
-                        "txid"=>$txid[$i],
-                        "vout"=>$vout[$i],
-                    );
-                    $i++; 
-                    if($totalin > $total){break;} 
+                foreach ($a as $x) {
+                    if(in_array('label', $x) == $label){
+                        $txid[$i] = $x['txid'];
+                        $vout[$i] = $x['vout'];
+                        $amt[$i] = number_format($x['amount'], 8, '.', '');
+                        $totalin += $amt[$i];
+                        $prevtxn[$i] = array(
+                            "txid"=>$txid[$i],
+                            "vout"=>$vout[$i],
+                        );
+                        $i++;
+                        if($totalin > $total){break;} 
+                    }
                 }
-                $j++;
             }
+            $j++;
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
