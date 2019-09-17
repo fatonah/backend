@@ -15,6 +15,7 @@ class Withdrawal extends Model
 		'after_bal',
 		'myr_amount',
 		'rate',
+		'currency',
 		'recipient_id',
 		'recipient',
 		'netfee', 

@@ -1262,6 +1262,7 @@ class ApiController extends Controller{
 					$withdraw->txid = $crypto_txid;
 					$withdraw->crypto = $crypto;
 					$withdraw->remarks = $remarks;
+					$withdraw->currency = $useruid->currency;
 					$withdraw->rate = number_format($price, 2, '.', '');
 					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
@@ -1286,6 +1287,7 @@ class ApiController extends Controller{
 					$withdraw->txid = $crypto_txid;
 					$withdraw->crypto = $crypto;
 					$withdraw->remarks = $remarks;
+					$withdraw->currency = $useruid->currency;
 					$withdraw->rate = number_format($price, 2, '.', '');
 					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
