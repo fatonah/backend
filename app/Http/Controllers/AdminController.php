@@ -140,7 +140,7 @@ class AdminController extends Controller
 		$balance = getbalance($crypto, $label)/100000000;
 
 		$balance = sprintf('%f', $balance);
-		if($crypto=='BTC'){$fees_pay = settings('fee_btc');}elseif($crypto=='BCH'){$fees_pay = settings('fee_bch');}elseif($crypto=='DOGE'){$fees_pay = settings('fee_doge');}else{$fees_pay = 0;}
+		$fees_pay = getestimatefee($crypto);
 		$amount = sprintf('%f', ($request->amount+$fees_pay));
 		
 		$ga = new GoogleAuthenticator();
