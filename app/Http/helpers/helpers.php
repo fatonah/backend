@@ -36,14 +36,39 @@ function send_email_basic($to, $from_name, $from_email, $subject, $message){
 ///  CONN CRYPTO                     ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function getconnection($crypto){
-    if ($crypto == 'BTC'){$crycode = 'bitcoin';}
-    elseif($crypto == 'BCH'){$crycode = 'bitabc';}
-    elseif($crypto == 'DASH'){$crycode = 'dashcoin';}
-    elseif($crypto == 'DOGE'){$crycode = 'dogecoin';}
-    elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
+    if ($crypto == 'BTC'){
+        $crycode = 'bitcoin';
+        $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
+        return $conn;
+    }
+    elseif($crypto == 'BCH'){
+        $crycode = 'bitabc';
+        $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
+        return $conn;
+    }
+    elseif($crypto == 'DASH'){
+        $crycode = 'dashcoin';
+        $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
+        return $conn;
+    }
+    elseif($crypto == 'DOGE'){
+        $crycode = 'dogecoin';
+        $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
+        return $conn;
+    }
+    elseif($crypto == 'LTC'){
+        $crycode = 'litecoin';
+        $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
+        return $conn;
+    }
+    elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        $lnrest = new LNDAvtClient();
+        $conn = $lnrest->getInfo();
+        return $conn;
+    }
     else {return "invalid crypto";}
-    $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
-    return $conn;
+   
 }
 
 ///////////////////////////////////////////////////////////////
@@ -72,8 +97,13 @@ function getestimatefee($crypto) {
         return $fee;
     }
     elseif($crypto == 'LTC'){
-        $crycode = 'bitcoin';
+        $crycode = 'litecoin';
         $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
+        return $fee;
+    }
+     elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        $fee = $lnrest->getFee();
         return $fee;
     }
     else {return "invalid crypto";}
@@ -145,12 +175,8 @@ function getbalance($crypto, $label) {
             }
             $j++;
         }
-       if($amt != null) {
-            $balance = $balance;
-        }
-        else {
-            $balance = 0;
-        }
+        if($amt != null) {$balance = $balance;}
+        else {$balance = 0;}
         $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
@@ -161,13 +187,37 @@ function getbalance($crypto, $label) {
         return $wallet_balance;
     }
     elseif($crypto == 'DOGE'){
-        $wallet_balance = bitcoind()->client('dogecoin')->getbalance($label)->get()*100000000;
+        $j = 0;
+        $balacc[] = bitcoind()->client('dogecoin')->listunspent()->get();
+        $balance = 0;
+        foreach ($balacc as $acc) {
+            $ac[$j] = $acc;
+            foreach ($ac as $a) {
+                $i = 0;
+                foreach ($a as $x) {
+                    $labelret[$i] = $x['account'];
+                    if( $labelret[$i] == $label){
+                        $amt[$i] = number_format($x['amount'], 8, '.', '');
+                        $balance += $amt[$i];
+                        $i++; 
+                    }
+                }
+            }
+            $j++;
+        }
+        if($amt != null) {$balance = $balance;}
+        else {$balance = 0;}
+        $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
     elseif($crypto == 'LTC'){
         $wallet_balance = bitcoind()->client('litecoin')->getbalance($label)->get();
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
+        return $wallet_balance;
+    }
+    elseif($crypto == 'LND'){
+        $wallet_balance = WalletAddress::where('label', $label)->where('crypto', $crypto)->first()->balance;
         return $wallet_balance;
     }
     else {
@@ -186,24 +236,30 @@ function getaddress($crypto, $label) {
         $wallet_address = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];   
         return $wallet_address;
     }
-   elseif($crypto == 'BCH') {
+    elseif($crypto == 'BCH') {
         getbalance($crypto, $label);
         $wallet_address = substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0],12);
         return $wallet_address;
     }
-   elseif($crypto == 'DASH') {
+    elseif($crypto == 'DASH') {
         getbalance($crypto, $label);
         $wallet_address = bitcoind()->client('dashcoin')->getaddressesbyaccount($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'DOGE') {
+    elseif($crypto == 'DOGE') {
         getbalance($crypto, $label);
         $wallet_address = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[0];
         return $wallet_address;
     }
-   elseif($crypto == 'LTC') {
+    elseif($crypto == 'LTC') {
         getbalance($crypto, $label);
         $wallet_address = bitcoind()->client('litecoin')->getaddressesbyaccount($label)->get();
+        return $wallet_address;
+    }
+    elseif($crypto == 'LND') {
+        $lnrest = new LNDAvtClient();
+        getbalance($crypto, $label);
+        $wallet_address = $lnrest->newAddress();
         return $wallet_address;
     }
     else {return "invalid crypto";}
@@ -284,6 +340,14 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
+    elseif($crypto == 'LND') {
+        $addrinfo = WalletAddress::where('crypto',$crypto)->where('address',$address)->first();
+        if($addrinfo != null){
+            $label = $addrinfo->label;
+            return $label;
+        }
+        else{return null;}
+    }
     else {return "invalid crypto";}
 }
 
@@ -292,38 +356,109 @@ function get_label_crypto($crypto, $address) {
 ///  TRANSACTIONS                 ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function listransactionall($crypto) {
-    if ($crypto == 'BTC'){$crycode = 'bitcoin';}
-    elseif($crypto == 'BCH'){$crycode = 'bitabc';}
-    elseif($crypto == 'DASH'){$crycode = 'dashcoin';}
-    elseif($crypto == 'DOGE'){$crycode = 'dogecoin';}
-    elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
+    if ($crypto == 'BTC'){
+        $crycode = 'bitcoin';
+        //GET all transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'BCH'){
+        $crycode = 'bitabc';
+        //GET all transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'DASH'){
+        $crycode = 'dashcoin';
+        //GET all transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'DOGE'){
+        $crycode = 'dogecoin';
+        //GET all transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'LTC'){
+        $crycode = 'litecoin';
+        //GET all transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+     elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        $lnrest = new LNDAvtClient();
+        $transaction = $lnrest->getPayments();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
     else {return "invalid crypto";}
-    //GET all transaction
-    $transaction = bitcoind()->client($crycode)->listtransactions()->get();
-    if($transaction){return $transaction;}
-    else{return null;}
 }
 function listransaction($crypto, $label) {
-    if ($crypto == 'BTC'){$crycode = 'bitcoin';}
-    elseif($crypto == 'BCH'){$crycode = 'bitabc';}
-    elseif($crypto == 'DASH'){$crycode = 'dashcoin';}
-    elseif($crypto == 'DOGE'){$crycode = 'dogecoin';}
-    elseif($crypto == 'LTC'){$crycode = 'bitcoin';}
-    else {return "invalid crypto";}
-    //GET all transaction
-    $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-    //$transactionsend = listransactionall($crypto);
-    if($transaction){
-        // foreach ($transaction as $tx) {
-        //     if($tx['label'] == $label){$usrtx[] = $tx;}
-        //     if($tx['account'] == $label){$usrtx[] = $tx;}
-        // }
-        // dd($usrtx);
-        // // return $usrtx;
-        // dd($transaction);
-        return $transaction;
+    if ($crypto == 'BTC'){
+        $crycode = 'bitcoin';
+        //GET label transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
     }
-    else{return null;}
+    elseif($crypto == 'BCH'){
+        $crycode = 'bitabc';
+        //GET label transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'DASH'){
+        $crycode = 'dashcoin';
+        //GET label transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'DOGE'){
+        $crycode = 'dogecoin';
+        //GET label transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'LTC'){
+        $crycode = 'litecoin';
+        //GET label transaction
+        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        //GET label transaction
+        $lnrest = new LNDAvtClient();
+        $transaction = $lnrest->getPayments();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
+    else {return "invalid crypto";}
+    // //GET all transaction
+    // $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+    // //$transactionsend = listransactionall($crypto);
+    // if($transaction){
+    //     // foreach ($transaction as $tx) {
+    //     //     if($tx['label'] == $label){$usrtx[] = $tx;}
+    //     //     if($tx['account'] == $label){$usrtx[] = $tx;}
+    //     // }
+    //     // dd($usrtx);
+    //     // // return $usrtx;
+    //     // dd($transaction);
+    //     return $transaction;
+    // }
+    // else{return null;}
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -348,6 +483,11 @@ function gettransaction_crypto($crypto, $txid) {
     }
     elseif($crypto == 'DOGE'){
         $transaction = bitcoind()->client('dogecoin')->gettransaction($txid)->get();
+        return $transaction;
+    }
+    elseif($crypto == 'LND'){
+        $lnrest = new LNDAvtClient();
+        $transaction = $lnrest->decodeInvoice($txid);
         return $transaction;
     }
     else {return "invalid crypto";}
@@ -555,34 +695,34 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
-        $addressarr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get());
-        foreach ($addressarr as $address) {
-            $j = 0;
-            $balacc[] = bitcoind()->client('dogecoin')->listunspent(1, 9999999, [$address])->get();
-            $prevtxn[] = null;
-            $totalin = 0;
-            foreach ($balacc as $acc) {
+        $j = 0;
+        $balacc[] = bitcoind()->client('dogecoin')->listunspent()->get();
+        $prevtxn[] = null;
+        $totalin = 0;
+        foreach ($balacc as $acc) {
+            $ac[$j] = $acc;
+            foreach ($ac as $a) {
                 $i = 0;
-                $ac[$j] = $acc;
-                foreach ($acc as $a) {
-                    $txid[$i] = $a['txid'];
-                    $vout[$i] = $a['vout'];
-                    $amt[$i] = $a['amount']; 
-                    $scriptPubKey[$i] = $a['scriptPubKey'];
-                    $totalin += $amt[$i];
-                    $prevtxn[$i] = array(
-                        "txid"=>$txid[$i],
-                        "vout"=>$vout[$i],
-                    );
-                    $i++; 
-                    if($totalin > $total){break;} 
+                foreach ($a as $x) {
+                    if(in_array('label', $x) == $label){
+                        $txid[$i] = $x['txid'];
+                        $vout[$i] = $x['vout'];
+                        $amt[$i] = number_format($x['amount'], 8, '.', '');
+                        $totalin += $amt[$i];
+                        $prevtxn[$i] = array(
+                            "txid"=>$txid[$i],
+                            "vout"=>$vout[$i],
+                        );
+                        $i++;
+                        if($totalin > $total){break;} 
+                    }
                 }
-                $j++;
             }
+            $j++;
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('dogecoin')->getaddressesbylabel($label)->get())[0];
+        $changeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[0];
         if($balance >= $total){  
             $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
                 $txin,
@@ -592,7 +732,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                     $pxfeeaddr => $pxfee
                 )
             )->get();
-            $signing = bitcoind()->client('dogecoin')->signrawtransactionwithwallet($createraw)->get();
+            $signing = bitcoind()->client('dogecoin')->signrawtransaction($createraw)->get();
             $decode = bitcoind()->client('dogecoin')->decoderawtransaction($signing['hex'])->get();
             //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
             if($signing['complete'] == true){
@@ -887,7 +1027,7 @@ function dumpkey($crypto, $label){
         return $data;
     }
     elseif($crypto == 'LTC'){
-        $crycode = 'bitcoin';
+        $crycode = 'litecoin';
         $addressarr = bitcoind()->client($crycode)->getaddressesbyaccount($label)->get();
         foreach ($addressarr as $addr){
             $priv = bitcoind()->client($crycode)->dumpprivkey($addr)->get();
@@ -1206,6 +1346,11 @@ function getbalanceAll($crypto) {
         $wallet_balance = bitcoind()->client('dogecoin')->getbalance()->get();
         return $wallet_balance;
     }
+    elseif ($crypto == 'LND') {
+        $lnrest = new LNDAvtClient();
+        $wallet_balance = $lnrest->getWalletBalance();
+        return $wallet_balance;
+    }
     else {
         $wallet_balance = null;
         return $wallet_balance;
@@ -1213,6 +1358,94 @@ function getbalanceAll($crypto) {
     
 }
 
+/////////////////////////////////////////////////////////////////////
+///  SEND LIGHTNING PAYMENT         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function paymentlightning003($label, $inv){
+    $lnrest = new LNDAvtClient();
+    $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    $balance = $userdet->balance;
+    $paymentdet = $lnrest->decodeInvoice($inv);
+    if($balance >= $paymentdet['num_satoshis']){
+        $res = $lnrest->sendPayment($inv);
+        if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
+        if(array_key_exists("error", $res)){return $res['error'];}
+        return $res['payment_hash'];
+    }
+    else{return "Error: insuffucient balance";}
+}
+
+/////////////////////////////////////////////////////////////////////
+///  RECEIVE LIGHTNING PAYMENT         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function receivelightning001($label, $amount, $memo, $expiryRaw){
+    if(!$memo){$memo='lightninginv_'.Carbon::now();}
+    if(!$expiryRaw){$expiryRaw=1;}
+    if(!$falladdr){
+        $userdet = WalletAddress::where('label', $label)->where('crypto', 'BTC')->first();
+        $falladdr= $userdet->address;
+    }
+    $expiry = strval($expiryRaw*3600);
+    $lnrest = new LNDAvtClient();
+    $invdet = $lnrest->addInvoice($amount, $memo, $expiry, $falladdr);
+    $inv = $invdet['payment_request'];
+    return $inv; 
+}
+
+/////////////////////////////////////////////////////////////////////
+///  OPEN LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function openchanlightning001($peers, $localsat, $pushsat){
+    $lnrest = new LNDAvtClient();
+    $peerspub = explode("@",$peers)[0];
+    $balance = $lnrest->getWalletBalance();
+    $connpeers = $lnrest->connectPeers($peers);
+    $allpeers = $lnrest->getPeers();
+    foreach ($allpeers as $peer) {
+        foreach ($peer as $p) {
+            if($p['pub_key'] == $peerspub){
+                $allchan = $lnrest->getAllChannels();
+                foreach ($allchan as $chan) {
+                    $i = 0;
+                    foreach ($chan as $c) {
+                        $remotepub[$i] = $c['remote_pubkey'];
+                        $i++;
+                    }
+                }
+            }
+        }
+    }
+    if(!in_array($peerspub, $remotepub, true)){
+        $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
+        if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
+        else{return $chantxid;} 
+    }
+    else{return "Error: channel already established with this node";}
+}
+
+/////////////////////////////////////////////////////////////////////
+///  CLOSE LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function closechanlightning001($chanpoint){
+        $lnrest = new LNDAvtClient();
+        $allchan = $lnrest->getAllChannels();
+        foreach ($allchan as $chan) {
+            $i = 0;
+            foreach ($chan as $c) {
+                $remotechanpoint[$i] = $c['channel_point'];
+                $i++;
+            }
+        }
+        if(in_array($chanpoint, $remotechanpoint, true)){
+            $cchantxid = $lnrest->closeChannel($chanpoint, 1);
+            if(!empty($cchantxid)) {
+                if(array_key_exists("error", $cchantxid)){return "Error: ".$cchantxid['error'];}
+                else{return $cchantxid;}
+            }
+            else{return "Error: no data";} 
+        }
+        else{return "Error: channel not existed on this node";}
+    }
 
 /////////////////////////////////////////////////////////////////////
 ///  API FUNCTION          ///////////////////////////////////////

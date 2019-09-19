@@ -1213,17 +1213,15 @@ class ApiController extends Controller{
 			 }
 		 }			 
 		 
-		$wuserF = getaddress($crypto,$label);
-		  
-			$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
-			$net_fee = getestimatefee($crypto);
+		$wuserF = getaddress($crypto,$label); 
+		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
+		$net_fee = getestimatefee($crypto);
 		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
 		$getuserlabel = get_label_crypto($crypto, $recipient); 
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
-		
 		/*
 		$checkwalladdr=  $recipient[0];
 		 
