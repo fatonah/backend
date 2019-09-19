@@ -495,10 +495,24 @@ function gettransaction_crypto($crypto, $txid) {
 
 
 /////////////////////////////////////////////////////////////////////
+///  CHECK ADDRESS           ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function checkAddress($crypto, $address) {
+    if ($crypto == 'BTC'){$valid = bitcoind()->client('bitcoin')->validateaddress($address)->get()['isvalid'];}
+    elseif($crypto == 'BCH'){$valid = bitcoind()->client('bitabc')->validateaddress($address)->get()['isvalid'];}
+    elseif($crypto == 'DASH'){$valid = bitcoind()->client('dashcoin')->validateaddress($address)->get()['isvalid'];}
+    elseif($crypto == 'DOGE'){$valid = bitcoind()->client('dogecoin')->validateaddress($address)->get()['isvalid'];}
+    elseif($crypto == 'LTC'){$valid = bitcoind()->client('litecoin')->validateaddress($address)->get()['isvalid'];}
+    else{$valid = false;}  
+    return $valid;
+}
+
+
+/////////////////////////////////////////////////////////////////////
 ///  PAYMENT / WITHDRAW / SEND                       ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee) {
-    if ($crypto == 'BTC'){
+    if ($crypto == 'BTC'){ 
         $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
@@ -558,7 +572,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
         $change = number_format($totalin-$total, 8, '.', '');
         $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
-        if($balance >= $total){  
+        if($balance >= $total){   
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
                 $txin,
                 array(
@@ -566,10 +580,10 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                     $changeaddr=>$change,
                     $pxfeeaddr => $pxfee
                 )
-            )->get();
+            )->get();  
             $signing = bitcoind()->client('bitcoin')->signrawtransactionwithwallet($createraw)->get();
             $decode = bitcoind()->client('bitcoin')->decoderawtransaction($signing['hex'])->get();
-            //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode);
+           //  dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
                 getbalance($crypto, $label);
@@ -578,6 +592,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             else{return "Signing Failed. ".$decode;}
         }
         else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+   
     } 
     // elseif ($crypto == 'BCH') {
     //     $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
