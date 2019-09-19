@@ -677,7 +677,6 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dashboard($userid,$tokenAPI){
-		 
 		$jumMYR = 0; $bilCrypto = 0;
 		$user = User::where('id',$userid)->first(); 
 		if($user){
@@ -1157,14 +1156,12 @@ class ApiController extends Controller{
 	//	
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
-		//dd(getbalance('BTC', 'usr_doradofees'));
 		$crypto = $request->crypto;
 		$amount = $request->amountcrypto;
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
 		$remarks = $request->remarks;
 		$secretpin = $request->secretpin;
-		//$admin_label = 'usr_admin';
 	 
 		$useruid = User::where('label',$label)->first();   
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
@@ -1174,41 +1171,40 @@ class ApiController extends Controller{
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
-		 
+
 		$amountset = 0.01;
 		$minwithdraw = number_format($amountset/$price, 8, '.', '');
 	
 		if($amount<=$minwithdraw){
 			$m = 'Minimum withdraw must more than '.$minwithdraw;
-		 $msg = array("mesej"=>$m);
+		 	$msg = array("mesej"=>$m);
 			$datamsg = response()->json([
 				'data' => $msg
 			]);
-			
-		 return $datamsg->content();
-			
-		}else if(!isset($useruid)){
+		 	return $datamsg->content();	
+		}
+		else if(!isset($useruid)){
 		 	$msg = array("mesej"=>"Id Sender does not exist!");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);
 		 	return $datamsg->content();
-		 }
-		 else if(isset($useruid) && $useruid->secretpin!=$secretpin){
+		}
+		else if(isset($useruid) && $useruid->secretpin!=$secretpin){
 		 	$msg = array("mesej"=>"Wrong Secret Pin!");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);
 		 	return $datamsg->content();	 
-		 }
-		 else if(checkAddress($crypto, $recipient)!=true){
+		}
+		else if(checkAddress($crypto, $recipient)!=true){
 			$msg = array("mesej"=>'Invalid Address');
-				$datamsg = response()->json([
-					'data' => $msg
-				]);
-			 	return $datamsg->content();
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			 return $datamsg->content();
 		 }
-		 else{
+		else{
 			$wuserF = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
 			if(!isset($wuserF)){
 				$m = $crypto.' for user does not exist!';
@@ -1217,19 +1213,13 @@ class ApiController extends Controller{
 					'data' => $msg
 				]);
 			 	return $datamsg->content();
-			 }
-<<<<<<< HEAD
+			}
+
 		 }			 
 		 
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 		$net_fee = getestimatefee($crypto);
-=======
-		 }			   
-		  
-			$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
-			$net_fee = getestimatefee($crypto);
->>>>>>> 491a5a48a44fb272a65e825caacf3aebcee270b3
 		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
