@@ -1201,6 +1201,13 @@ class ApiController extends Controller{
 			]);
 		 	return $datamsg->content();	 
 		 }
+		 else if(checkAddress($crypto, $recipient)!=true){
+			$msg = array("mesej"=>'Invalid Address');
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+			 	return $datamsg->content();
+		 }
 		 else{
 			$wuserF = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
 			if(!isset($wuserF)){
@@ -1211,16 +1218,14 @@ class ApiController extends Controller{
 				]);
 			 	return $datamsg->content();
 			 }
-		 }			 
-		 
-		$wuserF = getaddress($crypto,$label);
+		 }			   
 		  
 			$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 			$net_fee = getestimatefee($crypto);
 		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-		$getuserlabel = get_label_crypto($crypto, $recipient); 
+		//$getuserlabel = get_label_crypto($crypto, $recipient); 
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
 		
