@@ -1430,6 +1430,7 @@ class ApiController extends Controller{
 						'before_bal' => $tran->before_bal,
 						'after_bal' => $tran->after_bal,
 						'myr_amount' => $tran->myr_amount,
+						'remarks' => $tran->remarks,
 						'rate' => $tran->rate,
 						'currency' => $currency,
 						'recipient' => $tran->recipient,
