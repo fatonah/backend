@@ -33,10 +33,10 @@ class ApiController extends Controller{
 	#################Debug #########################
 	public function debug(){
 		//BTC//
-		$crypto = 'BTC';
+		$crypto = 'LND';
 		$label = 'usr_bsod666';
-		$address = '3K97qigXj6TA1mEiAw47TSs5hdg6caHqcn';
-		$txid = 'b1c5dfef6ba6252e0497a904005417098e3fae6857019cfdf705d452f247569b';
+		$address = 'bc1q2gu8gq43j3zemzz6setdte4jk2tntt55hpfdpz';
+		$txid = '6faef5d1c7a423b858a025605c176a8cc22f12a3d3ddbd02f3ef818320ebcbf4';
 
 		// // //BCH//
 		// $crypto = 'BCH';
@@ -51,18 +51,18 @@ class ApiController extends Controller{
 		// $txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
 
 		//walletinfo
-
+		//$data = getconnection($crypto);
 		//$data = getconnection($crypto);
 		//$data = getestimatefee($crypto);  
 		//$data = getbalance($crypto, $label);
 		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
-		$data = get_label_crypto($crypto, $address);
+		//$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
 		//$data = listransaction($crypto, $label);
 		//$data = gettransaction_crypto($crypto, $txid);
 		//$data = dumpkey($crypto, $label);
-		//$data = getbalanceAll($crypto);
+		$data = getbalanceAll($crypto);
 		dd($data);    
 		$datamsg = response()->json( 
 			 $data
