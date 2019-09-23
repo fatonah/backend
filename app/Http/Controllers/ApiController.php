@@ -32,6 +32,7 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
+		dd(receivelightning001('usr_bsod666', 120, 'lala', 1));
 		//BTC//
 		$crypto = 'LND';
 		$label = 'usr_bsod666';
