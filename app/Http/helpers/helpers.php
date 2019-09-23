@@ -61,12 +61,12 @@ function getconnection($crypto){
         $conn = bitcoind()->client($crycode)->getBlockchainInfo()->get();
         return $conn;
     }
-    elseif($crypto == 'LND'){
-        $crycode = 'lightning';
-        $lnrest = new LNDAvtClient();
-        $conn = $lnrest->getInfo();
-        return $conn;
-    }
+    // elseif($crypto == 'LND'){
+    //     $crycode = 'lightning';
+    //     $lnrest = new LNDAvtClient();
+    //     $conn = $lnrest->getInfo();
+    //     return $conn;
+    // }
     else {return "invalid crypto";}
    
 }
@@ -216,10 +216,10 @@ function getbalance($crypto, $label) {
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
-    elseif($crypto == 'LND'){
-        $wallet_balance = WalletAddress::where('label', $label)->where('crypto', $crypto)->first()->balance;
-        return $wallet_balance;
-    }
+    // elseif($crypto == 'LND'){
+    //     $wallet_balance = WalletAddress::where('label', $label)->where('crypto', $crypto)->first()->balance;
+    //     return $wallet_balance;
+    // }
     else {
         $wallet_balance = null;
         return $wallet_balance;
@@ -278,22 +278,22 @@ function addCrypto($crypto, $label) {
         $wallet_address = bitcoind()->client('bitcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'BCH') {
+    elseif($crypto == 'BCH') {
         bitcoind()->client('bitabc')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('bitabc')->getnewaddress($label)->get();
         return substr($wallet_address,12);
     }
-   elseif($crypto == 'DASH') {
+    elseif($crypto == 'DASH') {
         bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'DOGE') {
+    elseif($crypto == 'DOGE') {
         bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'LTC') {
+    elseif($crypto == 'LTC') {
         bitcoind()->client('litecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('litecoin')->getnewaddress($label)->get();
         return $wallet_address;
@@ -314,7 +314,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'BCH') {
+    elseif($crypto == 'BCH') {
         $addrinfo = bitcoind()->client('bitabc')->getaddressinfo($address)->get();
         if($addrinfo['account'] != null){
             $label = $addrinfo['account'];
@@ -322,7 +322,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'DASH') {
+    elseif($crypto == 'DASH') {
         $addrinfo = bitcoind()->client('dashcoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -330,7 +330,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'DOGE') {
+    elseif($crypto == 'DOGE') {
         $addrinfo = bitcoind()->client('dogecoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -338,7 +338,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'LTC') {
+    elseif($crypto == 'LTC') {
         $addrinfo = bitcoind()->client('litecoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -397,7 +397,7 @@ function listransactionall($crypto) {
         if($transaction){return $transaction;}
         else{return null;}
     }
-     elseif($crypto == 'LND'){
+    elseif($crypto == 'LND'){
         $crycode = 'lightning';
         $lnrest = new LNDAvtClient();
         $transaction = $lnrest->getPayments();
@@ -446,9 +446,8 @@ function listransaction($crypto, $label) {
     }
     elseif($crypto == 'LND'){
         $crycode = 'lightning';
-        //GET label transaction
-        $lnrest = new LNDAvtClient();
-        $transaction = $lnrest->getPayments();
+        $user = User::where('label',$label)->first();
+        $transaction = TransLND::where('uid', $user->id)->get();
         if($transaction){return $transaction;}
         else{return null;}
     }
