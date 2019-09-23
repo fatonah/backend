@@ -256,12 +256,12 @@ function getaddress($crypto, $label) {
         $wallet_address = bitcoind()->client('litecoin')->getaddressesbyaccount($label)->get();
         return $wallet_address;
     }
-    // elseif($crypto == 'LND') {
-    //     $lnrest = new LNDAvtClient();
-    //     getbalance($crypto, $label);
-    //     $wallet_address = $lnrest->newAddress();
-    //     return $wallet_address;
-    // }
+    elseif($crypto == 'LND') {
+        $lnrest = new LNDAvtClient();
+        getbalance($crypto, $label);
+        $wallet_address = $lnrest->newAddress();
+        return $wallet_address;
+    }
     else {return "invalid crypto";}
 }
  
@@ -276,22 +276,22 @@ function addCrypto($crypto, $label) {
         $wallet_address = bitcoind()->client('bitcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'BCH') {
+    elseif($crypto == 'BCH') {
         bitcoind()->client('bitabc')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('bitabc')->getnewaddress($label)->get();
         return substr($wallet_address,12);
     }
-   elseif($crypto == 'DASH') {
+    elseif($crypto == 'DASH') {
         bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dashcoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'DOGE') {
+    elseif($crypto == 'DOGE') {
         bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('dogecoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
-   elseif($crypto == 'LTC') {
+    elseif($crypto == 'LTC') {
         bitcoind()->client('litecoin')->getnewaddress($label)->get();
         $wallet_address = bitcoind()->client('litecoin')->getnewaddress($label)->get();
         return $wallet_address;
@@ -308,7 +308,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'BCH') {
+    elseif($crypto == 'BCH') {
         $addrinfo = bitcoind()->client('bitabc')->getaddressinfo($address)->get();
         if($addrinfo['account'] != null){
             $label = $addrinfo['account'];
@@ -316,7 +316,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'DASH') {
+    elseif($crypto == 'DASH') {
         $addrinfo = bitcoind()->client('dashcoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -324,7 +324,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'DOGE') {
+    elseif($crypto == 'DOGE') {
         $addrinfo = bitcoind()->client('dogecoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -332,7 +332,7 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-   elseif($crypto == 'LTC') {
+    elseif($crypto == 'LTC') {
         $addrinfo = bitcoind()->client('litecoin')->getaccount($address)->get();
         if($addrinfo != null){
             $label = $addrinfo;
@@ -340,14 +340,14 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-    // elseif($crypto == 'LND') {
-    //     $addrinfo = WalletAddress::where('crypto',$crypto)->where('address',$address)->first();
-    //     if($addrinfo != null){
-    //         $label = $addrinfo->label;
-    //         return $label;
-    //     }
-    //     else{return null;}
-    // }
+    elseif($crypto == 'LND') {
+        $addrinfo = WalletAddress::where('crypto',$crypto)->where('address',$address)->first();
+        if($addrinfo != null){
+            $label = $addrinfo->label;
+            return $label;
+        }
+        else{return null;}
+    }
     else {return "invalid crypto";}
 }
 
@@ -391,13 +391,13 @@ function listransactionall($crypto) {
         if($transaction){return $transaction;}
         else{return null;}
     }
-    // elseif($crypto == 'LND'){
-    //     $crycode = 'lightning';
-    //     $lnrest = new LNDAvtClient();
-    //     $transaction = $lnrest->getPayments();
-    //     if($transaction){return $transaction;}
-    //     else{return null;}
-    // }
+    elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        $lnrest = new LNDAvtClient();
+        $transaction = $lnrest->getPayments();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
     else {return "invalid crypto";}
 }
 function listransaction($crypto, $label) {
@@ -436,14 +436,13 @@ function listransaction($crypto, $label) {
         if($transaction){return $transaction;}
         else{return null;}
     }
-    // elseif($crypto == 'LND'){
-    //     $crycode = 'lightning';
-    //     //GET label transaction
-    //     $lnrest = new LNDAvtClient();
-    //     $transaction = $lnrest->getPayments();
-    //     if($transaction){return $transaction;}
-    //     else{return null;}
-    // }
+    elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        $user = User::where('label',$label)->first();
+        $transaction = TransLND::where('uid', $user->id)->get();
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
     else {return "invalid crypto";}
     // //GET all transaction
     // $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
@@ -485,11 +484,11 @@ function gettransaction_crypto($crypto, $txid) {
         $transaction = bitcoind()->client('dogecoin')->gettransaction($txid)->get();
         return $transaction;
     }
-    // elseif($crypto == 'LND'){
-    //     $lnrest = new LNDAvtClient();
-    //     $transaction = $lnrest->decodeInvoice($txid);
-    //     return $transaction;
-    // }
+    elseif($crypto == 'LND'){
+        $lnrest = new LNDAvtClient();
+        $transaction = $lnrest->decodeInvoice($txid);
+        return $transaction;
+    }
     else {return "invalid crypto";}
 }
 
@@ -1373,94 +1372,94 @@ function getbalanceAll($crypto) {
     
 }
 
-// /////////////////////////////////////////////////////////////////////
-// ///  SEND LIGHTNING PAYMENT         ///////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////
-// function paymentlightning003($label, $inv){
-//     $lnrest = new LNDAvtClient();
-//     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
-//     $balance = $userdet->balance;
-//     $paymentdet = $lnrest->decodeInvoice($inv);
-//     if($balance >= $paymentdet['num_satoshis']){
-//         $res = $lnrest->sendPayment($inv);
-//         if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
-//         if(array_key_exists("error", $res)){return $res['error'];}
-//         return $res['payment_hash'];
-//     }
-//     else{return "Error: insuffucient balance";}
-// }
+/////////////////////////////////////////////////////////////////////
+///  SEND LIGHTNING PAYMENT         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function paymentlightning003($label, $inv){
+    $lnrest = new LNDAvtClient();
+    $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    $balance = $userdet->balance;
+    $paymentdet = $lnrest->decodeInvoice($inv);
+    if($balance >= $paymentdet['num_satoshis']){
+        $res = $lnrest->sendPayment($inv);
+        if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
+        if(array_key_exists("error", $res)){return $res['error'];}
+        return $res['payment_hash'];
+    }
+    else{return "Error: insuffucient balance";}
+}
 
-// /////////////////////////////////////////////////////////////////////
-// ///  RECEIVE LIGHTNING PAYMENT         ///////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////
-// function receivelightning001($label, $amount, $memo, $expiryRaw){
-//     if(!$memo){$memo='lightninginv_'.Carbon::now();}
-//     if(!$expiryRaw){$expiryRaw=1;}
-//     if(!$falladdr){
-//         $userdet = WalletAddress::where('label', $label)->where('crypto', 'BTC')->first();
-//         $falladdr= $userdet->address;
-//     }
-//     $expiry = strval($expiryRaw*3600);
-//     $lnrest = new LNDAvtClient();
-//     $invdet = $lnrest->addInvoice($amount, $memo, $expiry, $falladdr);
-//     $inv = $invdet['payment_request'];
-//     return $inv; 
-// }
+/////////////////////////////////////////////////////////////////////
+///  RECEIVE LIGHTNING PAYMENT         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function receivelightning001($label, $amount, $memo, $expiryRaw){
+    if(!$memo){$memo='lightninginv_'.Carbon::now();}
+    if(!$expiryRaw){$expiryRaw=1;}
+    if(!$falladdr){
+        $userdet = WalletAddress::where('label', $label)->where('crypto', 'BTC')->first();
+        $falladdr= $userdet->address;
+    }
+    $expiry = strval($expiryRaw*3600);
+    $lnrest = new LNDAvtClient();
+    $invdet = $lnrest->addInvoice($amount, $memo, $expiry, $falladdr);
+    $inv = $invdet['payment_request'];
+    return $inv; 
+}
 
-// /////////////////////////////////////////////////////////////////////
-// ///  OPEN LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////
-// function openchanlightning001($peers, $localsat, $pushsat){
-//     $lnrest = new LNDAvtClient();
-//     $peerspub = explode("@",$peers)[0];
-//     $balance = $lnrest->getWalletBalance();
-//     $connpeers = $lnrest->connectPeers($peers);
-//     $allpeers = $lnrest->getPeers();
-//     foreach ($allpeers as $peer) {
-//         foreach ($peer as $p) {
-//             if($p['pub_key'] == $peerspub){
-//                 $allchan = $lnrest->getAllChannels();
-//                 foreach ($allchan as $chan) {
-//                     $i = 0;
-//                     foreach ($chan as $c) {
-//                         $remotepub[$i] = $c['remote_pubkey'];
-//                         $i++;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//     if(!in_array($peerspub, $remotepub, true)){
-//         $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
-//         if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
-//         else{return $chantxid;} 
-//     }
-//     else{return "Error: channel already established with this node";}
-// }
+/////////////////////////////////////////////////////////////////////
+///  OPEN LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function openchanlightning001($peers, $localsat, $pushsat){
+    $lnrest = new LNDAvtClient();
+    $peerspub = explode("@",$peers)[0];
+    $balance = $lnrest->getWalletBalance();
+    $connpeers = $lnrest->connectPeers($peers);
+    $allpeers = $lnrest->getPeers();
+    foreach ($allpeers as $peer) {
+        foreach ($peer as $p) {
+            if($p['pub_key'] == $peerspub){
+                $allchan = $lnrest->getAllChannels();
+                foreach ($allchan as $chan) {
+                    $i = 0;
+                    foreach ($chan as $c) {
+                        $remotepub[$i] = $c['remote_pubkey'];
+                        $i++;
+                    }
+                }
+            }
+        }
+    }
+    if(!in_array($peerspub, $remotepub, true)){
+        $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
+        if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
+        else{return $chantxid;} 
+    }
+    else{return "Error: channel already established with this node";}
+}
 
-// /////////////////////////////////////////////////////////////////////
-// ///  CLOSE LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////
-// function closechanlightning001($chanpoint){
-//         $lnrest = new LNDAvtClient();
-//         $allchan = $lnrest->getAllChannels();
-//         foreach ($allchan as $chan) {
-//             $i = 0;
-//             foreach ($chan as $c) {
-//                 $remotechanpoint[$i] = $c['channel_point'];
-//                 $i++;
-//             }
-//         }
-//         if(in_array($chanpoint, $remotechanpoint, true)){
-//             $cchantxid = $lnrest->closeChannel($chanpoint, 1);
-//             if(!empty($cchantxid)) {
-//                 if(array_key_exists("error", $cchantxid)){return "Error: ".$cchantxid['error'];}
-//                 else{return $cchantxid;}
-//             }
-//             else{return "Error: no data";} 
-//         }
-//         else{return "Error: channel not existed on this node";}
-//     }
+/////////////////////////////////////////////////////////////////////
+///  CLOSE LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function closechanlightning001($chanpoint){
+        $lnrest = new LNDAvtClient();
+        $allchan = $lnrest->getAllChannels();
+        foreach ($allchan as $chan) {
+            $i = 0;
+            foreach ($chan as $c) {
+                $remotechanpoint[$i] = $c['channel_point'];
+                $i++;
+            }
+        }
+        if(in_array($chanpoint, $remotechanpoint, true)){
+            $cchantxid = $lnrest->closeChannel($chanpoint, 1);
+            if(!empty($cchantxid)) {
+                if(array_key_exists("error", $cchantxid)){return "Error: ".$cchantxid['error'];}
+                else{return $cchantxid;}
+            }
+            else{return "Error: no data";} 
+        }
+        else{return "Error: channel not existed on this node";}
+    }
 
 /////////////////////////////////////////////////////////////////////
 ///  API FUNCTION          ///////////////////////////////////////
