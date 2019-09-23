@@ -1324,10 +1324,11 @@ function paymentlightning003($label, $inv){
 function receivelightning001($label, $amount, $memo, $expiryRaw){
     if(!$memo){$memo='lightninginv_'.Carbon::now();}
     if(!$expiryRaw){$expiryRaw=1;}
-    if(!$falladdr){
-        $userdet = WalletAddress::where('label', $label)->where('crypto', 'BTC')->first();
-        $falladdr= $userdet->address;
-    }
+    //if(!$falladdr){
+       // $userdet = WalletAddress::where('label', $label)->where('crypto', 'BTC')->first();
+      //  $falladdr= $userdet->address;
+      $falladdr= 'ddfdfd';
+   // }
     $expiry = strval($expiryRaw*3600);
     $lnrest = new LNDAvtClient();
     $invdet = $lnrest->addInvoice($amount, $memo, $expiry, $falladdr);
