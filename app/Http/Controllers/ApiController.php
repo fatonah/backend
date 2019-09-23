@@ -52,10 +52,10 @@ class ApiController extends Controller{
 
 		//$data = getconnection($crypto);
 		//$data = getestimatefee($crypto);  
-		$data = getbalance($crypto, $label);
+		//$data = getbalance($crypto, $label);
 		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
-		//$data = get_label_crypto($crypto, $address);
+		$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
 		//$data = listransaction($crypto, $label);
 		//$data = gettransaction_crypto($crypto, $txid);
