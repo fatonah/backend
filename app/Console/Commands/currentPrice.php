@@ -159,6 +159,20 @@ class currentPrice extends Command
         $doge_24H = round($data_doge[0]->price_change_percentage_24h, 1) . ' %';
         $myr_doge_price = round($data_doge[0]->current_price, 6);
 
+        
+// LIGHTNING    
+$LND = PriceCrypto::where('crypto', 'LND')->first();
+$json_url_lnd = $LND->url_api;
+//get JSON data
+$json_lnd = file_get_contents($json_url_lnd);
+
+$data_lnd = json_decode($json_lnd);
+$lnd_name = $data_lnd[0]->name; 
+$lnd_image = $data_lnd[0]->image;
+$lnd_24H = round($data_lnd[0]->price_change_percentage_24h, 1) . ' %';
+$myr_lnd_price = round($data_lnd[0]->current_price, 2);
+
+
 
   $updt_BTC = PriceCrypto::where('crypto', 'BTC')
                     ->update([ 
@@ -210,11 +224,18 @@ class currentPrice extends Command
                          'percentage' => $xlm_24H
                         ]);
           
-          $updt_DOGE = PriceCrypto::where('crypto', 'DOGE')
-                    ->update([ 
-                        'price' => $myr_doge_price,
-                         'logo2' => $doge_image,
-                         'percentage' => $doge_24H
+        $updt_DOGE = PriceCrypto::where('crypto', 'DOGE')
+                ->update([ 
+                'price' => $myr_doge_price,
+                'logo2' => $doge_image,
+                'percentage' => $doge_24H
+                ]);
+          
+        $updt_LND = PriceCrypto::where('crypto', 'LND')
+                        ->update([ 
+                        'price' => $myr_lnd_price,
+                        'logo2' => $lnd_image,
+                        'percentage' => $lnd_24H
                         ]);
                     
                     

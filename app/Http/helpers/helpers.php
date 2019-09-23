@@ -102,8 +102,8 @@ function getestimatefee($crypto) {
         return $fee;
     }
      elseif($crypto == 'LND'){
-        $crycode = 'lightning';
-        $fee = $lnrest->getFee();
+        $crycode = 'bitcoin';
+        $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
         return $fee;
     }
     else {return "invalid crypto";}
@@ -257,9 +257,11 @@ function getaddress($crypto, $label) {
         return $wallet_address;
     }
     elseif($crypto == 'LND') {
-        $lnrest = new LNDAvtClient();
+        //$lnrest = new LNDAvtClient();
+        //$wallet_address = $lnrest->newAddress();
         getbalance($crypto, $label);
-        $wallet_address = $lnrest->newAddress();
+        $lnrest = WalletAddress::where('crypto',$crypto)->where('label',$label)->first();
+        $wallet_address = $lnrest->address;
         return $wallet_address;
     }
     else {return "invalid crypto";}
@@ -296,6 +298,10 @@ function addCrypto($crypto, $label) {
         $wallet_address = bitcoind()->client('litecoin')->getnewaddress($label)->get();
         return $wallet_address;
     }
+    elseif($crypto == 'LND') { 
+         $wallet_address = 1;
+         return $wallet_address;
+     }
     else {return "invalid crypto";}
 }
 
@@ -400,6 +406,8 @@ function listransactionall($crypto) {
     }
     else {return "invalid crypto";}
 }
+
+
 function listransaction($crypto, $label) {
     if ($crypto == 'BTC'){
         $crycode = 'bitcoin';
