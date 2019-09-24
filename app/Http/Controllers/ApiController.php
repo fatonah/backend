@@ -38,7 +38,7 @@ class ApiController extends Controller{
 		//dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
 		//BTC//
 		$crypto = 'LND';
-		$label = 'usr_bsod666';
+		$label = 'usr_niha_pinkexc';
 		$address = 'bc1q2gu8gq43j3zemzz6setdte4jk2tntt55hpfdpz';
 		$txid = '6faef5d1c7a423b858a025605c176a8cc22f12a3d3ddbd02f3ef818320ebcbf4';
 
@@ -61,7 +61,7 @@ class ApiController extends Controller{
 		//$data = getbalance($crypto, $label);
 		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
-		$data = listchannel();
+		$data = listchannel($crypto, $label);
 		//$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
 		//$data = listransaction($crypto, $label);
