@@ -1434,15 +1434,21 @@ function openchanlightning001($peers, $localsat, $pushsat){
                     }
                 }
             }
+            else{
+                $msg = array('error'=>"Peer not found");
+                return $msg;
+            }
         }
     }
-    if(!in_array($peerspub, $remotepub, true)){
-        $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
-        //if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
-        //else{return $chantxid;} 
-        return $chantxid;
-    }
-    else{return "error: channel already established with this node";}
+ 
+        if(!in_array($peerspub, $remotepub, true)){
+            $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
+            //if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
+            //else{return $chantxid;} 
+            return $chantxid;
+        }
+        else{return "error: channel already established with this node";}
+ 
 }
 
 /////////////////////////////////////////////////////////////////////

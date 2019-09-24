@@ -1653,6 +1653,7 @@ class ApiController extends Controller{
 	//	
 	#################Send Crypto LND TO Bitcoin #########################
 	public function sendLNDBTC(Request $request){ 
+	 
 		$crypto = $request->crypto;
 		$cryptoSend = 'BTC';
 		$label = $request->sendfrom; 
@@ -1663,7 +1664,7 @@ class ApiController extends Controller{
 		$catPay = $request->catPay;
 		$sat = 100000000;
 	 
-		$useruid = User::where('label',$label)->first();  
+		$useruid = User::where('label',$label)->first();   
 
 		if(!isset($useruid)){
 			$msg = array("mesej"=>"Id Sender does not exist!");
@@ -1724,7 +1725,7 @@ class ApiController extends Controller{
 			else{
 				if($catPay==1){ $catPayment = true; }else{ $catPayment = false; }
 
-				$crypto_txid = 1;//paymentlightning003($useruid->label, $recipient);
+				$crypto_txid = refundlightning001($label, $catPayment, $amount, $recipient);
 				$myr_amount = ($amount/$sat)*$price;
 	 
 				if($crypto_txid=='' || array_key_exists("error", $crypto_txid) || array_key_exists("payment_error", $crypto_txid)){ //failed withdraw
@@ -1821,6 +1822,33 @@ class ApiController extends Controller{
 		$uid = $request->uid;
 		$crypto = $request->crypto;
 		$token = $request->tokenAPI;
+
+		$user = User::where('label',$usr_crypto)->first();
+        
+        if($user){
+		$tokenORI = apiToken($user->id);		  
+		if($tokenAPI==$tokenORI){
+			$trans = listchannel($crypto, $user->label);
+
+			$datamsg = response()->json([ 
+				'mesej' => 'jaya',
+				'info' => $trans,
+			]);
+		}
+		else{
+			$datamsg = response()->json([ 
+			'mesej' => 'No Access',
+			]);	
+		}
+            
+        }else{
+            $datamsg = response()->json([ 
+				'mesej' => 'User does not exist',
+				]);
+        }
+        
+		return $datamsg->content(); 
+
 	}
 	
 	//	
@@ -1861,17 +1889,16 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
-		if($remoteF>$localF){
+		if($pushsat>$localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	
 			return $datamsg->content();
 		}else{
-			$crypto_txid = 1;
-			//openchanlightning001($peers, $localsat, $pushsat);
-
-			if($txid=='' || array_key_exists("error", $crypto_txid)){
+			$crypto_txid = openchanlightning001($peers, $localsat, $pushsat);
+ 
+			if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 				$error = $crypto_txid['error'];
 
 				$msg = array("mesej"=>"jaya","mesej"=>$error);
@@ -1953,10 +1980,9 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
  
-		$crypto_txid = 1;
-		//closechanlightning001($idHash);
-
-		if($txid=='' || array_key_exists("error", $crypto_txid)){
+		$crypto_txid = closechanlightning001($idHash);
+dd($crypto_txid);
+		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 			$error = $crypto_txid['error'];
 
 			$msg = array("mesej"=>"jaya","mesej"=>$error);
