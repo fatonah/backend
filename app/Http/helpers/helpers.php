@@ -1404,7 +1404,7 @@ function listchannel($crypto, $label){
     $pendchan = $lnrest->getPendingChannels();
     $closedchan = $lnrest->getChanClosed();
     $trans = listransaction($crypto, $label);
-    dd($trans);
+    //dd($trans);
     $chan = array(
         'all_channels' => $allchan, 
         'pending_channels' => $pendchan, 
