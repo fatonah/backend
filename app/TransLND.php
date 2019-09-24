@@ -10,6 +10,6 @@ class TransLND extends Model
 	protected $fillable = [
 		'id','uid','type','invoice_id','before_bal','after_bal','status','error_code','txid','amount',
 		'myr_amount','rate','currency','recipient','netfee','walletfee',
-		'category','using','remarks',
+		'category','using','remarks','crypto',
 	];
 }
