@@ -73,7 +73,10 @@ function getconnection($crypto){
         $conn = $lnrest->getInfo();
         return $conn;
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
    
 }
 
@@ -107,34 +110,37 @@ function getestimatefee($crypto) {
         $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
         return $fee;
     }
-     elseif($crypto == 'LND'){
-        $crycode = 'lightning';
-        $lnrest = new LNDAvtClient();
-        $allchan = $lnrest->getAllChannels();
-        foreach ($allchan as $chan ) {
-            foreach ($chan as $c ) {
-                $feeall = $lnrest->getFee();
-                foreach ($feeall as $feearr ) {
-                    $i=0;
-                    foreach ($feearr as $arr) {
-                        $chanpoint = $arr['chan_point'];
-                        $base_fee_msat = number_format($arr['base_fee_msat'], 8, '.', '');
-                        $fee_rate = number_format($arr['fee_rate']*100000000, 8, '.', '');
-                        $ch[$i] = array(
-                            'remote_pubkey'=>$c['remote_pubkey'],
-                            'channel_point'=>$c['channel_point'],
-                            'base_fee_msat'=> $base_fee_msat,
-                            'fee_rate'=> $fee_rate
-                        );
-                        $i++;
-                    }
-                }
-            }
-        }
-        $fee = $ch;
-        return $fee;
+    // elseif($crypto == 'LND'){
+    //     $crycode = 'lightning';
+    //     $lnrest = new LNDAvtClient();
+    //     $allchan = $lnrest->getAllChannels();
+    //     foreach ($allchan as $chan ) {
+    //         foreach ($chan as $c ) {
+    //             $feeall = $lnrest->getFee();
+    //             foreach ($feeall as $feearr ) {
+    //                 $i=0;
+    //                 foreach ($feearr as $arr) {
+    //                     $chanpoint = $arr['chan_point'];
+    //                     $base_fee_msat = number_format($arr['base_fee_msat'], 8, '.', '');
+    //                     $fee_rate = number_format($arr['fee_rate']*100000000, 8, '.', '');
+    //                     $ch[$i] = array(
+    //                         'remote_pubkey'=>$c['remote_pubkey'],
+    //                         'channel_point'=>$c['channel_point'],
+    //                         'base_fee_msat'=> $base_fee_msat,
+    //                         'fee_rate'=> $fee_rate
+    //                     );
+    //                     $i++;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     $fee = $ch;
+    //     return $fee;
+    // }
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
     }
-    else {return "invalid crypto";}
 }
  
 
@@ -280,7 +286,10 @@ function getaddress($crypto, $label) {
         $wallet_address = $lnrest->address;
         return $wallet_address;
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
  
 
@@ -320,7 +329,10 @@ function addCrypto($crypto, $label) {
         $wallet_address = $walletdet['address'];
         return $wallet_address;
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 function get_label_crypto($crypto, $address) {
@@ -372,7 +384,10 @@ function get_label_crypto($crypto, $address) {
         }
         else{return null;}
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 
@@ -422,7 +437,10 @@ function listransactionall($crypto) {
         if($transaction){return $transaction;}
         else{return null;}
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 
@@ -470,7 +488,10 @@ function listransaction($crypto, $label) {
         if($transaction){return $transaction;}
         else{return null;}
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
     // //GET all transaction
     // $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
     // //$transactionsend = listransactionall($crypto);
@@ -518,7 +539,10 @@ function gettransaction_crypto($crypto, $txid) {
         $transaction = $lnrest->decodeInvoice($payreq);
         return $transaction;
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 
@@ -591,9 +615,15 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                 getbalance($crypto, $label);
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+           else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
    
     } 
     elseif ($crypto == 'BCH') {
@@ -647,9 +677,15 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                 getbalance($crypto, $label);
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'DOGE') {
         $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -702,9 +738,15 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                 getbalance($crypto, $label);
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'DASH') {
         $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -757,9 +799,15 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                 getbalance($crypto, $label);
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'LTC') {
         $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -812,9 +860,15 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
                 getbalance($crypto, $label);
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     else {
         $result = null;
@@ -839,7 +893,10 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
             getbalance($crypto, $sendlabel);
             return $txid;
         }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
    elseif ($crypto == 'BCH') {
         $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
@@ -847,16 +904,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         $bal = getbalance($crypto, $sendlabel);
         $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
-        // dd(
-        //     $pxfeeaddr,
-        //     $pxfee,
-        //     $recvaddress,
-        //     $cryptoamount,
-        //     $bal,
-        //     $estfee,
-        //     $txcost,
-        //     $bal >= $txcost  
-        // );
+  
         if ($bal >= $txcost){
             $txid = bitcoind()->client('bitabc')->sendmany("",
                 array(
@@ -867,7 +915,10 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
             getbalance($crypto, $sendlabel);
             return $txid;
         }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
    elseif ($crypto == 'DOGE') {
         $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -875,14 +926,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         $bal = getbalance($crypto, $sendlabel);
         $estfee = getestimatefee($crypto);
         $txcost =  number_format(($cryptoamount+$estfee+$pxfee)*100000000, 0, '.', '');
-        // dd(
-        //     $pxfeeaddr,
-        //     $pxfee,
-        //     $bal,
-        //     $estfee,
-        //     $txcost,
-        //     $bal >= $txcost  
-        // );
+
         if ($bal >= $txcost){
             $txid = bitcoind()->client('dogecoin')->sendmany("",
                 array(
@@ -893,7 +937,10 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
             getbalance($crypto, $sendlabel);
             return $txid;
         }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'DASH') {
         $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -911,7 +958,10 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
             getbalance($crypto, $sendlabel);
             return $txid;
         }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'LTC') {
         $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
@@ -929,9 +979,15 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
             getbalance($crypto, $sendlabel);
             return $txid;
         }
-        else{return "Insufficient balance. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".($txcost/'10000000')." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 
@@ -1000,7 +1056,10 @@ function dumpkey($crypto, $label){
         }
         return $data;
     }
-    else {return "invalid crypto";}
+    else {
+        $msg = array("error"=>"Invalid Crypto");
+        return $msg;
+    }
 }
 
 
@@ -1069,9 +1128,15 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     } 
     elseif ($crypto == 'BCH') {
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
@@ -1120,9 +1185,15 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
                 $txid = bitcoind()->client('bitabc')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'DASH') {
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
@@ -1171,9 +1242,15 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
                 $txid = bitcoind()->client('dashcoin')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'DOGE') {
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
@@ -1222,9 +1299,15 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
                 $txid = bitcoind()->client('dogecoin')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+           else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     elseif ($crypto == 'LTC') {
         $balance = number_format(getbalance($crypto, $sendlabel)/100000000, 8, '.', '');
@@ -1273,9 +1356,15 @@ function withdrawal_admin_crypto($crypto, $sendlabel, $recvaddress, $cryptoamoun
                 $txid = bitcoind()->client('litecoin')->sendrawtransaction($signing['hex'])->get();
                 return $txid;
             }
-            else{return "Signing Failed. ".$decode;}
+            else{
+                $msg = array('error'=>"Signing Failed. ".$decode);
+                return $msg;
+            }
         }
-        else{return "Error: insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction";}
+        else{
+            $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+            return $msg;
+        }
     }
     else {
         $add_crypto = null;
