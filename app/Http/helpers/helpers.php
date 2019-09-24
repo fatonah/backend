@@ -462,6 +462,14 @@ function listransaction($crypto, $label) {
         if($transaction){return $transaction;}
         else{return null;}
     }
+    elseif($crypto == 'LND'){
+        $crycode = 'lightning';
+        //GET label transaction
+        $user = WalletAddress::where('label', $label)->first();
+        $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get(); 
+        if($transaction){return $transaction;}
+        else{return null;}
+    }
     else {return "invalid crypto";}
     // //GET all transaction
     // $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
@@ -1342,7 +1350,7 @@ function refundlightning001($label, $sendall, $amount, $recepient){
     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
     $balance = number_format($userdet->balance, 8, '.', '');
     if($balance >= $amount){
-        $sendchain = $lnrest->sendOnChain($sendall, $amount, $satperbyte, $recepient);
+        $sendchain = $lnrest->sendOnChain($sendall, $amount, $recepient);
         return $sendchain;
     }
     else{return "error: insuffucient balance";}
@@ -1389,11 +1397,14 @@ function receivelightning001($label, $amount, $memo, $expiryRaw){
 /////////////////////////////////////////////////////////////////////
 ///  LIST ALL CHANNEL LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function listchannel(){
+function listchannel($crypto, $label){
+    $crypto = 'LND';
     $lnrest = new LNDAvtClient();
     $allchan = $lnrest->getAllChannels();
     $pendchan = $lnrest->getPendingChannels();
     $closedchan = $lnrest->getChanClosed();
+    $trans = listransaction($crypto, $label);
+    dd($trans);
     $chan = array(
         'all_channels' => $allchan, 
         'pending_channels' => $pendchan, 
