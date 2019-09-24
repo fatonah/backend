@@ -147,11 +147,11 @@ class LNDAvtClient
         $res = LNDAvtClient::LnRest('/v1/balance/blockchain');
         return json_decode($res,true);
     }
-    public function sendOnChain($sendall, $amount, $satperbyte, $address) {
+    public function sendOnChain($sendall, $amount, $address) {
         $payload =  json_encode(array(
             'send_all' => $sendall,
             'amount' => $amount,
-            'sat_per_byte' => $satperbyte,
+            //'sat_per_byte' => $satperbyte,
             'addr' => $address
         ));
         $res = LNDAvtClient::LnRest('/v1/transactions',$payload);
