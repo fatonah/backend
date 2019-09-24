@@ -1353,7 +1353,10 @@ function refundlightning001($label, $sendall, $amount, $recepient){
         $sendchain = $lnrest->sendOnChain($sendall, $amount, $recepient);
         return $sendchain;
     }
-    else{return "error: insuffucient balance";}
+    else{
+        $msg = array('error'=>" Insuffucient fund");
+        return $msg;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1377,7 +1380,10 @@ function paymentlightning003($label, $inv){
         $res = $lnrest->sendPayment($inv);
         return $res;
     }
-    else{return "error: insuffucient balance";}
+    else{
+        $msg = array('error'=>" Insuffucient fund");
+        return $msg;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1443,11 +1449,12 @@ function openchanlightning001($peers, $localsat, $pushsat){
  
         if(!in_array($peerspub, $remotepub, true)){
             $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
-            //if(array_key_exists("error", $chantxid)){return "Error: ".$chantxid['error'];}
-            //else{return $chantxid;} 
             return $chantxid;
         }
-        else{return "error: channel already established with this node";}
+        else{
+            $msg = array('error'=>"Channel already established with this node");
+            return $msg;
+        }
  
 }
 
@@ -1467,13 +1474,17 @@ function closechanlightning001($chanpoint){
         if(in_array($chanpoint, $remotechanpoint, true)){
             $cchantxid = $lnrest->closeChannel($chanpoint, 1);
             if(!empty($cchantxid)) {
-                //if(array_key_exists("error", $cchantxid)){return "Error: ".$cchantxid['error'];}
-                //else{return $cchantxid;}
                 return $cchantxid;
             }
-            else{return "Error: no data";} 
+            else{
+                $msg = array('error'=>"No Data");
+                return $msg;
+            } 
         }
-        else{return "error: channel not existed on this node";}
+        else{
+            $msg = array('error'=>"Channel not existed on this node");
+            return $msg;
+        }
     }
 
 /////////////////////////////////////////////////////////////////////
