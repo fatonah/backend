@@ -33,7 +33,6 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		dd(getestimatefee('LND'));
 		//$conn = test();
 		//dd($conn);
 		//dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
@@ -62,13 +61,14 @@ class ApiController extends Controller{
 		//$data = getbalance($crypto, $label);
 		//$data = getaddress($crypto, $label); 
 		//$data = addCrypto($crypto, $label);
+		$data = listchannel();
 		//$data = get_label_crypto($crypto, $address);
 		//$data = listransactionall($crypto, $label); 
 		//$data = listransaction($crypto, $label);
 		//$data = gettransaction_crypto($crypto, $txid);
 		//$data = dumpkey($crypto, $label);
-		$data = getbalanceAll($crypto);
-		dd($data);    
+		//$data = getbalanceAll($crypto); 
+		dd($data);  
 		$datamsg = response()->json( 
 			 $data
 		 );
@@ -1012,30 +1012,25 @@ class ApiController extends Controller{
 	 
 	#################Add Crypto #########################
 	public function create_asset(Request $request){	
-		
 		$user = User::where('id',$request->uid)->first();
-		
 		if($user){  
 			$tokenORI = apiToken($request->uid);
 			if($request->tokenAPI==$tokenORI){
 				$wallet = WalletAddress::where('label',$user->label)->where('crypto',$request->crypto)->first();
 				if(!$wallet){
-				$crypto = $request->crypto; 
-				$address = addCrypto($crypto, $user->label);
-			
-				$wallAddress = new WalletAddress;
-				$wallAddress->uid = $user->id;
-				$wallAddress->label = $user->label;
-				$wallAddress->address = $address; 
-				$wallAddress->balance = '0.00000000';
-				$wallAddress->crypto = $crypto;
-				$wallAddress->save();
+					$crypto = $request->crypto; 
+					$address = addCrypto($crypto, $user->label);
 				
-				if($crypto!='LND'){
-				getbalance($crypto, $user->label);
-				getaddress($crypto, $user->label);
-				}
-
+					$wallAddress = new WalletAddress;
+					$wallAddress->uid = $user->id;
+					$wallAddress->label = $user->label;
+					$wallAddress->address = $address; 
+					$wallAddress->balance = '0.00000000';
+					$wallAddress->crypto = $crypto;
+					$wallAddress->save();
+					
+					getbalance($crypto, $user->label);
+					getaddress($crypto, $user->label);
 				}
 
 				$msg = array(
