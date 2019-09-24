@@ -1981,7 +1981,6 @@ class ApiController extends Controller{
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
  
 		$crypto_txid = closechanlightning001($idHash);
-dd($crypto_txid);
 		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 			$error = $crypto_txid['error'];
 
