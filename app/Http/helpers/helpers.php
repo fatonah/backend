@@ -74,7 +74,7 @@ function getconnection($crypto){
         return $conn;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
    
@@ -138,7 +138,7 @@ function getestimatefee($crypto) {
         return $fee;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -287,7 +287,7 @@ function getaddress($crypto, $label) {
         return $wallet_address;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -330,7 +330,7 @@ function addCrypto($crypto, $label) {
         return $wallet_address;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -385,7 +385,7 @@ function get_label_crypto($crypto, $address) {
         else{return null;}
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -438,7 +438,7 @@ function listransactionall($crypto) {
         else{return null;}
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -489,7 +489,7 @@ function listransaction($crypto, $label) {
         else{return null;}
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
     // //GET all transaction
@@ -540,7 +540,7 @@ function gettransaction_crypto($crypto, $txid) {
         return $transaction;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -985,7 +985,7 @@ function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $me
         }
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
@@ -1057,7 +1057,7 @@ function dumpkey($crypto, $label){
         return $data;
     }
     else {
-        $msg = array("error"=>"Invalid Crypto")
+        $msg = array("error"=>"Invalid Crypto");
         return $msg;
     }
 }
