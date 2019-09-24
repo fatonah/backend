@@ -34,7 +34,7 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::post('edit_currency','ApiController@update_currency');
 	Route::get('crypto/{uid}/{token}','ApiController@getcrypto');
 	Route::post('add_crypto','ApiController@create_asset');
-	Route::post('createInvoive','ApiController@create_inv');
+	Route::post('createInvoice','ApiController@create_inv');
 	Route::get('transLND/{crypto}/{uid}/{token}','ApiController@transactionLND');
 	Route::get('transInvLND/{crypto}/{uid}/{token}','ApiController@transactionInvLND');
 	Route::post('sendLND','ApiController@sendLND');

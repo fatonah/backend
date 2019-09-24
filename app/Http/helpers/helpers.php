@@ -7,7 +7,11 @@ use App\WalletAddress;
 use App\User;
 use App\TransLND;
  
- 
+ function test(){
+    $lnrest = new LNDAvtClient();
+    $conn = $lnrest->getAllChannels();
+    return $conn;
+ }
 ///////////////////////////////////////////////////////////////
 /// SETTINGS /////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -215,7 +219,8 @@ function getbalance($crypto, $label) {
     }
     elseif($crypto == 'LND'){
         $user = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
-        $trans = TransLND::where('uid', $user->uid)->where('status', 'success')->latest()->first();
+        //$trans = TransLND::where('uid', $user->uid)->where('status', 'success')->latest()->first();
+        $trans = TransLND::where('uid', $user->uid)->latest()->first();
         $wallet_balance = $trans->after_bal;
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
@@ -441,13 +446,6 @@ function listransaction($crypto, $label) {
         $crycode = 'litecoin';
         //GET label transaction
         $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-        if($transaction){return $transaction;}
-        else{return null;}
-    }
-    elseif($crypto == 'LND'){
-        $crycode = 'lightning';
-        $user = User::where('label',$label)->first();
-        $transaction = TransLND::where('uid', $user->id)->get();
         if($transaction){return $transaction;}
         else{return null;}
     }
@@ -1300,7 +1298,35 @@ function getbalanceAll($crypto) {
     }
     
 }
+/////////////////////////////////////////////////////////////////////
+///  DECODE INVOICE LIGHTNING WALLET         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function getInvoiceDet($inv){
+    $lnrest = new LNDAvtClient();
+    $paymentdet = $lnrest->decodeInvoice($inv);
+    return $paymentdet;
+}
+/////////////////////////////////////////////////////////////////////
+///  FUND LIGHTNING WALLET         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// function fundlightning001($label, $inv){
+//     $txid = sendtoaddressRAW('BTC', $label, $recvaddress, $cryptoamount, $memo, $comm_fee)
+//     $lnrest = new LNDAvtClient();
+//     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+//     $balance = $userdet->balance;
+//     $paymentdet = $lnrest->decodeInvoice($inv);
+//     if($balance >= $paymentdet['num_satoshis']){
+//         $res = $lnrest->sendPayment($inv);
+//         if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
+//         if(array_key_exists("error", $res)){return $res['error'];}
+//         return $res['payment_hash'];
+//     }
+//     else{return "Error: insuffucient balance";}
 
+
+
+
+// }
 /////////////////////////////////////////////////////////////////////
 ///  SEND LIGHTNING PAYMENT         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -1311,11 +1337,16 @@ function paymentlightning003($label, $inv){
     $paymentdet = $lnrest->decodeInvoice($inv);
     if($balance >= $paymentdet['num_satoshis']){
         $res = $lnrest->sendPayment($inv);
-        if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
-        if(array_key_exists("error", $res)){return $res['error'];}
-        return $res['payment_hash'];
+        // $res2 = array(
+        //     "detail" => $res,
+        //     "amount" => $paymentdet['num_satoshis']
+        // );
+        return $res;
+        //if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
+        //if(array_key_exists("error", $res)){return $res['error'];}
+        //return $res['payment_hash'];
     }
-    else{return "Error: insuffucient balance";}
+    else{return "error: insuffucient balance";}
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1329,9 +1360,9 @@ function receivelightning001($label, $amount, $memo, $expiryRaw){
     $expiry = strval($expiryRaw*3600);
     $lnrest = new LNDAvtClient();
     $invdet = $lnrest->addInvoice($amount, $memo, $expiry, $falladdr);
-    if(array_key_exists("error", $invdet)){return $invdet['error'];}
-    $inv = $invdet['payment_request'];
-    return $inv; 
+    //if(array_key_exists("error", $invdet)){return $invdet['error'];}
+    //$inv = $invdet['payment_request'];
+    return $invdet; 
 }
 
 /////////////////////////////////////////////////////////////////////
