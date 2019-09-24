@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Images;
 use App\Lib\GoogleAuthenticator;
 use Denpa\Bitcoin\LaravelClient as BitcoinClient;
+use Carbon\Carbon;
 
 use DB;
 use App\User;
@@ -32,7 +33,10 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
+		dd(getestimatefee('LND'));
+		//$conn = test();
+		//dd($conn);
+		//dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
 		//BTC//
 		$crypto = 'LND';
 		$label = 'usr_bsod666';
@@ -1229,18 +1233,8 @@ class ApiController extends Controller{
 		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
-		//$getuserlabel = get_label_crypto($crypto, $recipient); 
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
-		/*
-		$checkwalladdr=  $recipient[0];
-		 
-		if($checkwalladdr == '3' || $checkwalladdr == '1' || $checkwalladdr == '0' || $checkwalladdr == 'd' || $checkwalladdr == 'D' || $checkwalladdr == 'q' || $checkwalladdr == 'X' || $checkwalladdr == 'L'){	 
-		$dashwall = 1;
-		}else{
-		$dashwall =0;
-		}
-		*/
 		
 		$tokenORI = apiToken($useruid->id); 
 		if($request->tokenAPI==$tokenORI){
@@ -1254,7 +1248,6 @@ class ApiController extends Controller{
 			}
 			else{
 				$crypto_txid = sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);   
-				//move_crypto_comment($crypto, $label, $admin_label, $comm_fee, 'fees');
 				$myr_amount = $amount*$price;
 					 
 				if($crypto_txid==''){ //failed withdraw
@@ -1310,52 +1303,6 @@ class ApiController extends Controller{
 					]);
 					return $datamsg->content(); 
 				}
-					
-			/*	}else{  // internal wallet
-					if($dashwall == 1){
-					$userR = User::where('label',$getuserlabel)->first();
-					
-					$crypto_txid = move_crypto_comment($crypto, $label, $getuserlabel, $amount, 'withdraw'); 
-				  
-					//success withdraw
-			 
-					$withdraw = new Withdrawal;
-					$withdraw->uid = $useruid->id;
-					$withdraw->status = 'success';
-					$withdraw->amount= $amount; 
-					$withdraw->before_bal = $userbalance;
-					$withdraw->after_bal = number_format(getbalance($crypto, $label), 8, '.', '');
-					$withdraw->recipient_id = $userR->id;
-					$withdraw->recipient = $recipient;
-					$withdraw->netfee = 0; 
-					$withdraw->walletfee = 0; 
-					$withdraw->txid = $crypto_txid;
-					$withdraw->crypto = $crypto;
-					$withdraw->remarks = $remarks;
-					$withdraw->type = 'internal';
-					$withdraw->save();
-						 
-					$msg = array("mesej"=>"jaya","display_msj"=>'Successfully widthdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient.' TXID : '. $crypto_txid);
-					$datamsg = response()->json([
-						'data' => $msg
-					]);
-					
-					return $datamsg->content(); 
-					
-					}else{
-						 
-					$msg = array("mesej"=>"Please enter valid address!");
-					$datamsg = response()->json([
-						'data' => $msg
-					]);
-					
-					return $datamsg->content();
-					
-					}
-					
-				}
-				*/
-				
 			}// end send /move crypto	
 		}
 		else{
@@ -1509,14 +1456,21 @@ class ApiController extends Controller{
         if($user){
 		$tokenORI = apiToken($user->id);		  
 		if($request->tokenAPI==$tokenORI){
-			$newHash = 'dsdsfcsdf34253rfdeed';
+			$invcreate = receivelightning001($user->label, $request->amount, $request->memo, $request->expired);
+			if(array_key_exists("error", $invcreate)){
+				$datamsg = response()->json([ 
+					'mesej' => $invcreate['error'],
+				]);
+		 		return $datamsg->content(); 
+			}
+			$newHash = $invcreate['payment_request'];
 
 			$ins = new InvoiceLND;
 			$ins->uid = $user->id;
 			$ins->hash = $newHash;
 			$ins->amount = $request->amount;
 			$ins->expired = $request->expired;
-			$ins->date_expired = '2019';
+			$ins->date_expired = date_format(Carbon::now()->addHours($request->expired),"Y-m-d H:i:s");
 			$ins->memo = $request->memo;
 			$ins->save();
 
@@ -1554,25 +1508,22 @@ class ApiController extends Controller{
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
 		$currency = Currency::where('id',$useruid->currency)->first();
 
-		$amount = 12365;//in sat
+		$invdet = getInvoiceDet($recipient); //in sat
+		if(array_key_exists("error", $invdet)){
+			$msg = array("mesej"=>"Invalid Invoice!");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+		 	return $datamsg->content(); 
+		}
+		$amount = $invdet['num_satoshis'];
 				   
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
-		$amountset = 0.01;
-		$minwithdraw = number_format(($amountset/$price)*$sat, 8, '.', ''); // in sat
-	
-		if($amount<=$minwithdraw){
-			$m = 'Minimum withdraw must more than '.$minwithdraw;
-		 	$msg = array("mesej"=>$m);
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-		 	return $datamsg->content();	
-		}
-		else if(!isset($useruid)){
+		if(!isset($useruid)){
 		 	$msg = array("mesej"=>"Id Sender does not exist!");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -1585,14 +1536,7 @@ class ApiController extends Controller{
 				'data' => $msg
 			]);
 		 	return $datamsg->content();	 
-		}/*
-		else if(checkAddress($crypto, $recipient)!=true){
-			$msg = array("mesej"=>'Invalid Address');
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-			 return $datamsg->content();
-		 }*/
+		}
 		else{
 			$wuserF = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
 			if(!isset($wuserF)){
@@ -1603,17 +1547,10 @@ class ApiController extends Controller{
 				]);
 			 	return $datamsg->content();
 			}
-
 		 }			 
 		 
-		$wuserF = getaddress($crypto,$label); 
-		$comm_fee = number_format((settings('commission_withdraw')/$price)*$sat, 8, '.', ''); // in sat
-		$net_fee = getestimatefee($crypto)*$sat; // in sat
-		
-		$fee = number_format($comm_fee+$net_fee, 8, '.', ''); // in sat
 		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
-	 
-		$totalfunds = number_format($amount + $fee, 8, '.', ''); // in sat
+		$totalfunds = number_format($amount, 8, '.', ''); // in sat
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
 		 
 		$tokenORI = apiToken($useruid->id); 
@@ -1627,21 +1564,27 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = 'sdfe32343dfgdgfer34s';
-				//sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);   
-		 
+				$crypto_txid = paymentlightning003($useruid->label, $recipient);
 				$myr_amount = ($amount/$sat)*$price;
 	 
-				if($crypto_txid==''){ //failed withdraw
+				if($crypto_txid=='' || array_key_exists("error", $crypto_txid) || array_key_exists("payment_error", $crypto_txid)){ //failed withdraw
+					if(array_key_exists("error", $crypto_txid)){
+						$error = $crypto_txid['error'];
+					}
+					else{
+						$error = $crypto_txid['payment_error'];
+					}
+
 					$withdraw = new TransLND;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'failed';
+					$withdraw->error_code = $error;
 					$withdraw->amount= $amount; 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal; 
 					$withdraw->recipient = $recipient;
-					$withdraw->netfee = $net_fee; 
-					$withdraw->walletfee = $comm_fee; 
+					$withdraw->netfee = 0; 
+					$withdraw->walletfee = 0; 
 					$withdraw->invoice_id = '0';
 					$withdraw->type = 'external';
 					$withdraw->using = 'mobile';
@@ -1657,7 +1600,7 @@ class ApiController extends Controller{
 						'balance' => number_format($after_bal, 8, '.', ''), 
 					]);
 
-					$msg = array("mesej"=>"Failed widthdraw!");
+					$msg = array("mesej"=>$error);
 					$datamsg = response()->json([
 						'data' => $msg
 					]);
@@ -1671,8 +1614,8 @@ class ApiController extends Controller{
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal;
 					$withdraw->recipient = $recipient;
-					$withdraw->netfee = $net_fee; 
-					$withdraw->walletfee = $comm_fee; 
+					$withdraw->netfee = 0; 
+					$withdraw->walletfee = 0; 
 					$withdraw->invoice_id = '0';
 					$withdraw->type = 'external';
 					$withdraw->using = 'mobile';

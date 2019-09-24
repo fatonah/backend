@@ -14,7 +14,7 @@ class LNDAvtClient
     public $rest_url = '';
     
     function __construct($mac = '', $url = '' ) {
-        $this->macaroon = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-access001.macaroon");
+        $this->macaroon = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-access002.macaroon");
         $this->rest_url = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-endpt.txt");
     }
 
