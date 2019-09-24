@@ -1653,6 +1653,7 @@ class ApiController extends Controller{
 	//	
 	#################Send Crypto LND TO Bitcoin #########################
 	public function sendLNDBTC(Request $request){ 
+	 
 		$crypto = $request->crypto;
 		$cryptoSend = 'BTC';
 		$label = $request->sendfrom; 
@@ -1663,8 +1664,8 @@ class ApiController extends Controller{
 		$catPay = $request->catPay;
 		$sat = 100000000;
 	 
-		$useruid = User::where('label',$label)->first();  
-
+		$useruid = User::where('label',$label)->first();   
+		
 		if(!isset($useruid)){
 			$msg = array("mesej"=>"Id Sender does not exist!");
 		   $datamsg = response()->json([
@@ -1724,7 +1725,7 @@ class ApiController extends Controller{
 			else{
 				if($catPay==1){ $catPayment = true; }else{ $catPayment = false; }
 
-				$crypto_txid = 1;//paymentlightning003($useruid->label, $recipient);
+				$crypto_txid = refundlightning001($label, $catPayment, $amount, $recipient);
 				$myr_amount = ($amount/$sat)*$price;
 	 
 				if($crypto_txid=='' || array_key_exists("error", $crypto_txid) || array_key_exists("payment_error", $crypto_txid)){ //failed withdraw
