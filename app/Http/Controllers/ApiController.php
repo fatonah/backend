@@ -1827,6 +1827,8 @@ class ApiController extends Controller{
 	
 	#################List Channel #########################
 	public function list_channel(Request $request){ 
+		//afaa5899c0f876337a491c7e9555750a58fe671de4de12a236f121eba0a591a2 23
+		//6b961d85d18af62a785cd5f3811d7a742eaad56fcfa8e20cbb50be0f0701476a 9
 		$uid = $request->uid;
 		$crypto = $request->crypto;
 		$token = $request->tokenAPI;
@@ -1843,7 +1845,6 @@ class ApiController extends Controller{
 				}
 				else{
 					$trans = listchannel($crypto, $user->label);
-					dd($tran);
 					$datamsg = response()->json([ 
 						'mesej' => 'jaya',
 						'info' => $trans,
