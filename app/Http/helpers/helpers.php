@@ -110,11 +110,6 @@ function getestimatefee($crypto) {
         $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
         return $fee;
     }
-    elseif($crypto == 'LND'){
-        $crycode = 'bitcoin';
-        $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
-        return $fee;
-    }
     // elseif($crypto == 'LND'){
     //     $crycode = 'lightning';
     //     $lnrest = new LNDAvtClient();
