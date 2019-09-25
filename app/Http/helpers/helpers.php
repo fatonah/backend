@@ -1549,10 +1549,11 @@ function listchannel($crypto, $label){
     //dd($clmatch, $cchan_txid, $trans_txid);
 
     $channel = array(
-        'all_channels' => $opmatch, 
+        'active_channels' => $opmatch, 
         'pending_channels' => $pdmatch, 
         'closed_channels' => $clmatch
     );
+    dd($channel);
     return $channel;
 }
 

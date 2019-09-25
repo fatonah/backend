@@ -1969,9 +1969,9 @@ class ApiController extends Controller{
 
 		if(!isset($useruid)){
 			$msg = array("mesej"=>"Id Sender does not exist!");
-		   $datamsg = response()->json([
+		   	$datamsg = response()->json([
 			   'data' => $msg
-		   ]);
+		   	]);
 			return $datamsg->content();
 	   	} 
 		else{
