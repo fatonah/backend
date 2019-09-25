@@ -1844,7 +1844,7 @@ class ApiController extends Controller{
 					]);	
 				}
 				else{
-					$trans = listchannel($crypto, $user->label);
+					$trans = listchannel($crypto, $user->label); 
 					$datamsg = response()->json([ 
 						'mesej' => 'jaya',
 						'info' => $trans,
@@ -1901,8 +1901,17 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
+		$peerExp = preg_match("/[a-zA-Z0-9]@[a-zA-Z0-9]/", $peers); 
+
 		if($pushsat>$localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);	
+			return $datamsg->content();
+		}
+		else if(!$peerExp){
+			$msg = array("mesej"=>"Please make sure Peer like as ' dsfds@1 ' ");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	
