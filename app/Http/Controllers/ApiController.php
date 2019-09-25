@@ -97,9 +97,9 @@ class ApiController extends Controller{
 	
 	#################SecretPin #########################
 	public function send_secretpin(Request $request){
-		$user = User::where('id',$request->uid)->where('secretpin',$request->secretpin)->first();	
-		if($user)
-		{ 
+		$user = User::where('id',$request->uid)->where('secretpin',$request->secretpin)->first();
+
+		if($user){ 
 			$tokenORI = apiToken($user->id);
 			if($request->tokenAPI==$tokenORI){
 				$msg = array("mesej"=>"jaya");
@@ -129,10 +129,10 @@ class ApiController extends Controller{
 	#################Login2 #########################
 	public function login2(Request $request){
 		$msg = array("mesej"=>"This service currently unavailable.");
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-			return $datamsg->content();
+		$datamsg = response()->json([
+			'data' => $msg
+		]);
+		return $datamsg->content();
 	}
 
 	
@@ -140,6 +140,7 @@ class ApiController extends Controller{
 	public function login(Request $request){
 		$userData = '';
 		$user = User::where('username',$request->username)->orWhere('email',$request->username)->first();
+
 		if($user){
 			if(!Hash::check($request->password, $user->password)){
 				$msg = array("mesej"=>"Wrong Password.");
@@ -306,6 +307,7 @@ class ApiController extends Controller{
 			$tokenORI = apiToken($user->id);
 			
 			if($request->tokenAPI==$tokenORI){
+				
 				if(!Hash::check($pwordold, $user->password)){
 					$msg = array("mesej"=>"Wrong Old Password");
 					$datamsg = response()->json([
@@ -447,7 +449,6 @@ class ApiController extends Controller{
 	 
 	#################Update Power SecretPin #########################
 	public function send_powerpin(Request $request){	
-		
 		$user = User::where('id',$request->uid)->first();
 		
 		if($user){  
@@ -467,18 +468,20 @@ class ApiController extends Controller{
 					"display_msj"=>'Successfully update', 
 					"mesej"=>"jaya"
 				); 
-			   $datamsg = response()->json([
-				   'data' => $msg
-			   ]);
-			   return $datamsg->content(); 
-			}else{
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+				return $datamsg->content(); 
+			}
+			else{
 				$msg = array("mesej"=>"No Access");
 				$datamsg = response()->json([
 					'data' => $msg
 				]);
 				return $datamsg->content();
 			}
-		}else{
+		}
+		else{
 			$msg = array("mesej"=>"User does not exist.");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -490,7 +493,6 @@ class ApiController extends Controller{
 	 
 	#################Update Power 2FA #########################
 	public function send_powerauth(Request $request){	
-		
 		$user = User::where('id',$request->uid)->first();
 		
 		if($user){  
@@ -510,18 +512,20 @@ class ApiController extends Controller{
 					"display_msj"=>'Successfully update', 
 					"mesej"=>"jaya"
 				); 
-			   $datamsg = response()->json([
-				   'data' => $msg
-			   ]);
+			  	$datamsg = response()->json([
+					'data' => $msg
+			   	]);
 			   return $datamsg->content(); 
-			}else{
+			}
+			else{
 				$msg = array("mesej"=>"No Access");
 				$datamsg = response()->json([
 					'data' => $msg
 				]);
 				return $datamsg->content();
 			}
-		}else{
+		}
+		else{
 			$msg = array("mesej"=>"User does not exist.");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -533,7 +537,6 @@ class ApiController extends Controller{
 	 
 	#################Update Power FingerPrint #########################
 	public function send_powerfp(Request $request){	
-		
 		$user = User::where('id',$request->uid)->first();
 		
 		if($user){  
@@ -553,18 +556,20 @@ class ApiController extends Controller{
 					"display_msj"=>'Successfully update', 
 					"mesej"=>"jaya"
 				); 
-			   $datamsg = response()->json([
-				   'data' => $msg
-			   ]);
+			   	$datamsg = response()->json([
+				   	'data' => $msg
+			   	]);
 			   return $datamsg->content(); 
-			}else{
+			}
+			else{
 				$msg = array("mesej"=>"No Access");
 				$datamsg = response()->json([
 					'data' => $msg
 				]);
 				return $datamsg->content();
 			}
-		}else{
+		}
+		else{
 			$msg = array("mesej"=>"User does not exist.");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -576,7 +581,6 @@ class ApiController extends Controller{
 	 
 	#################Update Secretpin #########################
 	public function edit_secretpin(Request $request){	
-		
 		$user = User::where('id',$request->uid)->first();
 		
 		if($user){  
@@ -591,14 +595,16 @@ class ApiController extends Controller{
 					$datamsg = response()->json([
 						'data' => $msg
 					]);  
-				}else if(!$secret_pin2) {
+				}
+				else if(!$secret_pin2) {
 					$msg = array( 
 						"mesej"=>"Secret PIN must be digits only."
 					); 
 					$datamsg = response()->json([
 						'data' => $msg
 					]); 
-				}else{ 
+				}
+				else{ 
 					$upt = User::findorFail($user->id);
 					$upt->secretpin = $request->secretpin;
 					$upt->save();
@@ -612,14 +618,16 @@ class ApiController extends Controller{
 					]);
 				}
 			   return $datamsg->content(); 
-			}else{
+			}
+			else{
 				$msg = array("mesej"=>"No Access");
 				$datamsg = response()->json([
 					'data' => $msg
 				]);
 				return $datamsg->content();
 			}
-		}else{
+		}
+		else{
 			$msg = array("mesej"=>"User does not exist.");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -632,10 +640,10 @@ class ApiController extends Controller{
 	#################User Info2 #########################
 	public function userInfo2(Request $request){
 		$msg = array("mesej"=>"This service currently unavailable.");
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-			return $datamsg->content();
+		$datamsg = response()->json([
+			'data' => $msg
+		]);
+		return $datamsg->content();
 	}
 
 
@@ -749,28 +757,27 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dash_view($crypto,$userid,$tokenAPI){
-		 
 		$jumMYR = 0; $bilCrypto = 0;
 		$user = User::where('id',$userid)->first(); 
+
 		if($user){
 			$tokenORI = apiToken($userid);
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('crypto',$crypto)->first();
 				$currency = Currency::where('id',$user->currency)->first();
 				   
-						$json_string = settings('url_gecko').'simple/price?ids='.$priceapi->id_gecko.'&vs_currencies='.strtolower($currency->code);
-						$jsondata = file_get_contents($json_string);
-						$obj = json_decode($jsondata, TRUE); 
+				$json_string = settings('url_gecko').'simple/price?ids='.$priceapi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+				$jsondata = file_get_contents($json_string);
+				$obj = json_decode($jsondata, TRUE); 
 					
-						$price = $obj[$priceapi->id_gecko][strtolower($currency->code)];
-								
-						$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
+				$price = $obj[$priceapi->id_gecko][strtolower($currency->code)];		
+				$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
 					
-						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
+				if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
 						
-						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
-						$addressCrypto = getaddress($priceapi->crypto, $user->label);   
-						$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
+				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
+				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
+				$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
 			 
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
@@ -809,8 +816,8 @@ class ApiController extends Controller{
 		 
 	#################Dashboard Older#########################
 	public function dashboardOLD($userid,$tokenAPI){
-		  
 		$user = User::where('id',$userid)->first(); 
+
 		if($user){
 			$tokenORI = apiToken($userid);
 			if($tokenAPI==$tokenORI){ 
@@ -907,23 +914,24 @@ class ApiController extends Controller{
 						'mesej' => 'Currency failed',
 						'info' => null,
 						'currency' => $user->currency,
-						]);
+					]);
 				}
-			}else{
+			}
+			else{
 				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
-				'info' => null,
-				'currency' => $user->currency,
+					'mesej' => 'No Access',
+					'info' => null,
+					'currency' => $user->currency,
 				]);	
 			}
-        }else{
+        }
+        else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
 				'info' => null,
 				'currency' => '',
-				]);
+			]);
 		}
-		
 		return $datamsg->content();
 	}
 	
@@ -942,35 +950,36 @@ class ApiController extends Controller{
 						'info' => $currency,
 						'currency' => $user->currency,
 					]);   
-				}else{
+				}
+				else{
 					$datamsg = response()->json([ 
 						'mesej' => 'Currency failed',
 						'info' => null,
 						'currency' => $user->currency,
-						]);
+					]);
 				}
-			}else{
+			}
+			else{
 				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
-				'info' => null,
-				'currency' => $user->currency,
+					'mesej' => 'No Access',
+					'info' => null,
+					'currency' => $user->currency,
 				]);	
 			}
-        }else{
+        }
+        else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
 				'info' => null,
 				'currency' => '',
-				]);
+			]);
 		}
-		
 		return $datamsg->content();
 	}
 	
 	
 	#################Crypto #########################
 	public function getcrypto($uid,$tokenAPI){  
-		
 		$user = User::where('id',$uid)->first();
 		$results = null;
         
@@ -988,23 +997,24 @@ class ApiController extends Controller{
 				$json2 = json_encode($results);
 				$json = json_decode($json2);
 				   
-					$datamsg = response()->json([ 
-						'mesej' => 'jaya',
-						'info' => $json,
-					]);   
-			}else{
 				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
-				'info' => null,
+					'mesej' => 'jaya',
+					'info' => $json,
+				]);   
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+					'info' => null,
 				]);	
 			}
-        }else{
+        }
+        else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
 				'info' => null,
-				]);
+			]);
 		}
-		
 		return $datamsg->content();
 	}
 
@@ -1012,6 +1022,7 @@ class ApiController extends Controller{
 	#################Add Crypto #########################
 	public function create_asset(Request $request){	
 		$user = User::where('id',$request->uid)->first();
+
 		if($user){  
 			$tokenORI = apiToken($request->uid);
 			if($request->tokenAPI==$tokenORI){
@@ -1036,18 +1047,20 @@ class ApiController extends Controller{
 					"display_msj"=>'Successfully Create', 
 					"mesej"=>"jaya"
 				); 
-			   $datamsg = response()->json([
-				   'data' => $msg
-			   ]);
+			    $datamsg = response()->json([
+				    'data' => $msg
+			    ]);
 			   return $datamsg->content(); 
-			}else{
+			}
+			else{
 				$msg = array("mesej"=>"No Access");
 				$datamsg = response()->json([
 					'data' => $msg
 				]);
 				return $datamsg->content();
 			}
-		}else{
+		}
+		else{
 			$msg = array("mesej"=>"User does not exist.");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -1070,25 +1083,27 @@ class ApiController extends Controller{
 						'mesej' => 'jaya',
 						'remarks' => $withdraw->remarks,
 					]);   
-				}else{
+				}
+				else{
 					$datamsg = response()->json([ 
 						'mesej' => 'Withdraw info does not exist',
 						'remarks' => '',
-						]);
+					]);
 				}
-			}else{
+			}
+			else{
 				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
-				'remarks' => '',
+					'mesej' => 'No Access',
+					'remarks' => '',
 				]);	
 			}
-        }else{
+        }
+        else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
 				'remarks' => '',
-				]);
+			]);
 		}
-		
 		return $datamsg->content();
 	}
 	
@@ -1099,25 +1114,24 @@ class ApiController extends Controller{
 		$user = User::where('label',$usr_crypto)->first();
         
         if($user){
-		$tokenORI = apiToken($user->id);		  
-		if($tokenAPI==$tokenORI){
-			$datamsg = response()->json([ 
-				'mesej' => 'jaya',
-				'info' => $trans,
-			]);
+			$tokenORI = apiToken($user->id);		  
+			if($tokenAPI==$tokenORI){
+				$datamsg = response()->json([ 
+					'mesej' => 'jaya',
+					'info' => $trans,
+				]);
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+				]);	
+			}
 		}
 		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'No Access',
-			]);	
-		}
-            
-        }else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
-				]);
+			]);
         }
-        
 		return $datamsg->content();
 	}
 	
@@ -1133,8 +1147,8 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 		
-			$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
-			$net_fee = getestimatefee($crypto);
+		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
+		$net_fee = getestimatefee($crypto);
 		
 		if($user){
 			$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
@@ -1157,7 +1171,6 @@ class ApiController extends Controller{
 		return $datamsg->content();	
 	}
 	
-	//	
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
 		$crypto = $request->crypto;
@@ -1329,7 +1342,8 @@ class ApiController extends Controller{
 			else{
 				$jum = number_format($request->nilai/$priceCrypto, 8, '.', '');
 			}
-		}else{
+		}
+		else{
 			if($request->type=='crypto'){ 
 				$bit = number_format($request->nilai/$sat, 8, '.', ''); 
 				$jum = number_format($bit*$priceCrypto, 2, '.', '');  
@@ -1353,58 +1367,58 @@ class ApiController extends Controller{
 		$trans = null;
 		
         if($user){
-		$tokenORI = apiToken($user->id);		  
-		if($tokenAPI==$tokenORI){ 
-			$wallet = WalletAddress::where('uid',$uid)->where('crypto',$crypto)->first();
-			if($wallet){
-				$transX = TransLND::where('uid',$uid)->orderBy('id','desc')->get();
+			$tokenORI = apiToken($user->id);		  
+			if($tokenAPI==$tokenORI){ 
+				$wallet = WalletAddress::where('uid',$uid)->where('crypto',$crypto)->first();
+				if($wallet){
+					$transX = TransLND::where('uid',$uid)->orderBy('id','desc')->get();
 
-				foreach($transX as $tran){
-					$currency = Currency::where('id',$tran->currency)->first()->code;
-					$trans[] = array(
-						'uid' => $tran->uid,
-						'type' => $tran->type,
-						'category' => $tran->category,
-						'using' => $tran->using,
-						'status' => $tran->status,
-						'invoice_id' => $tran->invoice_id,
-						'amount' => $tran->amount,
-						'before_bal' => $tran->before_bal,
-						'after_bal' => $tran->after_bal,
-						'myr_amount' => $tran->myr_amount,
-						'remarks' => $tran->remarks,
-						'rate' => $tran->rate,
-						'currency' => $currency,
-						'recipient' => $tran->recipient,
-						'netfee' => $tran->netfee,
-						'walletfee' => $tran->walletfee,
-						'created_at' => date('Y-m-d h:i:s', strtotime($tran->created_at)),
-					); 
-				}
+					foreach($transX as $tran){
+						$currency = Currency::where('id',$tran->currency)->first()->code;
+						$trans[] = array(
+							'uid' => $tran->uid,
+							'type' => $tran->type,
+							'category' => $tran->category,
+							'using' => $tran->using,
+							'status' => $tran->status,
+							'invoice_id' => $tran->invoice_id,
+							'amount' => $tran->amount,
+							'before_bal' => $tran->before_bal,
+							'after_bal' => $tran->after_bal,
+							'myr_amount' => $tran->myr_amount,
+							'remarks' => $tran->remarks,
+							'rate' => $tran->rate,
+							'currency' => $currency,
+							'recipient' => $tran->recipient,
+							'netfee' => $tran->netfee,
+							'walletfee' => $tran->walletfee,
+							'created_at' => date('Y-m-d h:i:s', strtotime($tran->created_at)),
+						); 
+					}
 
-				$datamsg = response()->json([ 
-					'mesej' => 'jaya',
-					'info' => $trans,
-				]);
-			}else{
-				$datamsg = response()->json([ 
-					'mesej' => 'Lightning user does not exist',
+					$datamsg = response()->json([ 
+						'mesej' => 'jaya',
+						'info' => $trans,
 					]);
+				}
+				else{
+					$datamsg = response()->json([ 
+						'mesej' => 'Lightning user does not exist',
+					]);
+				}
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+				]);	
 			}
 		}
 		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'No Access',
-			]);	
-		}
-            
-        }else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
-				]);
+			]);
         }
-        
-		return $datamsg->content();
+        return $datamsg->content();
 	}
 
 	#################Transaction Invoice Lightning#########################
@@ -1412,35 +1426,33 @@ class ApiController extends Controller{
 		$user = User::where('id',$uid)->first();
         
         if($user){
-		$tokenORI = apiToken($user->id);		  
-		if($tokenAPI==$tokenORI){ 
-			$wallet = WalletAddress::where('uid',$uid)->where('crypto',$crypto)->first();
-			if($wallet){
-				$invoice = InvoiceLND::where('uid',$uid)->orderBy('id','desc')->get();
-
-				$datamsg = response()->json([ 
-					'mesej' => 'jaya',
-					'info' => $invoice,
-				]);
-			}else{
-				$datamsg = response()->json([ 
-					'mesej' => 'Lightning user does not exist',
+			$tokenORI = apiToken($user->id);		  
+			if($tokenAPI==$tokenORI){ 
+				$wallet = WalletAddress::where('uid',$uid)->where('crypto',$crypto)->first();
+				if($wallet){
+					$invoice = InvoiceLND::where('uid',$uid)->orderBy('id','desc')->get();
+					$datamsg = response()->json([ 
+						'mesej' => 'jaya',
+						'info' => $invoice,
 					]);
+				}else{
+					$datamsg = response()->json([ 
+						'mesej' => 'Lightning user does not exist',
+					]);
+				}
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+				]);	
 			}
 		}
 		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'No Access',
-			]);	
-		}
-            
-        }else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
-				]);
+			]);
         }
-        
-		return $datamsg->content();
+        return $datamsg->content();
 	}
 
 	#################Create Invoice#########################
@@ -1448,47 +1460,45 @@ class ApiController extends Controller{
 		$user = User::where('id',$request->uid)->first();
         
         if($user){
-		$tokenORI = apiToken($user->id);		  
-		if($request->tokenAPI==$tokenORI){
-			$invcreate = receivelightning001($user->label, $request->amount, $request->memo, $request->expired);
-			if(array_key_exists("error", $invcreate)){
+			$tokenORI = apiToken($user->id);		  
+			if($request->tokenAPI==$tokenORI){
+				$invcreate = receivelightning001($user->label, $request->amount, $request->memo, $request->expired);
+				if(array_key_exists("error", $invcreate)){
+					$datamsg = response()->json([ 
+						'mesej' => $invcreate['error'],
+					]);
+			 		return $datamsg->content(); 
+				}
+				$newHash = $invcreate['payment_request'];
+
+				$ins = new InvoiceLND;
+				$ins->uid = $user->id;
+				$ins->hash = $newHash;
+				$ins->amount = $request->amount;
+				$ins->expired = $request->expired;
+				$ins->date_expired = date_format(Carbon::now()->addHours($request->expired),"Y-m-d H:i:s");
+				$ins->memo = $request->memo;
+				$ins->save();
+
 				$datamsg = response()->json([ 
-					'mesej' => $invcreate['error'],
+					'mesej' => 'jaya',
+					'display_msj' => 'Successfully Create',
 				]);
-		 		return $datamsg->content(); 
 			}
-			$newHash = $invcreate['payment_request'];
-
-			$ins = new InvoiceLND;
-			$ins->uid = $user->id;
-			$ins->hash = $newHash;
-			$ins->amount = $request->amount;
-			$ins->expired = $request->expired;
-			$ins->date_expired = date_format(Carbon::now()->addHours($request->expired),"Y-m-d H:i:s");
-			$ins->memo = $request->memo;
-			$ins->save();
-
-			$datamsg = response()->json([ 
-				'mesej' => 'jaya',
-				'display_msj' => 'Successfully Create',
-			]);
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+				]);	
+			}
 		}
 		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'No Access',
-			]);	
-		}
-            
-        }else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
-				]);
+			]);
         }
-        
-		return $datamsg->content();
+        return $datamsg->content();
 	}
 	
-	//	
 	#################Send Crypto LND TO LND #########################
 	public function sendLND(Request $request){ 
 		$crypto = $request->crypto;
@@ -1506,12 +1516,13 @@ class ApiController extends Controller{
 			   'data' => $msg
 		   ]);
 			return $datamsg->content();
-	   }
+	   	}
 
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
 		$currency = Currency::where('id',$useruid->currency)->first();
 
 		$invdet = getInvoiceDet($recipient);
+		
 		if(array_key_exists("error", $invdet)){
 			$msg = array("mesej"=>"Invalid Invoice!");
 			$datamsg = response()->json([
@@ -1519,8 +1530,8 @@ class ApiController extends Controller{
 			]);
 		 	return $datamsg->content(); 
 		}
-		$amount = $invdet['num_satoshis'];  //in sat
-				   
+		
+		$amount = $invdet['num_satoshis'];  //in sat	   
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
@@ -1592,8 +1603,8 @@ class ApiController extends Controller{
 					$withdraw->save();
 					  
 					WalletAddress::where('uid', $useruid->id)->where('crypto', $crypto)
-					->update([
-						'balance' => number_format($after_bal, 8, '.', ''), 
+						->update([
+							'balance' => number_format($after_bal, 8, '.', ''), 
 					]);
 
 					$msg = array("mesej"=>$error);
@@ -1671,7 +1682,7 @@ class ApiController extends Controller{
 			   'data' => $msg
 		   ]);
 			return $datamsg->content();
-	   }
+	   	}
 	    
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
 		$currency = Currency::where('id',$useruid->currency)->first();
@@ -1705,7 +1716,7 @@ class ApiController extends Controller{
 				]);
 			 	return $datamsg->content();
 			}
-		 }			 
+		}			 
 		 
 		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
 		$totalfunds = number_format($amount, 8, '.', ''); // in sat
@@ -1790,8 +1801,8 @@ class ApiController extends Controller{
 					$withdraw->save();
 
 					WalletAddress::where('uid', $useruid->id)->where('crypto', $crypto)
-					->update([
-						'balance' => number_format($after_bal, 8, '.', ''), 
+						->update([
+							'balance' => number_format($after_bal, 8, '.', ''), 
 					]);
 					
 					$msg = array(
@@ -1802,8 +1813,7 @@ class ApiController extends Controller{
 						'data' => $msg
 					]);
 					return $datamsg->content(); 
-				} 
-				
+				} 	
 			}// end send /move crypto	
 		}
 		else{
@@ -1815,7 +1825,6 @@ class ApiController extends Controller{
 		}	 
 	}
 	
-	//	
 	#################List Channel #########################
 	public function list_channel(Request $request){ 
 		$uid = $request->uid;
@@ -1825,32 +1834,29 @@ class ApiController extends Controller{
 		$user = User::where('label',$usr_crypto)->first();
         
         if($user){
-		$tokenORI = apiToken($user->id);		  
-		if($tokenAPI==$tokenORI){
-			$trans = listchannel($crypto, $user->label);
+			$tokenORI = apiToken($user->id);		  
+			if($tokenAPI==$tokenORI){
+				$trans = listchannel($crypto, $user->label);
 
-			$datamsg = response()->json([ 
-				'mesej' => 'jaya',
-				'info' => $trans,
-			]);
-		}
-		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'No Access',
-			]);	
-		}
-            
-        }else{
+				$datamsg = response()->json([ 
+					'mesej' => 'jaya',
+					'info' => $trans,
+				]);
+			}
+			else{
+				$datamsg = response()->json([ 
+				'mesej' => 'No Access',
+				]);	
+			}   
+        }
+        else{
             $datamsg = response()->json([ 
 				'mesej' => 'User does not exist',
 				]);
         }
-        
-		return $datamsg->content(); 
-
-	}
-	
-	//	
+        return $datamsg->content();
+    }
+		
 	#################Add Channel #########################
 	public function create_channel(Request $request){ 
 		$uid = $request->uid;
@@ -1867,7 +1873,7 @@ class ApiController extends Controller{
 			   'data' => $msg
 		   ]);
 			return $datamsg->content();
-	   } 
+	   	} 
 		else{
 			$tokenORI = apiToken($useruid->id); 
 			if($request->tokenAPI!=$tokenORI){
@@ -1877,7 +1883,6 @@ class ApiController extends Controller{
 				]);	
 				return $datamsg->content();
 			}
-
 		}
 
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
@@ -1894,7 +1899,8 @@ class ApiController extends Controller{
 				'data' => $msg
 			]);	
 			return $datamsg->content();
-		}else{
+		}
+		else{
 			$crypto_txid = openchanlightning001($peers, $localsat, $pushsat);
  
 			if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
@@ -1905,7 +1911,8 @@ class ApiController extends Controller{
 					'data' => $msg
 				]);	
 				return $datamsg->content();
-			}else{
+			}
+			else{
 				$amount = 230;
 
 				$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
@@ -1938,12 +1945,12 @@ class ApiController extends Controller{
 					'data' => $msg
 				]);	
 				return $datamsg->content();
-				}
+			}
 
 		}
 	}
 	
-	//	
+	
 	#################Close Channel #########################
 	public function close_channel(Request $request){ 
 		$uid = $request->uid; 
@@ -1958,7 +1965,7 @@ class ApiController extends Controller{
 			   'data' => $msg
 		   ]);
 			return $datamsg->content();
-	   } 
+	   	} 
 		else{
 			$tokenORI = apiToken($useruid->id); 
 			if($request->tokenAPI!=$tokenORI){
@@ -1968,7 +1975,6 @@ class ApiController extends Controller{
 				]);	
 				return $datamsg->content();
 			}
-
 		}
 
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
@@ -1980,7 +1986,7 @@ class ApiController extends Controller{
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
  
 		$crypto_txid = closechanlightning001($idHash);
-dd($crypto_txid);
+
 		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 			$error = $crypto_txid['error'];
 
@@ -1989,7 +1995,8 @@ dd($crypto_txid);
 				'data' => $msg
 			]);	
 			return $datamsg->content();
-		}else{
+		}
+		else{
 			$amount = 230;
 
 			$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
@@ -2023,7 +2030,6 @@ dd($crypto_txid);
 			]);	
 			return $datamsg->content();
 		}
-
 	} 
 
 }  // tag
