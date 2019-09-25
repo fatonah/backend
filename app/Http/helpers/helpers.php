@@ -1509,16 +1509,52 @@ function listchannel($crypto, $label){
     $closedchan = $lnrest->getChanClosed();
 
     $user = WalletAddress::where('label', $label)->first();
-    $trans = TransLND::where('uid',$user->uid)->where('status','success')->get(); 
-    $trans_txid = $trans->txid;
+    $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get();
 
-    dd($trans_txid);
-    $chan = array(
-        'all_channels' => $allchan, 
-        'pending_channels' => $pendchan, 
-        'closed_channels' => $closedchan
+    if(!$transaction){
+        $msg = array('error'=>"No Transaction Found for Channel");
+        return $msg;
+    }
+
+    foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
+
+    //active channel match
+    foreach ($allchan as $achan ) {
+        foreach ($achan as $ach ) {
+            $achan_txid[] = explode(":",$ach['channel_point'])[0];
+            if(array_intersect($trans_txid,$achan_txid)){$opmatch[] = $ach;}
+            else{$opmatch=null;}  
+        }
+    }
+    //dd($opmatch, $achan_txid, $trans_txid);
+
+    // //pending channel match
+    foreach ($pendchan as $pchan ) {
+        foreach ($pchan as $pch ) {
+            $pchan_txid[] = explode(":",$pch['channel']['channel_point'])[0];
+            if(array_intersect($trans_txid,$pchan_txid)){$pdmatch[] = $pch;}
+            else{$pdmatch=null;} 
+        }
+    }
+    //dd($pdmatch, $pchan_txid, $trans_txid);
+
+    //closed channel match
+    foreach ($closedchan as $cchan ) {
+        foreach ($cchan as $cch ) {
+            $cchan_txid[] = $cch['closing_tx_hash'];
+            if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
+            else{$clmatch=null;}
+        }
+    }
+    //dd($clmatch, $cchan_txid, $trans_txid);
+
+    $channel = array(
+        'active_channels' => $opmatch, 
+        'pending_channels' => $pdmatch, 
+        'closed_channels' => $clmatch
     );
-    return $trans;
+    dd($channel);
+    return $channel;
 }
 
 /////////////////////////////////////////////////////////////////////
