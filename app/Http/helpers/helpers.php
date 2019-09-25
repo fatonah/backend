@@ -110,33 +110,34 @@ function getestimatefee($crypto) {
         $fee = number_format(bitcoind()->client($crycode)->estimatesmartfee($numberblock)->get()['feerate'], 8, '.', '');
         return $fee;
     }
-    // elseif($crypto == 'LND'){
-    //     $crycode = 'lightning';
-    //     $lnrest = new LNDAvtClient();
-    //     $allchan = $lnrest->getAllChannels();
-    //     foreach ($allchan as $chan ) {
-    //         foreach ($chan as $c ) {
-    //             $feeall = $lnrest->getFee();
-    //             foreach ($feeall as $feearr ) {
-    //                 $i=0;
-    //                 foreach ($feearr as $arr) {
-    //                     $chanpoint = $arr['chan_point'];
-    //                     $base_fee_msat = number_format($arr['base_fee_msat'], 8, '.', '');
-    //                     $fee_rate = number_format($arr['fee_rate']*100000000, 8, '.', '');
-    //                     $ch[$i] = array(
-    //                         'remote_pubkey'=>$c['remote_pubkey'],
-    //                         'channel_point'=>$c['channel_point'],
-    //                         'base_fee_msat'=> $base_fee_msat,
-    //                         'fee_rate'=> $fee_rate
-    //                     );
-    //                     $i++;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     $fee = $ch;
-    //     return $fee;
-    // }
+    elseif($crypto == 'LND'){
+        // $crycode = 'lightning';
+        // $lnrest = new LNDAvtClient();
+        // $allchan = $lnrest->getAllChannels();
+        // foreach ($allchan as $chan ) {
+        //     foreach ($chan as $c ) {
+        //         $feeall = $lnrest->getFee();
+        //         foreach ($feeall as $feearr ) {
+        //             $i=0;
+        //             foreach ($feearr as $arr) {
+        //                 $chanpoint = $arr['chan_point'];
+        //                 $base_fee_msat = number_format($arr['base_fee_msat'], 8, '.', '');
+        //                 $fee_rate = number_format($arr['fee_rate']*100000000, 8, '.', '');
+        //                 $ch[$i] = array(
+        //                     'remote_pubkey'=>$c['remote_pubkey'],
+        //                     'channel_point'=>$c['channel_point'],
+        //                     'base_fee_msat'=> $base_fee_msat,
+        //                     'fee_rate'=> $fee_rate
+        //                 );
+        //                 $i++;
+        //             }
+        //         }
+        //     }
+        // }
+        //$fee = $ch;
+        $fee = 0;
+        return $fee;
+    }
     else {
         $msg = array("error"=>"Invalid Crypto");
         return $msg;

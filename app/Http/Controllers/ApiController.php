@@ -707,8 +707,7 @@ class ApiController extends Controller{
 						
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label);  
-						$feesCrypto = 0; //number_format(getestimatefee($row['crypto']) + settings('commission_withdraw')/$price, 8, '.', '');
-						//dd($feesCrypto); 
+						$feesCrypto = number_format(getestimatefee($row['crypto']) + (settings('commission_withdraw')/$price), 8, '.', '');  
 
 						$results[] = array('price' => $price, 'imgCrypto' => $row['url_img'], 'nameCrypto' => $row['name'], 'crypto' => $row['crypto'], 'balance' => $totalCrypto, 'myrBalance' => $myrCrypto, 'addressCrypto' => $addressCrypto, 'feesCrypto' => $feesCrypto);	
 						$jumMYR = $jumMYR + $myrCrypto;
@@ -750,7 +749,7 @@ class ApiController extends Controller{
 		 
 	#################Dashboard#########################
 	public function dash_view($crypto,$userid,$tokenAPI){
-		 
+		
 		$jumMYR = 0; $bilCrypto = 0;
 		$user = User::where('id',$userid)->first(); 
 		if($user){
@@ -758,7 +757,7 @@ class ApiController extends Controller{
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('crypto',$crypto)->first();
 				$currency = Currency::where('id',$user->currency)->first();
-				   
+				
 						$json_string = settings('url_gecko').'simple/price?ids='.$priceapi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 						$jsondata = file_get_contents($json_string);
 						$obj = json_decode($jsondata, TRUE); 
@@ -771,8 +770,9 @@ class ApiController extends Controller{
 						
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($priceapi->crypto, $user->label);   
-						$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
-			 
+					 
+						$feesCrypto = number_format(getestimatefee($priceapi->crypto) + (settings('commission_withdraw')/$price), 8, '.', ''); 
+			  
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
 					'price' => $priceapi->price,
@@ -2025,5 +2025,8 @@ class ApiController extends Controller{
 		}
 
 	} 
+
+
+
 
 }  // tag
