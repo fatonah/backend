@@ -1831,21 +1831,28 @@ class ApiController extends Controller{
 		$crypto = $request->crypto;
 		$token = $request->tokenAPI;
 
-		$user = User::where('label',$usr_crypto)->first();
+		$user = User::where('id',$uid)->first();
         
         if($user){
 			$tokenORI = apiToken($user->id);		  
-			if($tokenAPI==$tokenORI){
-				$trans = listchannel($crypto, $user->label);
-
-				$datamsg = response()->json([ 
-					'mesej' => 'jaya',
-					'info' => $trans,
-				]);
+			if($token==$tokenORI){
+				if($crypto != 'LND'){
+					$datamsg = response()->json([ 
+						'mesej' => 'Channel Only Available for Lightning Blockchain',
+					]);	
+				}
+				else{
+					$trans = listchannel($crypto, $user->label);
+					dd($tran);
+					$datamsg = response()->json([ 
+						'mesej' => 'jaya',
+						'info' => $trans,
+					]);
+				}
 			}
 			else{
 				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
+					'mesej' => 'No Access',
 				]);	
 			}   
         }

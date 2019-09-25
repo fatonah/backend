@@ -494,7 +494,7 @@ function listransaction($crypto, $label) {
         $crycode = 'lightning';
         //GET label transaction
         $user = WalletAddress::where('label', $label)->first();
-        $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get(); 
+        $transaction = TransLND::where('uid',$user->uid)->get(); 
         if($transaction){return $transaction;}
         else{return null;}
     }
@@ -1503,19 +1503,22 @@ function receivelightning001($label, $amount, $memo, $expiryRaw){
 ///  LIST ALL CHANNEL LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function listchannel($crypto, $label){
-    $crypto = 'LND';
     $lnrest = new LNDAvtClient();
     $allchan = $lnrest->getAllChannels();
     $pendchan = $lnrest->getPendingChannels();
     $closedchan = $lnrest->getChanClosed();
-    $trans = listransaction($crypto, $label);
-    //dd($trans);
+
+    $user = WalletAddress::where('label', $label)->first();
+    $trans = TransLND::where('uid',$user->uid)->where('status','success')->get(); 
+    $trans_txid = $trans->txid;
+
+    dd($trans_txid);
     $chan = array(
         'all_channels' => $allchan, 
         'pending_channels' => $pendchan, 
         'closed_channels' => $closedchan
     );
-    return $chan;
+    return $trans;
 }
 
 /////////////////////////////////////////////////////////////////////
