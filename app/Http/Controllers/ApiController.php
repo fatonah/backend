@@ -706,11 +706,7 @@ class ApiController extends Controller{
 						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
 						
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
-						$addressCrypto = getaddress($row['crypto'], $user->label);
-						// dd(
-						// 	getestimatefee($row['crypto']),
-						// 	number_format(strval(settings('commission_withdraw')/$price), 8, '.', '')
-						// );  
+						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
 
 						$results[] = array('price' => $price, 'imgCrypto' => $row['url_img'], 'nameCrypto' => $row['name'], 'crypto' => $row['crypto'], 'balance' => $totalCrypto, 'myrBalance' => $myrCrypto, 'addressCrypto' => $addressCrypto, 'feesCrypto' => $feesCrypto);	
