@@ -33,6 +33,64 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
+		//dd(listchannel('LND','usr_bsod666'));
+		dd(getLightningTXDet('0a6da1f0b67a7ebe1a1e7475ba7904ee2d7fd29e35ce6b7eead60400ec334d5c'));
+		dd(gettransaction_crypto('BTC', 'be14814ed8b9e4292a93ce630c060e5a2237c33e75192aa96773e764a8e87fa5'));
+		$curr = Carbon::now(); 
+		$create_ts = "1568790796";
+		$hours = strval("9000"/3600);
+		$create_date = Carbon::createFromTimestamp($create_ts); 
+		$exp_date = Carbon::parse($create_date)->addHour($hours);
+		$diff = $exp_date->diffInMinutes($curr);
+
+
+		//update expired invoice
+		$allinv = InvoiceLND::all();
+		foreach ($allinv as $inv) {
+			$invhash[] = $inv['hash'];
+			foreach ($invhash as $hash) {
+				$invdet[] = getInvoiceDet($hash);
+				foreach ($invdet as $det) {
+					if(!array_key_exists('error', $det)){
+						$create_ts = $det['timestamp']; //"1568790796";
+						$hours = $det['expiry']/3600;
+						$create_date = Carbon::createFromTimestamp($create_ts); 
+						$exp_date = Carbon::parse($create_date)->addHour($hours);
+						$diff = $exp_date->diffInMinutes($curr);
+
+						if($diff > 1){
+							$upinv = InvoiceLND::where('hash', $hash)->update(['status' => 'expired']);
+						}
+					}
+				}	
+			}
+		}
+
+
+		dd($det['timestamp'], $invdet);
+
+		//update paid invoice
+		// $allpayment = getLightningPayment();
+		// foreach ($allpayment as $payment) {
+		// 	foreach ($payment as $pay) {
+		// 		if($pay['status'] == "SUCCEEDED"){
+		// 			$upinv = InvoiceLND::where('hash', $pay['payment_request'])->update([
+		// 				'txid' => $pay['payment_hash'],
+		// 				'status' => 'paid'
+		// 			]);
+		// 		}
+		// 		elseif($pay['status'] == "SUCCEEDED"){
+		// 			$upinv = InvoiceLND::where('hash', $pay['payment_request'])->update([
+		// 				'txid' => $pay['payment_hash'],
+		// 				'status' => 'paid'
+		// 			]);
+		// 		}
+		// 	}
+		// }
+		// dd($allpayment);
+        
+    
+
 		//$conn = test();
 		//dd($conn);
 		//dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));

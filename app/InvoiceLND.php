@@ -8,6 +8,14 @@ class InvoiceLND extends Model
 {
 	protected $table = 'invoice_lnd';
 	protected $fillable = [
-		'id','uid','hash','amount','expired','date_expired','memo','created_at','updated_at',
+		'id',
+		'uid',
+		'hash',
+		'amount',
+		'expired',
+		'date_expired',
+		'memo',
+		'status',
+		'txid',
 	];
 }
