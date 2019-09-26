@@ -1453,7 +1453,7 @@ function refundlightning001($label, $sendall, $amount, $recepient){
         return $sendchain;
     }
     else{
-        $msg = array('error'=>" Insuffucient fund");
+        $msg = array('error'=>"Insuffucient fund");
         return $msg;
     }
 }
@@ -1480,7 +1480,7 @@ function paymentlightning003($label, $inv){
         return $res;
     }
     else{
-        $msg = array('error'=>" Insuffucient fund");
+        $msg = array('error'=>"Insuffucient fund");
         return $msg;
     }
 }
@@ -1515,9 +1515,7 @@ function listchannel($crypto, $label){
         $msg = array('error'=>"No Transaction Found for Channel");
         return $msg;
     }
-
     foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
-
     //active channel match
     foreach ($allchan as $achan ) {
         foreach ($achan as $ach ) {
@@ -1528,7 +1526,7 @@ function listchannel($crypto, $label){
     }
     // dd($opmatch, $achan_txid, $trans_txid);
     
-    // //pending channel match
+    //pending channel match
     foreach ($pendchan as $pchan ) {
         foreach ($pchan as $pch ) {
             $pchan_txid[] = explode(":",$pch['channel']['channel_point'])[0];
