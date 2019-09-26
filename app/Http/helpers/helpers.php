@@ -1541,7 +1541,7 @@ function listchannel($crypto, $label){
     foreach ($allchan as $achan ) {
         foreach ($achan as $ach ) {
             $achan_txid[] = explode(":",$ach['channel_point'])[0];
-            if(array_intersect($trans_txid,$achan_txid)){$opmatch[] = $ach;}
+            if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
             else{$opmatch=null;}  
         }
     }
@@ -1551,7 +1551,7 @@ function listchannel($crypto, $label){
     foreach ($pendchan as $pchan ) {
         foreach ($pchan as $pch ) {
             $pchan_txid[] = explode(":",$pch['channel']['channel_point'])[0];
-            if(array_intersect($trans_txid,$pchan_txid)){$pdmatch[] = $pch;}
+            if(array_intersect($trans_txid,$pchan_txid)){$match[] = $pch;}
             else{$pdmatch=null;} 
         }
     }
@@ -1561,19 +1561,21 @@ function listchannel($crypto, $label){
     foreach ($closedchan as $cchan ) {
         foreach ($cchan as $cch ) {
             $cchan_txid[] = $cch['closing_tx_hash'];
-            if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
+            if(array_intersect($trans_txid,$cchan_txid)){$match[] = $cch;}
             else{$clmatch=null;}
         }
     }
     //dd($clmatch, $cchan_txid, $trans_txid);
-    
+    /*
     $channel = array(
         'active_channels' => $opmatch, 
         'pending_channels' => $pdmatch, 
         'closed_channels' => $clmatch
     );
+    */
+    //$channel = $chan_txid; 
     //dd($channel);
-    return $channel;
+    return $match;
 }
 
 /////////////////////////////////////////////////////////////////////
