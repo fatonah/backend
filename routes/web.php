@@ -39,6 +39,7 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::get('transInvLND/{crypto}/{uid}/{token}','ApiController@transactionInvLND');
 	Route::post('sendLND','ApiController@sendLND');
 	Route::post('sendLNDBTC','ApiController@sendLNDBTC');
+	Route::post('sendBTCLND','ApiController@sendBTCLND');
 	Route::post('listChannel','ApiController@list_channel');
 	Route::post('addChannel','ApiController@create_channel');
 	Route::post('closeChannel','ApiController@close_channel');

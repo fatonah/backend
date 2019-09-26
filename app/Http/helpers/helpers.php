@@ -1510,7 +1510,7 @@ function listchannel($crypto, $label){
 
     $user = WalletAddress::where('label', $label)->first();
     $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get();
-
+    
     if(!$transaction){
         $msg = array('error'=>"No Transaction Found for Channel");
         return $msg;
@@ -1526,8 +1526,8 @@ function listchannel($crypto, $label){
             else{$opmatch=null;}  
         }
     }
-    //dd($opmatch, $achan_txid, $trans_txid);
-
+    // dd($opmatch, $achan_txid, $trans_txid);
+    
     // //pending channel match
     foreach ($pendchan as $pchan ) {
         foreach ($pchan as $pch ) {
@@ -1537,7 +1537,7 @@ function listchannel($crypto, $label){
         }
     }
     //dd($pdmatch, $pchan_txid, $trans_txid);
-
+   
     //closed channel match
     foreach ($closedchan as $cchan ) {
         foreach ($cchan as $cch ) {
@@ -1547,13 +1547,13 @@ function listchannel($crypto, $label){
         }
     }
     //dd($clmatch, $cchan_txid, $trans_txid);
-
+    
     $channel = array(
         'active_channels' => $opmatch, 
         'pending_channels' => $pdmatch, 
         'closed_channels' => $clmatch
     );
-    dd($channel);
+    //dd($channel);
     return $channel;
 }
 

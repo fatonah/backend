@@ -1670,8 +1670,7 @@ class ApiController extends Controller{
 		$recipient = $request->sendto;
 		$amount = $request->amount;
 		$remarks = $request->remarks;
-		$secretpin = $request->secretpin;
-		$catPay = $request->catPay;
+		$secretpin = $request->secretpin; 
 		$sat = 100000000;
 	 
 		$useruid = User::where('label',$label)->first();   
@@ -1733,9 +1732,8 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				if($catPay==1){ $catPayment = true; }else{ $catPayment = false; }
-
-				$crypto_txid = refundlightning001($label, $catPayment, $amount, $recipient);
+				 
+				$crypto_txid = 1;//refundlightning001($label, $catPayment, $amount, $recipient);
 				$myr_amount = ($amount/$sat)*$price;
 	 
 				if($crypto_txid=='' || array_key_exists("error", $crypto_txid) || array_key_exists("payment_error", $crypto_txid)){ //failed withdraw
@@ -1825,6 +1823,151 @@ class ApiController extends Controller{
 		}	 
 	}
 	
+	#################Send BTC to LND #########################
+	public function sendBTCLND(Request $request){ 
+		$crypto = $request->crypto;
+		$amount = $request->amountcrypto;
+		$label = $request->sendfrom; 
+		$recipient = $request->sendto;
+		$remarks = $request->remarks;
+		$secretpin = $request->secretpin;
+	 
+		$useruid = User::where('label',$label)->first();   
+		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
+		$currency = Currency::where('id',$useruid->currency)->first();
+				   
+		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+		$jsondata = file_get_contents($json_string);
+		$obj = json_decode($jsondata, TRUE); 
+		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
+
+		$amountset = 0.01;
+		$minwithdraw = number_format($amountset/$price, 8, '.', '');
+	
+		if($amount<=$minwithdraw){
+			$m = 'Minimum withdraw must more than '.$minwithdraw;
+		 	$msg = array("mesej"=>$m);
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+		 	return $datamsg->content();	
+		}
+		else if(!isset($useruid)){
+		 	$msg = array("mesej"=>"Id Sender does not exist!");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+		 	return $datamsg->content();
+		}
+		else if(isset($useruid) && $useruid->secretpin!=$secretpin){
+		 	$msg = array("mesej"=>"Wrong Secret Pin!");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+		 	return $datamsg->content();	 
+		}
+		else{
+			$wuserF = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
+			if(!isset($wuserF)){
+				$m = $crypto.' for user does not exist!';
+			 	$msg = array("mesej"=>$m);
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+			 	return $datamsg->content();
+			}
+
+		 }			 
+		 
+		$wuserF = getaddress($crypto,$label); 
+		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
+		$net_fee = getestimatefee($crypto);
+		
+		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
+		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+		$totalfunds = number_format($amount + $fee, 8, '.', '');
+		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
+		
+		$tokenORI = apiToken($useruid->id); 
+		if($request->tokenAPI==$tokenORI){
+			
+			if($userbalance < $totalfunds) {   
+				$msg = array("mesej"=>"Sorry, you do not have enough funds for withdrawal!");
+				$datamsg = response()->json([
+					'data' => $msg
+				]);
+				return $datamsg->content();
+			}
+			else{
+				$crypto_txid = 1;
+				//sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);   
+				$myr_amount = $amount*$price;
+					 
+				if($crypto_txid==''){ //failed withdraw
+					$withdraw = new Withdrawal;
+					$withdraw->uid = $useruid->id;
+					$withdraw->status = 'failed';
+					$withdraw->amount= $amount; 
+					$withdraw->before_bal = $userbalance;
+					$withdraw->after_bal = $after_bal; 
+					$withdraw->recipient = $recipient;
+					$withdraw->netfee = $net_fee; 
+					$withdraw->walletfee = $comm_fee; 
+					$withdraw->txid = $crypto_txid;
+					$withdraw->crypto = $crypto;
+					$withdraw->remarks = $remarks;
+					$withdraw->currency = $useruid->currency;
+					$withdraw->rate = number_format($price, 2, '.', '');
+					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
+					$withdraw->type = 'external';
+					$withdraw->save();
+					  
+					$msg = array("mesej"=>"Failed widthdraw!");
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+					return $datamsg->content();
+				}
+				else{ //success withdraw
+					$withdraw = new Withdrawal;
+					$withdraw->uid = $useruid->id;
+					$withdraw->status = 'success';
+					$withdraw->amount= $amount; 
+					$withdraw->before_bal = $userbalance;
+					$withdraw->after_bal = $after_bal;
+					$withdraw->recipient = $recipient;
+					$withdraw->netfee = $net_fee; 
+					$withdraw->walletfee = $comm_fee; 
+					$withdraw->txid = $crypto_txid;
+					$withdraw->crypto = $crypto;
+					$withdraw->remarks = $remarks;
+					$withdraw->currency = $useruid->currency;
+					$withdraw->rate = number_format($price, 2, '.', '');
+					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
+					$withdraw->type = 'external';
+					$withdraw->save();
+						 
+					$msg = array(
+						"mesej"=>"jaya",
+						"display_msj"=>'Successfully refill. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
+					);
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+					return $datamsg->content(); 
+				}
+			}// end send /move crypto	
+		}
+		else{
+			$msg = array("mesej"=>"No Access");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);	
+			return $datamsg->content();
+		}	 
+	}
+	
+	 	
 	#################List Channel #########################
 	public function list_channel(Request $request){ 
 		//afaa5899c0f876337a491c7e9555750a58fe671de4de12a236f121eba0a591a2 23
@@ -1974,6 +2117,14 @@ class ApiController extends Controller{
 		$idHash = $request->idHash;
 		$crypto = $request->crypto;
 
+		$trans = gettransaction_crypto('BTC', 'c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8');
+ 
+		   	$datamsg = response()->json([
+			   'data' => $trans
+		   	]);
+			return $datamsg->content();
+
+
 		$useruid = User::where('id',$uid)->first();
 
 		if(!isset($useruid)){
@@ -2014,6 +2165,8 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 		else{
+			$trans = gettransaction_crypto('BTC', $txid);
+
 			$amount = 230;
 
 			$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
@@ -2028,6 +2181,7 @@ class ApiController extends Controller{
 			$withdraw->amount= $totalfunds; 
 			$withdraw->before_bal = $userbalance;
 			$withdraw->after_bal = $after_bal;
+			$withdraw->recipient = $idHash;
 			$withdraw->txid = $crypto_txid;
 			$withdraw->netfee = 0; 
 			$withdraw->walletfee = 0; 
