@@ -42,7 +42,7 @@ class LNDAvtClient
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);
-        $machex = bin2hex(file_get_contents($this->macaroon));
+        $machex = bin2hex($this->macaroon);
         $payload = 'Grpc-Metadata-macaroon : '.$machex;
         curl_setopt($ch, CURLOPT_HTTPHEADER, array($payload,'Accept: application/json','Content-Type: application/json')); 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -149,7 +149,7 @@ class LNDAvtClient
     }
     public function sendOnChain($sendall, $amount, $address) {
         $payload =  json_encode(array(
-            'send_all' => $sendall,
+            'send_all' => 0,
             'amount' => $amount,
             //'sat_per_byte' => $satperbyte,
             'addr' => $address
@@ -216,7 +216,7 @@ class LNDAvtClient
         $hex_id =$tx_id['0'].'/'.$tx_id['1'];
         $url = '/v1/channels/'.$hex_id;
         $res = LNDAvtClient::LnRestDEL($url);
-        return json_decode($res);        
+        return json_decode($res,true);        
     }
     public function openChannel($nodePubkeyString,$localFundingAmount,$pushSat,$targetConf = "",$satPerByte =""){
         $array = json_encode(array(

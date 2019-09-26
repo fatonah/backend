@@ -1481,6 +1481,7 @@ function getInvoiceDet($inv){
 function getLightningTXDet($txid){
     $lnrest = new LNDAvtClient();
     $alltx = $lnrest->getTransactions();
+    dd($alltx);
     foreach ($alltx as $tx) {
         foreach ($tx as $t) {
             if($t['tx_hash'] == $txid){return $t;}
@@ -1526,7 +1527,7 @@ function receivelightning001($label, $amount, $memo, $expiryRaw){
 function listchannel($crypto, $label){
     $lnrest = new LNDAvtClient();
     $allchan = $lnrest->getAllChannels();
-    $pendchan = $lnrest->getPendingChannels();
+    //$pendchan = $lnrest->getPendingChannels();
     $closedchan = $lnrest->getChanClosed();
 
     $user = WalletAddress::where('label', $label)->first();
@@ -1541,41 +1542,42 @@ function listchannel($crypto, $label){
     foreach ($allchan as $achan ) {
         foreach ($achan as $ach ) {
             $achan_txid[] = explode(":",$ach['channel_point'])[0];
-            if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
+            if(array_intersect($trans_txid,$achan_txid)){$opmatch[] = $ach;}
             else{$opmatch=null;}  
         }
     }
     // dd($opmatch, $achan_txid, $trans_txid);
     
     //pending channel match
-    foreach ($pendchan as $pchan ) {
-        foreach ($pchan as $pch ) {
-            $pchan_txid[] = explode(":",$pch['channel']['channel_point'])[0];
-            if(array_intersect($trans_txid,$pchan_txid)){$match[] = $pch;}
-            else{$pdmatch=null;} 
-        }
-    }
+    // foreach ($pendchan as $pchan ) {
+    //     foreach ($pchan as $pch ) {
+    //         // $pchan_txid[] = explode(":",$pch['channel_point'])[0];
+    //         // if(array_intersect($trans_txid,$pchan_txid)){$pdmatch[] = $pch;}
+    //         // else{$pdmatch=null;} 
+    //     }
+    // }
+    //dd($pendchan);
     //dd($pdmatch, $pchan_txid, $trans_txid);
    
     //closed channel match
     foreach ($closedchan as $cchan ) {
         foreach ($cchan as $cch ) {
             $cchan_txid[] = $cch['closing_tx_hash'];
-            if(array_intersect($trans_txid,$cchan_txid)){$match[] = $cch;}
+            if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
             else{$clmatch=null;}
         }
     }
     //dd($clmatch, $cchan_txid, $trans_txid);
-    /*
+    
     $channel = array(
         'active_channels' => $opmatch, 
-        'pending_channels' => $pdmatch, 
+        //'pending_channels' => $pdmatch, 
         'closed_channels' => $clmatch
     );
-    */
+     
     //$channel = $chan_txid; 
     //dd($channel);
-    return $match;
+    return $channel;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1632,13 +1634,14 @@ function closechanlightning001($chanpoint){
         }
         if(in_array($chanpoint, $remotechanpoint, true)){
             $cchantxid = $lnrest->closeChannel($chanpoint);
-            if(!empty($cchantxid)) {
-                return $cchantxid;
-            }
-            else{
-                $msg = array('error'=>"No Data");
-                return $msg;
-            } 
+            return $cchantxid;
+            // if(!empty($cchantxid)) {
+            //     return $cchantxid;
+            // }
+            // else{
+            //     $msg = array('error'=>"No Data");
+            //     return $msg;
+            // } 
         }
         else{
             $msg = array('error'=>"Channel not existed on this node");
