@@ -1629,7 +1629,7 @@ function closechanlightning001($chanpoint){
             }
         }
         if(in_array($chanpoint, $remotechanpoint, true)){
-            $cchantxid = $lnrest->closeChannel($chanpoint, 1);
+            $cchantxid = $lnrest->closeChannel($chanpoint);
             if(!empty($cchantxid)) {
                 return $cchantxid;
             }

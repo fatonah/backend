@@ -34,7 +34,11 @@ class ApiController extends Controller{
 	#################Debug #########################
 	public function debug(){
 		//dd(listchannel('LND','usr_bsod666'));
-		dd(getLightningTXDet('0a6da1f0b67a7ebe1a1e7475ba7904ee2d7fd29e35ce6b7eead60400ec334d5c'));
+		//c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8
+		//1e1c0529daf9d31b1aef010e8acd66ff01c698cb0476daf7a25cb80e27447623
+		//0a6da1f0b67a7ebe1a1e7475ba7904ee2d7fd29e35ce6b7eead60400ec334d5c
+
+		dd(getLightningTXDet('c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8'));
 		dd(gettransaction_crypto('BTC', 'be14814ed8b9e4292a93ce630c060e5a2237c33e75192aa96773e764a8e87fa5'));
 		$curr = Carbon::now(); 
 		$create_ts = "1568790796";
