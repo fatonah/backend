@@ -2179,7 +2179,7 @@ class ApiController extends Controller{
 		$idHash = $request->idHash;
 		$crypto = $request->crypto;
 
-		$trans = gettransaction_crypto('BTC', 'c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8');
+		$trans = getLightningTXDet($idHash);
  
 		   	$datamsg = response()->json([
 			   'data' => $trans
