@@ -210,10 +210,10 @@ class LNDAvtClient
         $res = LNDAvtClient::LnRest('/v1/channels');
         return json_decode($res,true);
     }
-    public function closeChannel($tx_id,$force){
+    public function closeChannel($tx_id){
         $tx_id = explode(':',$tx_id);
-        ($force)? $force = '?force=true': "";
-        $hex_id =$tx_id['0'].'/'.$tx_id['1'].$force;
+        //($force)? $force = '?force=true': "";
+        $hex_id =$tx_id['0'].'/'.$tx_id['1'];
         $url = '/v1/channels/'.$hex_id;
         $res = LNDAvtClient::LnRestDEL($url);
         return json_decode($res);        
