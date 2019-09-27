@@ -843,16 +843,22 @@ class ApiController extends Controller{
 						$obj = json_decode($jsondata, TRUE); 
 					
 						$price = $obj[$row["id_gecko"]][strtolower($currency->code)];
-								
+						
 						$jumCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
-					
-						if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
+
+						if($row['crypto']=='LND'){
+						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label));
+						}else{
+						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
+						}
+
+						if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0;  }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
 						
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
 
-						$results[] = array('price' => $price, 'imgCrypto' => $row['url_img'], 'nameCrypto' => $row['name'], 'crypto' => $row['crypto'], 'balance' => $totalCrypto, 'myrBalance' => $myrCrypto, 'addressCrypto' => $addressCrypto, 'feesCrypto' => $feesCrypto);	
+						$results[] = array('price' => $price, 'imgCrypto' => $row['url_img'], 'nameCrypto' => $row['name'], 'crypto' => $row['crypto'], 'balance' => $displyCrypto, 'myrBalance' => $myrCrypto, 'addressCrypto' => $addressCrypto, 'feesCrypto' => $feesCrypto);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
 					}
@@ -907,8 +913,14 @@ class ApiController extends Controller{
 					
 				$price = $obj[$priceapi->id_gecko][strtolower($currency->code)];		
 				$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
+ 
+				if($crypto=='LND'){
+					$dipCrypto = str_replace("\n","",getbalance($crypto,$user->label));
+				}else{
+					$dipCrypto = str_replace("\n","",getbalance($crypto,$user->label)/100000000); 
+				}
 					
-				if($jumCrypto<=0){ $totalCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); } 	
+				if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
 						
 				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
@@ -921,7 +933,7 @@ class ApiController extends Controller{
 					'imgCrypto' => $priceapi->url_img,
 					'nameCrypto' => $priceapi->name,
 					'feesCrypto' => $feesCrypto,
-					'balance' => $totalCrypto,
+					'balance' => $displyCrypto,
 					'myrBalance' => $myrCrypto,
 					'uid' => $user->id,
 					'email' => $user->email,
@@ -1150,6 +1162,7 @@ class ApiController extends Controller{
 				'info' => null,
 			]);
 		}
+		
 		return $datamsg->content();
 	}
 
@@ -2289,7 +2302,7 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
  
-		$crypto_txid = closechanlightning001($idHash);
+		$crypto_txid = 1;//closechanlightning001($idHash);
 
 		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 			$error = $crypto_txid['error'];
