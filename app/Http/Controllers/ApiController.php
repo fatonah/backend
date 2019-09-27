@@ -2030,6 +2030,7 @@ class ApiController extends Controller{
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 		$net_fee = getestimatefee($crypto);
+		$memo = 'REFILL_LND';
 		
 		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
@@ -2047,9 +2048,8 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = 1;
-				//sendtoaddressRAW($crypto, $label, $recipient, $amount, 'withdraw', $comm_fee);   
-				$myr_amount = $amount*$price;
+				$crypto_txid = fundlightning001($label, $cryptoamount, $memo, $comm_fee);   
+				$myr_amount = ($amount/100000000)*$price;
 					 
 				if($crypto_txid==''){ //failed withdraw
 					$withdraw = new Withdrawal;
@@ -2265,15 +2265,6 @@ class ApiController extends Controller{
 		$uid = $request->uid; 
 		$idHash = $request->idHash;
 		$crypto = $request->crypto;
-
-		// $trans = getLightningTXDet('0a6da1f0b67a7ebe1a1e7475ba7904ee2d7fd29e35ce6b7eead60400ec334d5c');
- 
-		//    	$datamsg = response()->json([
-		// 	   'data' => $trans
-		//    	]);
-		// 	return $datamsg->content();
-
-
 		$useruid = User::where('id',$uid)->first();
 
 		if(!isset($useruid)){
@@ -2314,36 +2305,6 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 		else{
-			// $trans = gettransaction_crypto('BTC', $txid);
-
-			// $amount = 230;
-
-			// $userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
-			// $totalfunds = number_format($amount, 8, '.', ''); // in sat
-			// $after_bal =  number_format($userbalance + $totalfunds, 8, '.', '');  // in sat
-	
-			// $myr_amount = ($amount/$sat)*$price;
-
-			// $withdraw = new TransLND;
-			// $withdraw->uid = $useruid->id;
-			// $withdraw->status = 'success';
-			// $withdraw->amount= $totalfunds; 
-			// $withdraw->before_bal = $userbalance;
-			// $withdraw->after_bal = $after_bal;
-			// $withdraw->recipient = $idHash;
-			// $withdraw->txid = $crypto_txid;
-			// $withdraw->netfee = 0; 
-			// $withdraw->walletfee = 0; 
-			// $withdraw->invoice_id = '0';
-			// $withdraw->type = 'external';
-			// $withdraw->using = 'mobile';
-			// $withdraw->category = 'closed';
-			// $withdraw->remarks = '';
-			// $withdraw->currency = $useruid->currency;
-			// $withdraw->rate = number_format($price, 2, '.', '');
-			// $withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
-			// $withdraw->save();
-
 			$msg = array("mesej"=>"jaya","mesej"=>"Pending Closed!");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -2351,5 +2312,4 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 	} 
-
 }  // tag

@@ -1425,13 +1425,13 @@ function getbalanceAll($crypto) {
 /////////////////////////////////////////////////////////////////////
 ///  FUND LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function fundlightning001($sendlabel, $cryptoamount, $comm_fee){
-    $userdet = WalletAddress::where('label', $sendlabel)->where('crypto', 'LND')->first();
+function fundlightning001($label, $cryptoamount, $memo, $comm_fee){ 
+    $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
     $recvaddress = $userdet->address;
-    $balance = $userdet->balance;
+    $balance = getbalance('BTC', $label);
     $amount = number_format($cryptoamount/100000000, 8, '.', '');
     
-    if($balance >= $amount){$txid = sendtoaddressRAW('BTC', $sendlabel, $recvaddress, $amount, $comm_fee)}
+    if($balance >= $cryptoamount){$txid = sendtoaddressRAW('BTC', $label, $recvaddress, $amount, $memo, $comm_fee);}
     else{return "error: insuffucient balance";}
 }
 
