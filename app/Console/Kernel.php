@@ -14,6 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
        Commands\currentPrice::class,
+       Commands\InvoiceUpdate::class,
+       Commands\CloseChanUpdate::class,
         //
     ];
 
@@ -25,8 +27,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-         $schedule->command('command:currentPrice')
-                  ->everyMinute();
+        $schedule->command('command:currentPrice')->everyMinute();
+        $schedule->command('command:InvoiceUpdate')->everyMinute();
+        $schedule->command('command:CloseChanUpdate')->everyMinute();
     }
 
     /**

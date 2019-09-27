@@ -38,42 +38,36 @@ class ApiController extends Controller{
 		//1e1c0529daf9d31b1aef010e8acd66ff01c698cb0476daf7a25cb80e27447623
 		//0a6da1f0b67a7ebe1a1e7475ba7904ee2d7fd29e35ce6b7eead60400ec334d5c
 
-		dd(getLightningTXDet('c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8'));
-		dd(gettransaction_crypto('BTC', 'be14814ed8b9e4292a93ce630c060e5a2237c33e75192aa96773e764a8e87fa5'));
-		$curr = Carbon::now(); 
-		$create_ts = "1568790796";
-		$hours = strval("9000"/3600);
-		$create_date = Carbon::createFromTimestamp($create_ts); 
-		$exp_date = Carbon::parse($create_date)->addHour($hours);
-		$diff = $exp_date->diffInMinutes($curr);
+		//dd(getLightningTXDet('c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8'));
+		//dd(gettransaction_crypto('BTC', 'be14814ed8b9e4292a93ce630c060e5a2237c33e75192aa96773e764a8e87fa5'));
+		//$create_ts = "1568790796";
+		//$hours = strval("9000"/3600);
+		//$create_date = Carbon::createFromTimestamp($create_ts); 
+		//$exp_date = Carbon::parse($create_date)->addHour($hours);
+		//$diff = $exp_date->diffInMinutes($curr);
 
 
-		//update expired invoice
-		$allinv = InvoiceLND::all();
-		foreach ($allinv as $inv) {
-			$invhash[] = $inv['hash'];
-			foreach ($invhash as $hash) {
-				$invdet[] = getInvoiceDet($hash);
-				foreach ($invdet as $det) {
-					if(!array_key_exists('error', $det)){
-						$create_ts = $det['timestamp']; //"1568790796";
-						$hours = $det['expiry']/3600;
-						$create_date = Carbon::createFromTimestamp($create_ts); 
-						$exp_date = Carbon::parse($create_date)->addHour($hours);
-						$diff = $exp_date->diffInMinutes($curr);
-
-						if($diff > 1){
-							$upinv = InvoiceLND::where('hash', $hash)->update(['status' => 'expired']);
-						}
-					}
-				}	
-			}
-		}
-
-
-		dd($det['timestamp'], $invdet);
-
-		//update paid invoice
+		########################InvoiceUpdate COMMAND####################################
+		// //update expired invoice
+		// $allinv = InvoiceLND::all();
+		// $curr = Carbon::now(); 
+		// foreach ($allinv as $inv) {
+		// 	$invhash[] = $inv['hash'];
+		// 	foreach ($invhash as $hash) {
+		// 		$invdet[] = getInvoiceDet($hash);
+		// 		foreach ($invdet as $det) {
+		// 			if(!array_key_exists('error', $det)){
+		// 				$create_ts = $det['timestamp'];
+		// 				$hours = $det['expiry']/3600;
+		// 				$create_date = Carbon::createFromTimestamp($create_ts); 
+		// 				$exp_date = Carbon::parse($create_date)->addHour($hours);
+		// 				$diff = $exp_date->diffInMinutes($curr);
+		// 				if($diff > 1){$upinv = InvoiceLND::where('hash', $hash)->update(['status' => 'expired']);}
+		// 			}
+		// 		}	
+		// 	}
+		// }
+		// //update paid invoice
 		// $allpayment = getLightningPayment();
 		// foreach ($allpayment as $payment) {
 		// 	foreach ($payment as $pay) {
@@ -83,7 +77,87 @@ class ApiController extends Controller{
 		// 				'status' => 'paid'
 		// 			]);
 		// 		}
-		// 		elseif($pay['status'] == "SUCCEEDED"){
+		// 	}
+		// }
+
+
+		########################CloseChanUpdate COMMAND####################################
+		//update close chan tx
+		$crypto = 'LND';
+		$alltrans = TransLND::where('category', 'open')->get();
+		foreach ($alltrans as $trans) {
+			$sat = 100000000;
+			$user = User::where('id', $trans['uid'])->first();
+			$currency = Currency::where('id',$user->currency)->first();
+			$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
+			$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+			$jsondata = file_get_contents($json_string);
+			$obj = json_decode($jsondata, TRUE); 
+			$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
+
+			$closedchan = listClosedChannel();
+			foreach ($closedchan as $chan) {
+				foreach ($chan as $c) {
+					if(explode(':', $c['channel_point'])[0] == $trans['txid']){
+						$checktx = TransLND::where('category', 'closed')->where('status', 'success')->where('txid', $c['closing_tx_hash'])->count();
+						if($checktx == 0){
+							$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', ''); // in sat
+							$totalfunds = number_format($c['settled_balance'], 8, '.', ''); // in sat
+							$after_bal =  number_format($userbalance + $totalfunds, 8, '.', '');  // in sat
+							$myr_amount = ($c['settled_balance']/$sat)*$price;
+
+							if(array_key_exists('close_type', $c)){$remarks = $c['close_type'];}
+							else{$remarks = 'NEGOTIABLE _CLOSE';}
+
+							$withdraw = new TransLND;
+							$withdraw->uid = $trans['uid'];
+							$withdraw->status = 'success';
+							$withdraw->amount= $totalfunds; 
+							$withdraw->before_bal = $userbalance;
+							$withdraw->after_bal = $after_bal;
+							$withdraw->recipient = $c['remote_pubkey'];
+							$withdraw->txid = $c['closing_tx_hash'];
+							$withdraw->netfee = 0; 
+							$withdraw->walletfee = 0; 
+							$withdraw->remarks = $remarks; 
+							$withdraw->invoice_id = '0';
+							$withdraw->type = 'external';
+							$withdraw->using = 'mobile';
+							$withdraw->category = 'closed';
+							$withdraw->currency = $trans['currency'];
+							$withdraw->rate = number_format($price, 2, '.', '');
+							$withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
+							$withdraw->save();
+						}
+					}
+				}
+			}
+		}
+		dd($checktx);
+
+		
+
+		// foreach ($allinv as $inv) {
+		// 	$invhash[] = $inv['hash'];
+		// 	foreach ($invhash as $hash) {
+		// 		$invdet[] = getInvoiceDet($hash);
+		// 		foreach ($invdet as $det) {
+		// 			if(!array_key_exists('error', $det)){
+		// 				$create_ts = $det['timestamp'];
+		// 				$hours = $det['expiry']/3600;
+		// 				$create_date = Carbon::createFromTimestamp($create_ts); 
+		// 				$exp_date = Carbon::parse($create_date)->addHour($hours);
+		// 				$diff = $exp_date->diffInMinutes($curr);
+		// 				if($diff > 1){$upinv = InvoiceLND::where('hash', $hash)->update(['status' => 'expired']);}
+		// 			}
+		// 		}	
+		// 	}
+		// }
+		// //update paid invoice
+		// $allpayment = getLightningPayment();
+		// foreach ($allpayment as $payment) {
+		// 	foreach ($payment as $pay) {
+		// 		if($pay['status'] == "SUCCEEDED"){
 		// 			$upinv = InvoiceLND::where('hash', $pay['payment_request'])->update([
 		// 				'txid' => $pay['payment_hash'],
 		// 				'status' => 'paid'
@@ -91,50 +165,49 @@ class ApiController extends Controller{
 		// 		}
 		// 	}
 		// }
-		// dd($allpayment);
         
     
 
-		//$conn = test();
-		//dd($conn);
-		//dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
-		//BTC//
-		$crypto = 'LND';
-		$label = 'usr_niha_pinkexc';
-		$address = 'bc1q2gu8gq43j3zemzz6setdte4jk2tntt55hpfdpz';
-		$txid = '6faef5d1c7a423b858a025605c176a8cc22f12a3d3ddbd02f3ef818320ebcbf4';
+		// //$conn = test();
+		// //dd($conn);
+		// //dd(receivelightning001('usr_bsod666', 160, 'lolo', 1));
+		// //BTC//
+		// $crypto = 'LND';
+		// $label = 'usr_niha_pinkexc';
+		// $address = 'bc1q2gu8gq43j3zemzz6setdte4jk2tntt55hpfdpz';
+		// $txid = '6faef5d1c7a423b858a025605c176a8cc22f12a3d3ddbd02f3ef818320ebcbf4';
 
-		// // //BCH//
-		// $crypto = 'BCH';
-		// $label = 'usr_bsod666';
-		// $address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
-		// $txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
+		// // // //BCH//
+		// // $crypto = 'BCH';
+		// // $label = 'usr_bsod666';
+		// // $address = 'qztrk7m57450h65qffhjrd6ekaams3kas5ecpw6pzz';
+		// // $txid = '53c0b56f1f46046d328666ba1e86897da8b88df1da259f4b8c3ed49b1fd08114';
 
-		// //DOGE//
-		// $crypto = 'DOGE';
-		// $label = 'usr_bsod666';
-		// $address = 'DKzRr2pUGLVQRe2Csr7Y1znDhGtB1eBZLw';
-		// $txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
+		// // //DOGE//
+		// // $crypto = 'DOGE';
+		// // $label = 'usr_bsod666';
+		// // $address = 'DKzRr2pUGLVQRe2Csr7Y1znDhGtB1eBZLw';
+		// // $txid = '989b981221a1cc860d509a8ca3979f46fd222db8ec63a1bdf910ea1f39b94ac4';
 
-		//walletinfo
-		//$data = getconnection($crypto);
-		//$data = getconnection($crypto);
-		//$data = getestimatefee($crypto);  
-		//$data = getbalance($crypto, $label);
-		//$data = getaddress($crypto, $label); 
-		//$data = addCrypto($crypto, $label);
-		$data = listchannel($crypto, $label);
-		//$data = get_label_crypto($crypto, $address);
-		//$data = listransactionall($crypto, $label); 
-		//$data = listransaction($crypto, $label);
-		//$data = gettransaction_crypto($crypto, $txid);
-		//$data = dumpkey($crypto, $label);
-		//$data = getbalanceAll($crypto); 
-		dd($data);  
-		$datamsg = response()->json( 
-			 $data
-		 );
-		return $datamsg->content();
+		// //walletinfo
+		// //$data = getconnection($crypto);
+		// //$data = getconnection($crypto);
+		// //$data = getestimatefee($crypto);  
+		// //$data = getbalance($crypto, $label);
+		// //$data = getaddress($crypto, $label); 
+		// //$data = addCrypto($crypto, $label);
+		// $data = listchannel($crypto, $label);
+		// //$data = get_label_crypto($crypto, $address);
+		// //$data = listransactionall($crypto, $label); 
+		// //$data = listransaction($crypto, $label);
+		// //$data = gettransaction_crypto($crypto, $txid);
+		// //$data = dumpkey($crypto, $label);
+		// //$data = getbalanceAll($crypto); 
+		// dd($data);  
+		// $datamsg = response()->json( 
+		// 	 $data
+		//  );
+		// return $datamsg->content();
 	}
 
 	#################State #########################
@@ -2150,6 +2223,7 @@ class ApiController extends Controller{
 				$withdraw->amount= $totalfunds; 
 				$withdraw->before_bal = $userbalance;
 				$withdraw->after_bal = $after_bal;
+				$withdraw->recipient = $peers;
 				$withdraw->txid = $crypto_txid;
 				$withdraw->netfee = 0; 
 				$withdraw->walletfee = 0; 

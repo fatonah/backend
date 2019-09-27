@@ -442,8 +442,11 @@ function listransactionall($crypto) {
     }
     elseif($crypto == 'LND'){
         $crycode = 'lightning';
-        $lnrest = new LNDAvtClient();
-        $transaction = $lnrest->getPayments();
+        // $lnrest = new LNDAvtClient();
+        // $transaction = $lnrest->getPayments();
+        // if($transaction){return $transaction;}
+        // else{return null;}
+        $transaction = TransLND::all(); 
         if($transaction){return $transaction;}
         else{return null;}
     }
@@ -1570,6 +1573,35 @@ function listchannel($crypto, $label){
     //dd($match, $cchan_txid, $trans_txid);
      
     return $match;
+}
+
+/////////////////////////////////////////////////////////////////////
+///  LIST ALL CHANNEL LIGHTNING WALLET         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function listClosedChannel(){
+    $lnrest = new LNDAvtClient();
+    $closedchan = $lnrest->getChanClosed();
+    //$user = WalletAddress::where('label', $label)->first();
+    //$transaction = TransLND::where('uid',$user->uid)->where('status','success')->where('category','open')->get();
+
+    // if(!$transaction){
+    //     $msg = array('error'=>"No Transaction Found for Channel");
+    //     return $msg;
+    // }
+    // foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
+   
+    // //closed channel match
+    // foreach ($closedchan as $cchan ) {
+    //     foreach ($cchan as $cch ) {
+    //         $cchan_txid[] = $cch['closing_tx_hash'];
+    //         if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
+    //         else{$clmatch=null;}
+    //     }
+    // }
+    //dd($clmatch, $cchan_txid, $trans_txid);
+    //$channel = array('closed_channels' => $clmatch);
+    //return $channel;
+    return $closedchan;
 }
 
 /////////////////////////////////////////////////////////////////////
