@@ -888,7 +888,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         return $result;
     }
 }
-
+////////////////////////////////////////////////////////////////////
 function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC') {
         $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
@@ -1425,24 +1425,15 @@ function getbalanceAll($crypto) {
 /////////////////////////////////////////////////////////////////////
 ///  FUND LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-// function fundlightning001($label, $inv){
-//     $txid = sendtoaddressRAW('BTC', $label, $recvaddress, $cryptoamount, $memo, $comm_fee)
-//     $lnrest = new LNDAvtClient();
-//     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
-//     $balance = $userdet->balance;
-//     $paymentdet = $lnrest->decodeInvoice($inv);
-//     if($balance >= $paymentdet['num_satoshis']){
-//         $res = $lnrest->sendPayment($inv);
-//         if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
-//         if(array_key_exists("error", $res)){return $res['error'];}
-//         return $res['payment_hash'];
-//     }
-//     else{return "error: insuffucient balance";}
-
-
-
-
-// }
+function fundlightning001($sendlabel, $cryptoamount, $comm_fee){
+    $userdet = WalletAddress::where('label', $sendlabel)->where('crypto', 'LND')->first();
+    $recvaddress = $userdet->address;
+    $balance = $userdet->balance;
+    $amount = number_format($cryptoamount/100000000, 8, '.', '');
+    
+    if($balance >= $amount){$txid = sendtoaddressRAW('BTC', $sendlabel, $recvaddress, $amount, $comm_fee)}
+    else{return "error: insuffucient balance";}
+}
 
 /////////////////////////////////////////////////////////////////////
 ///  REFUND LIGHTNING WALLET         ///////////////////////////////////////
@@ -1582,26 +1573,6 @@ function listchannel($crypto, $label){
 function listClosedChannel(){
     $lnrest = new LNDAvtClient();
     $closedchan = $lnrest->getChanClosed();
-    //$user = WalletAddress::where('label', $label)->first();
-    //$transaction = TransLND::where('uid',$user->uid)->where('status','success')->where('category','open')->get();
-
-    // if(!$transaction){
-    //     $msg = array('error'=>"No Transaction Found for Channel");
-    //     return $msg;
-    // }
-    // foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
-   
-    // //closed channel match
-    // foreach ($closedchan as $cchan ) {
-    //     foreach ($cchan as $cch ) {
-    //         $cchan_txid[] = $cch['closing_tx_hash'];
-    //         if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
-    //         else{$clmatch=null;}
-    //     }
-    // }
-    //dd($clmatch, $cchan_txid, $trans_txid);
-    //$channel = array('closed_channels' => $clmatch);
-    //return $channel;
     return $closedchan;
 }
 
@@ -1659,14 +1630,7 @@ function closechanlightning001($chanpoint){
         }
         if(in_array($chanpoint, $remotechanpoint, true)){
             $cchantxid = $lnrest->closeChannel($chanpoint);
-            return $cchantxid;
-            // if(!empty($cchantxid)) {
-            //     return $cchantxid;
-            // }
-            // else{
-            //     $msg = array('error'=>"No Data");
-            //     return $msg;
-            // } 
+            return $cchantxid; 
         }
         else{
             $msg = array('error'=>"Channel not existed on this node");
