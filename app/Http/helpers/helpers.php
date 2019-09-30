@@ -457,19 +457,156 @@ function listransactionall($crypto) {
 }
 
 
-function listransaction($crypto, $label) {
+function listransaction($crypto, $label, $idcurrency, $id_gecko) {
     if ($crypto == 'BTC'){
         $crycode = 'bitcoin';
         //GET label transaction
         $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-        if($transaction){return $transaction;}
+        if($transaction){
+            if(!isset($transaction[0]['time'])){
+                if(array_key_exists('time',$transaction)){
+                    $starT = $transaction['time'] - 10000;
+                    $endT = $transaction['time'] + 10000;                
+                }else{
+                    $starT = $transaction['timereceived'] - 10000;
+                    $endT = $transaction['timereceived'] + 10000;
+                }
+
+                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                $jsondata = file_get_contents($json_string);
+                $obj = json_decode($jsondata, TRUE); 
+                $priceA = $obj['prices'];
+                for($i=0;$i<count($priceA);$i++){
+                    $price[] = $priceA[$i][0];
+                }
+                foreach ($price as $i) {
+                    if(array_key_exists('time',$transaction)){
+                    $smallest[$i] = abs($i - $transaction['time']);
+                    }else{
+                    $smallest[$i] = abs($i - $transaction['timereceived']);    
+                    }
+                }
+                asort($smallest); 
+                $ids = array_search(key($smallest),$price);
+            
+                $info = array(
+                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'tran' => $transaction,
+                );
+            }else{
+                foreach($transaction as $trans){
+                if(array_key_exists('time',$trans)){
+                    $starT = $trans['time'] - 10000;
+                    $endT = $trans['time'] + 10000;                
+                }else{
+                    $starT = $trans['timereceived'] - 10000;
+                    $endT = $trans['timereceived'] + 10000;
+                }
+
+                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                $jsondata = file_get_contents($json_string);
+                $obj = json_decode($jsondata, TRUE); 
+                $priceA = $obj['prices'];
+                for($i=0;$i<count($priceA);$i++){
+                    $price[] = $priceA[$i][0];
+                }
+                foreach ($price as $i) {
+                    if(array_key_exists('time',$trans)){
+                    $smallest[$i] = abs($i - $trans['time']);
+                    }else{
+                    $smallest[$i] = abs($i - $trans['timereceived']);    
+                    }
+                }
+                asort($smallest); 
+                $ids = array_search(key($smallest),$price);
+               
+                $info[] = array(
+                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'tran' => $trans,
+                );
+                } 
+            }
+            
+             //return $transaction;
+             return $info;
+        
+        }
         else{return null;}
     }
     elseif($crypto == 'BCH'){
         $crycode = 'bitabc';
         //GET label transaction
         $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-        if($transaction){return $transaction;}
+       // return $transaction['time'];
+        if($transaction){ 
+           if(!isset($transaction[0]['time'])){
+                if(array_key_exists('time',$transaction)){
+                    $starT = $transaction['time'] - 10000;
+                    $endT = $transaction['time'] + 10000;                
+                }else{
+                    $starT = $transaction['timereceived'] - 10000;
+                    $endT = $transaction['timereceived'] + 10000;
+                }
+
+                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                $jsondata = file_get_contents($json_string);
+                $obj = json_decode($jsondata, TRUE); 
+                $priceA = $obj['prices'];
+                for($i=0;$i<count($priceA);$i++){
+                    $price[] = $priceA[$i][0];
+                }
+                foreach ($price as $i) {
+                    if(array_key_exists('time',$transaction)){
+                    $smallest[$i] = abs($i - $transaction['time']);
+                    }else{
+                    $smallest[$i] = abs($i - $transaction['timereceived']);    
+                    }
+                }
+                asort($smallest); 
+                $ids = array_search(key($smallest),$price);
+            
+                $info = array(
+                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'tran' => $transaction,
+                );
+            }else{
+                foreach($transaction as $key => $trans){ 
+                if(array_key_exists('time',$trans)){
+                    $starT = $trans['time'] - 10000;
+                    $endT = $trans['time'] + 10000;                
+                }else{
+                    $starT = $trans['timereceived'] - 10000;
+                    $endT = $trans['timereceived'] + 10000;
+                }
+
+                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                $jsondata = file_get_contents($json_string);
+                $obj = json_decode($jsondata, TRUE); 
+                $priceA = $obj['prices'];
+                for($i=0;$i<count($priceA);$i++){
+                    $price[] = $priceA[$i][0];
+                }
+                foreach ($price as $i) {
+                    if(array_key_exists('time',$trans)){
+                    $smallest[$i] = abs($i - $trans['time']);
+                    }else{
+                    $smallest[$i] = abs($i - $trans['timereceived']);    
+                    }
+                }
+                asort($smallest); 
+                $ids = array_search(key($smallest),$price);
+            
+                $info[] = array(
+                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'tran' => $trans,
+                );
+                
+                }
+            }
+
+             //return $transaction;
+             return $info;
+        }
         else{return null;}
     }
     elseif($crypto == 'DASH'){
@@ -483,7 +620,73 @@ function listransaction($crypto, $label) {
         $crycode = 'dogecoin';
         //GET label transaction
         $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-        if($transaction){return $transaction;}
+        if($transaction){
+            if(!isset($transaction[0]['time'])){
+                if(array_key_exists('time',$transaction)){
+                    $starT = $transaction['time'] - 10000;
+                    $endT = $transaction['time'] + 10000;                
+                }else{
+                    $starT = $transaction['timereceived'] - 10000;
+                    $endT = $transaction['timereceived'] + 10000;
+                }
+
+                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                $jsondata = file_get_contents($json_string);
+                $obj = json_decode($jsondata, TRUE); 
+                $priceA = $obj['prices'];
+                for($i=0;$i<count($priceA);$i++){
+                    $price[] = $priceA[$i][0];
+                }
+                foreach ($price as $i) {
+                    if(array_key_exists('time',$transaction)){
+                    $smallest[$i] = abs($i - $transaction['time']);
+                    }else{
+                    $smallest[$i] = abs($i - $transaction['timereceived']);    
+                    }
+                }
+                asort($smallest); 
+                $ids = array_search(key($smallest),$price);
+            
+                $info = array(
+                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'tran' => $transaction,
+                );
+            }else{
+                foreach($transaction as $trans){
+                    if(array_key_exists('time',$trans)){
+                        $starT = $trans['time'] - 10000;
+                        $endT = $trans['time'] + 10000;                
+                    }else{
+                        $starT = $trans['timereceived'] - 10000;
+                        $endT = $trans['timereceived'] + 10000;
+                    }
+
+                    $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                    $jsondata = file_get_contents($json_string);
+                    $obj = json_decode($jsondata, TRUE); 
+                    $priceA = $obj['prices'];
+                    for($i=0;$i<count($priceA);$i++){
+                        $price[] = $priceA[$i][0];
+                    }
+                    foreach ($price as $i) {
+                        if(array_key_exists('time',$trans)){
+                        $smallest[$i] = abs($i - $trans['time']);
+                        }else{
+                        $smallest[$i] = abs($i - $trans['timereceived']);    
+                        }
+                    }
+                    asort($smallest); 
+                    $ids = array_search(key($smallest),$price);
+                
+                    $info[] = array(
+                        'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                        'tran' => $trans,
+                    );
+                }
+            }
+             //return $transaction;
+             return $info;
+        }
         else{return null;}
     }
     elseif($crypto == 'LTC'){

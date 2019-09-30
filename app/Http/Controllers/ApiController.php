@@ -849,7 +849,7 @@ class ApiController extends Controller{
 						if($row['crypto']=='LND'){
 						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label));
 						}else{
-						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
+						$dipCrypto = $jumCrypto; 
 						}
 
 						if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0;  }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
@@ -917,7 +917,7 @@ class ApiController extends Controller{
 				if($crypto=='LND'){
 					$dipCrypto = str_replace("\n","",getbalance($crypto,$user->label));
 				}else{
-					$dipCrypto = str_replace("\n","",getbalance($crypto,$user->label)/100000000); 
+					$dipCrypto = $jumCrypto; 
 				}
 					
 				if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
@@ -1258,8 +1258,10 @@ class ApiController extends Controller{
 	
 	#################Transaction #########################
 	public function transaction($crypto,$usr_crypto,$tokenAPI){ 
-		$trans = listransaction($crypto,$usr_crypto);
 		$user = User::where('label',$usr_crypto)->first();
+		$currency = Currency::where('id',$user->currency)->first();
+		$priCrypto = PriceCrypto::where('crypto',$crypto)->first();
+		$trans = listransaction($crypto,$usr_crypto,strtolower($currency->code),$priCrypto->id_gecko);
         
         if($user){
 			$tokenORI = apiToken($user->id);		  
@@ -1303,12 +1305,18 @@ class ApiController extends Controller{
 			$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 			$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
 
-			if($maxDraw<=0){ $maxWithdraw =0; }else{ $maxWithdraw =$maxDraw; }
+			if($crypto=='LND'){
+				$disCrypto = number_format(getbalance($crypto, $user->label), 8, '.', '');
+			}else{
+				$disCrypto = $userbalance;
+			}
+
+			if($maxDraw<=0){ $maxWithdraw =0; $displyCrypto =0; }else{ $maxWithdraw =$maxDraw; $displyCrypto = $disCrypto; }
 
 			$priceWithdraw = $maxWithdraw*$price;
 			$datamsg = response()->json([
 				"totalMyr"=>number_format($priceWithdraw, 2, '.', ''),
-				"totalCrypto"=>$maxWithdraw
+				"totalCrypto"=>$displyCrypto
 			]);
 		}
 		else{
@@ -1523,6 +1531,7 @@ class ApiController extends Controller{
 
 					foreach($transX as $tran){
 						$currency = Currency::where('id',$tran->currency)->first()->code;
+						$totalfees = $tran->netfee + $tran->walletfee;
 						$trans[] = array(
 							'uid' => $tran->uid,
 							'type' => $tran->type,
@@ -1540,6 +1549,9 @@ class ApiController extends Controller{
 							'recipient' => $tran->recipient,
 							'netfee' => $tran->netfee,
 							'walletfee' => $tran->walletfee,
+							'totalfees' => $totalfees,
+							'txid' => $tran->txid,
+							'error_code' => $tran->error_code,
 							'created_at' => date('Y-m-d h:i:s', strtotime($tran->created_at)),
 						); 
 					}
