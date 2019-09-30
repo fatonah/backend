@@ -1636,23 +1636,92 @@ function getbalanceAll($crypto) {
 /////////////////////////////////////////////////////////////////////
 ///  FUND LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function fundlightning001($label, $cryptoamount, $memo, $comm_fee){ 
-    $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
-    $recvaddress = $userdet->address;
-    $balance = getbalance('BTC', $label);
-    $amount = number_format($cryptoamount/100000000, 8, '.', '');
+function fundlightning001($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee){ 
+    $crypto == 'BTC';
+    $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;
+    $pxfee = $comm_fee;
+    $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+    $estfee = getestimatefee($crypto);
+    $total =  number_format(($cryptoamount/100000000)+$estfee+$pxfee, 8, '.', '');
+// dd(
+//     $cryptoamount/100000000,
+//     $pxfee,
+//     $estfee,
+//     $balance,
+//     $total
+// );
+    $j = 0;
+    $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
+    $prevtxn[] = null;
+    $totalin = 0;
+    foreach ($balacc as $acc) {
+        $ac[$j] = $acc;
+        foreach ($ac as $a) {
+            $i = 0;
+            foreach ($a as $x) {
+                if(in_array('label', $x) == $label){
+                    $txid[$i] = $x['txid'];
+                    $vout[$i] = $x['vout'];
+                    $amt[$i] = number_format($x['amount'], 8, '.', '');
+                    $totalin += $amt[$i];
+                    $prevtxn[$i] = array(
+                        "txid"=>$txid[$i],
+                        "vout"=>$vout[$i],
+                    );
+                    $i++;
+                    if($totalin > $total){break;} 
+                }
+            }
+        }
+        $j++;
+        $txin = array_filter($prevtxn);
+    }
+    $change = number_format($totalin-$total, 8, '.', '');
+    $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
+
+    if($balance >= $total){   
+        $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
+            $txin,
+            array(
+                $recvaddress=>number_format($cryptoamount/100000000, 8, '.', ''),
+                $changeaddr=>$change,
+                $pxfeeaddr => $pxfee
+            )
+        )->get();  
+        $signing = bitcoind()->client('bitcoin')->signrawtransactionwithwallet($createraw)->get();
+        $decode = bitcoind()->client('bitcoin')->decoderawtransaction($signing['hex'])->get();
+        //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
+        if($signing['complete'] == true){
+            $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
+            getbalance($crypto, $label);
+            return $txid;
+        }
+        else{
+            $msg = array('error'=>"Signing Failed. ".$decode);
+            return $msg;
+        }
+    }
+    else{
+        $msg = array('error'=>"Insufficient fund. You need at least ".$total." ".$crypto." to perform this transaction");
+        return $msg;
+    } 
+
+    // $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    // $recvaddress = $userdet->address;
+    // $balance = getbalance('BTC', $label);
+    // $cryptoamount = number_format($amount/100000000, 8, '.', '');
     // dd( 
-    //     $recvaddress,
+    //     $recipient,
     //     $balance,
     //     $cryptoamount,
     //     $amount,
     //     $balance >= $cryptoamount,
-    //     $memo,
+    //     $remarks,
     //     $comm_fee
     // );
     
-    if($balance >= $cryptoamount){$txid = sendtoaddressRAW('BTC', $label, $recvaddress, $amount, $memo, $comm_fee);}
-    else{return "error: insuffucient balance";}
+    // if($balance >= $amount){$txid = sendtoaddressRAW('BTC', $label, $recipient, $cryptoamount, $remarks, $comm_fee);}
+    // else{return "error: insuffucient balance";}
 }
 
 /////////////////////////////////////////////////////////////////////

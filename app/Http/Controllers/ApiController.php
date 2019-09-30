@@ -2103,7 +2103,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = fundlightning001($label, $amount, $remarks, $comm_fee);   
+				$crypto_txid = fundlightning001($crypto, $label, $recipient, $amount, $remarks, $comm_fee);   
 				$myr_amount = ($amount/100000000)*$price;
 					 
 				if($crypto_txid==''){ //failed withdraw
@@ -2124,8 +2124,6 @@ class ApiController extends Controller{
 					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
 					$withdraw->save();
-
-					dd($crypto_txid);
 					  
 					$msg = array("mesej"=>"Failed widthdraw!");
 					$datamsg = response()->json([
