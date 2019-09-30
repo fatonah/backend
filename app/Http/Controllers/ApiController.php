@@ -49,44 +49,51 @@ class ApiController extends Controller{
 
 		########################RefillLNDUpdate COMMAND####################################
         //update funding lnd txid n balance
-        $alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->where('remarks', 'FUND_LND')->get();
+        $alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->whereNotNull('txid')->get();
         foreach ($alltrans as $trans) {
             $transdet[] = getLightningTXDet($trans['txid']);
-            foreach ($transdet as $txdet) {
-                if($txdet['num_confirmations'] >= 6){
-                    $userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
-                    $after_bal = $userdet->balance + $txdet['amount'];
-                    
-                    $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
-                        ->update([
-                            'balance' => $after_bal
-                        ]);
+            if($transdet != null){
+            	foreach ($transdet as $txdet) {
 
-                    $trans = TransLND::create([
-                        'uid' => $userdet->uid,
-                        'type' => $trans['type'],
-                        'crypto' => 'LND',
-                        'category' => 'refill',
-                        'using' => $trans['using'],
-                        'status' => $trans['status'],
-                        'recipient' => $txdet['dest_addresses'][0],
-                        'txid' => $txdet['tx_hash'],
-                        'amount' => $txdet['amount'],
-                        'before_bal' => $userdet->balance,
-                        'after_bal' => $after_bal,
-                        'myr_amount' => $trans['myr_amount'],
-                        'rate' => $trans['rate'],
-                        'currency' => $trans['currency'],
-                        'netfee' => $trans['netfee'],
-                        'walletfee' => $trans['walletfee'],
-                        'remarks' => $trans['remarks'],
+	                if($txdet['dest_addresses'][0] == $trans['recipient'] && $txdet['num_confirmations'] >= 6){
+	                    $userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
+	                    $after_bal = $userdet->balance + $txdet['amount'];
+	                    $test[] = $txdet['dest_addresses'][0] == $trans['recipient'];
+	                    
+	                    $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
+	                        ->update([
+	                            'balance' => $after_bal
+	                        ]);
 
-                    ]);
-                }
+	                    $checktx = TransLND::where('category', 'refill')->where('status', 'success')->where('txid', $txdet['tx_hash'])->count();
+	                    if($checktx == 0){
+	                        $trans = TransLND::create([
+	                            'uid' => $userdet->uid,
+	                            'type' => $trans['type'],
+	                            'crypto' => 'LND',
+	                            'category' => 'refill',
+	                            'using' => $trans['using'],
+	                            'status' => $trans['status'],
+	                            'recipient' => $txdet['dest_addresses'][0],
+	                            'txid' => $txdet['tx_hash'],
+	                            'amount' => $txdet['amount'],
+	                            'before_bal' => $userdet->balance,
+	                            'after_bal' => $after_bal,
+	                            'myr_amount' => $trans['myr_amount'],
+	                            'rate' => $trans['rate'],
+	                            'currency' => $trans['currency'],
+	                            'netfee' => $trans['netfee'],
+	                            'walletfee' => $trans['walletfee'],
+	                            'remarks' => 'FUND_LND',
 
+	                        ]);
+	                    }
+	                }
+	            }
             }
+            
         }
-		dd($trans['currency'], $userdet->balance, $after_bal, $txdet['num_confirmations'], $txdet['amount'], $txdet['tx_hash'], $txdet['dest_addresses'][0], $transdet);
+		dd($alltrans, $trans['currency'], $userdet->balance, $after_bal, $txdet['num_confirmations'], $txdet['amount'], $txdet['tx_hash'], $txdet['dest_addresses'][0], $transdet);
 
 
 		########################InvoiceUpdate COMMAND####################################
