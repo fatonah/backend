@@ -578,11 +578,12 @@ function checkAddress($crypto, $address) {
 ////////////////////////////////////////////////////////////////////
 function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC'){ 
-        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
+
         $j = 0;
         $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
         $prevtxn[] = null;
@@ -611,6 +612,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
         $change = number_format($totalin-$total, 8, '.', '');
         $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
+        dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance);
         if($balance >= $total){   
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
                 $txin,
@@ -622,7 +624,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             )->get();  
             $signing = bitcoind()->client('bitcoin')->signrawtransactionwithwallet($createraw)->get();
             $decode = bitcoind()->client('bitcoin')->decoderawtransaction($signing['hex'])->get();
-           //  dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
+            dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
                 getbalance($crypto, $label);
@@ -640,7 +642,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
    
     } 
     elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -701,7 +703,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'DOGE') {
-        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -762,7 +764,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'DASH') {
-        $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -823,7 +825,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'LTC') {
-        $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -1430,6 +1432,15 @@ function fundlightning001($label, $cryptoamount, $memo, $comm_fee){
     $recvaddress = $userdet->address;
     $balance = getbalance('BTC', $label);
     $amount = number_format($cryptoamount/100000000, 8, '.', '');
+    // dd( 
+    //     $recvaddress,
+    //     $balance,
+    //     $cryptoamount,
+    //     $amount,
+    //     $balance >= $cryptoamount,
+    //     $memo,
+    //     $comm_fee
+    // );
     
     if($balance >= $cryptoamount){$txid = sendtoaddressRAW('BTC', $label, $recvaddress, $amount, $memo, $comm_fee);}
     else{return "error: insuffucient balance";}
@@ -1474,8 +1485,7 @@ function getInvoiceDet($inv){
 ////////////////////////////////////////////////////////////////////
 function getLightningTXDet($txid){
     $lnrest = new LNDAvtClient();
-    $alltx = $lnrest->getTransactions();
-    dd($alltx);
+    $alltx = $lnrest->getTransactions();;
     foreach ($alltx as $tx) {
         foreach ($tx as $t) {
             if($t['tx_hash'] == $txid){return $t;}

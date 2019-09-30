@@ -47,6 +47,26 @@ class ApiController extends Controller{
 		//$diff = $exp_date->diffInMinutes($curr);
 
 
+		########################RefillLNDUpdate COMMAND####################################
+		//update funding lnd txid n balance
+		$alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->where('remarks', 'FUND_LND')->get();
+		foreach ($alltrans as $trans) {
+			$transdet[] = getLightningTXDet($trans['txid']);
+			foreach ($transdet as $txdet) {
+				if($txdet['num_confirmations'] >= 6){
+					$userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
+					$newbalance = $userdet->balance + $txdet['amount'];
+					$walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
+						->update([
+							'balance' => $newbalance
+						]);
+				}
+
+			}
+		}
+		dd($userdet->balance, $newbalance, $txdet['num_confirmations'], $txdet['amount'], $txdet['tx_hash'], $txdet['dest_addresses'][0], $transdet);
+
+
 		########################InvoiceUpdate COMMAND####################################
 		// //update expired invoice
 		// $allinv = InvoiceLND::all();
@@ -81,59 +101,59 @@ class ApiController extends Controller{
 		// }
 
 
-		########################CloseChanUpdate COMMAND####################################
-		//update close chan tx
-		$crypto = 'LND';
-		$alltrans = TransLND::where('category', 'open')->get();
-		foreach ($alltrans as $trans) {
-			$sat = 100000000;
-			$user = User::where('id', $trans['uid'])->first();
-			$currency = Currency::where('id',$user->currency)->first();
-			$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
-			$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
-			$jsondata = file_get_contents($json_string);
-			$obj = json_decode($jsondata, TRUE); 
-			$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
+		// ########################CloseChanUpdate COMMAND####################################
+		// //update close chan tx
+		// $crypto = 'LND';
+		// $alltrans = TransLND::where('category', 'open')->get();
+		// foreach ($alltrans as $trans) {
+		// 	$sat = 100000000;
+		// 	$user = User::where('id', $trans['uid'])->first();
+		// 	$currency = Currency::where('id',$user->currency)->first();
+		// 	$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
+		// 	$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+		// 	$jsondata = file_get_contents($json_string);
+		// 	$obj = json_decode($jsondata, TRUE); 
+		// 	$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
-			$closedchan = listClosedChannel();
-			foreach ($closedchan as $chan) {
-				foreach ($chan as $c) {
-					if(explode(':', $c['channel_point'])[0] == $trans['txid']){
-						$checktx = TransLND::where('category', 'closed')->where('status', 'success')->where('txid', $c['closing_tx_hash'])->count();
-						if($checktx == 0){
-							$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', ''); // in sat
-							$totalfunds = number_format($c['settled_balance'], 8, '.', ''); // in sat
-							$after_bal =  number_format($userbalance + $totalfunds, 8, '.', '');  // in sat
-							$myr_amount = ($c['settled_balance']/$sat)*$price;
+		// 	$closedchan = listClosedChannel();
+		// 	foreach ($closedchan as $chan) {
+		// 		foreach ($chan as $c) {
+		// 			if(explode(':', $c['channel_point'])[0] == $trans['txid']){
+		// 				$checktx = TransLND::where('category', 'closed')->where('status', 'success')->where('txid', $c['closing_tx_hash'])->count();
+		// 				if($checktx == 0){
+		// 					$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', ''); // in sat
+		// 					$totalfunds = number_format($c['settled_balance'], 8, '.', ''); // in sat
+		// 					$after_bal =  number_format($userbalance + $totalfunds, 8, '.', '');  // in sat
+		// 					$myr_amount = ($c['settled_balance']/$sat)*$price;
 
-							if(array_key_exists('close_type', $c)){$remarks = $c['close_type'];}
-							else{$remarks = 'NEGOTIABLE _CLOSE';}
+		// 					if(array_key_exists('close_type', $c)){$remarks = $c['close_type'];}
+		// 					else{$remarks = 'NEGOTIABLE _CLOSE';}
 
-							$withdraw = new TransLND;
-							$withdraw->uid = $trans['uid'];
-							$withdraw->status = 'success';
-							$withdraw->amount= $totalfunds; 
-							$withdraw->before_bal = $userbalance;
-							$withdraw->after_bal = $after_bal;
-							$withdraw->recipient = $c['remote_pubkey'];
-							$withdraw->txid = $c['closing_tx_hash'];
-							$withdraw->netfee = 0; 
-							$withdraw->walletfee = 0; 
-							$withdraw->remarks = $remarks; 
-							$withdraw->invoice_id = '0';
-							$withdraw->type = 'external';
-							$withdraw->using = 'mobile';
-							$withdraw->category = 'closed';
-							$withdraw->currency = $trans['currency'];
-							$withdraw->rate = number_format($price, 2, '.', '');
-							$withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
-							$withdraw->save();
-						}
-					}
-				}
-			}
-		}
-		dd($checktx);
+		// 					$withdraw = new TransLND;
+		// 					$withdraw->uid = $trans['uid'];
+		// 					$withdraw->status = 'success';
+		// 					$withdraw->amount= $totalfunds; 
+		// 					$withdraw->before_bal = $userbalance;
+		// 					$withdraw->after_bal = $after_bal;
+		// 					$withdraw->recipient = $c['remote_pubkey'];
+		// 					$withdraw->txid = $c['closing_tx_hash'];
+		// 					$withdraw->netfee = 0; 
+		// 					$withdraw->walletfee = 0; 
+		// 					$withdraw->remarks = $remarks; 
+		// 					$withdraw->invoice_id = '0';
+		// 					$withdraw->type = 'external';
+		// 					$withdraw->using = 'mobile';
+		// 					$withdraw->category = 'closed';
+		// 					$withdraw->currency = $trans['currency'];
+		// 					$withdraw->rate = number_format($price, 2, '.', '');
+		// 					$withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
+		// 					$withdraw->save();
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// }
+		// dd($checktx);
 
 		
 
@@ -1977,7 +1997,6 @@ class ApiController extends Controller{
 		$amount = $request->amountcrypto;
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
-		$remarks = $request->remarks;
 		$secretpin = $request->secretpin;
 	 
 		$useruid = User::where('label',$label)->first();   
@@ -2030,10 +2049,10 @@ class ApiController extends Controller{
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 		$net_fee = getestimatefee($crypto);
-		$memo = 'REFILL_LND';
+		$remarks = 'FUND_LND';
 		
-		$fee = number_format($comm_fee+$net_fee, 8, '.', '');
-		$userbalance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
+		$fee = number_format(($comm_fee+$net_fee)*100000000, 8, '.', '');
+		$userbalance = number_format(getbalance($crypto, $label), 8, '.', '');
 		$totalfunds = number_format($amount + $fee, 8, '.', '');
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
 		
@@ -2048,16 +2067,16 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$crypto_txid = fundlightning001($label, $cryptoamount, $memo, $comm_fee);   
+				$crypto_txid = fundlightning001($label, $amount, $remarks, $comm_fee);   
 				$myr_amount = ($amount/100000000)*$price;
 					 
 				if($crypto_txid==''){ //failed withdraw
 					$withdraw = new Withdrawal;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'failed';
-					$withdraw->amount= $amount; 
-					$withdraw->before_bal = $userbalance;
-					$withdraw->after_bal = $after_bal; 
+					$withdraw->amount= $amount/100000000; 
+					$withdraw->before_bal = $userbalance/100000000;
+					$withdraw->after_bal = $after_bal/100000000; 
 					$withdraw->recipient = $recipient;
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
@@ -2069,6 +2088,8 @@ class ApiController extends Controller{
 					$withdraw->myr_amount = number_format($myr_amount, 2, '.', '');
 					$withdraw->type = 'external';
 					$withdraw->save();
+
+					dd($crypto_txid);
 					  
 					$msg = array("mesej"=>"Failed widthdraw!");
 					$datamsg = response()->json([
@@ -2080,9 +2101,9 @@ class ApiController extends Controller{
 					$withdraw = new Withdrawal;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'success';
-					$withdraw->amount= $amount; 
-					$withdraw->before_bal = $userbalance;
-					$withdraw->after_bal = $after_bal;
+					$withdraw->amount= $amount/100000000; 
+					$withdraw->before_bal = $userbalance/100000000;
+					$withdraw->after_bal = $after_bal/100000000; 
 					$withdraw->recipient = $recipient;
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
