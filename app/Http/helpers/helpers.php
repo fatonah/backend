@@ -159,49 +159,53 @@ function getestimatefee($crypto) {
 ////////////////////////////////////////////////////////////////////
 function getbalance($crypto, $label) {
     if ($crypto == 'BTC'){
-        $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+        $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
         $amt = null;
-        foreach ($addressarr as $address) {
-            $balacc = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
-            $balance = 0;
-            if(in_array('txid', $balacc)){
-                $amt[] =  (int)number_format($balacc['amount']*100000000, 8, '.', '');
-                foreach ($amt as $a) {$balance += $a;}
-            }
-            else{
-                foreach ($balacc as $acc) {$amt[] = (int)number_format($acc['amount']*100000000, 8, '.', '');}
+        $balance = 0;
+        foreach ($balacc as $acc) {
+            foreach ($acc as $a) {
+                if($a['label'] == $label){$amt[] = number_format($a['amount'], 8, '.', '');}
             }
         }
-        if($amt != null) {
-            $wallet_balance = array_sum($amt);
-        }
-        else {
-            $wallet_balance = 0;
-        }
+        if($amt != null) {$balance = array_sum($amt);}
+        else {$balance = 0;}
+
+        // $addressarr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get());
+        // $amt = null;
+        // foreach ($addressarr as $address) {
+        //     $balacc = bitcoind()->client('bitcoin')->listunspent(1, 9999999, [$address])->get();
+        //     $balance = 0;
+        //     if(in_array('txid', $balacc)){
+        //         $amt[] =  (int)number_format($balacc['amount']*100000000, 8, '.', '');
+        //         foreach ($amt as $a) {$balance += $a;}
+        //     }
+        //     else{
+        //         foreach ($balacc as $acc) {$amt[] = (int)number_format($acc['amount']*100000000, 8, '.', '');}
+        //     }
+        // }
+        // if($amt != null) {
+        //     $wallet_balance = array_sum($amt);
+        // }
+        // else {
+        //     $wallet_balance = 0;
+        // }
+
+        $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', 'BTC')->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
     elseif($crypto == 'BCH'){
-        $j = 0;
         $balacc[] = bitcoind()->client('bitabc')->listunspent()->get();
+        $amt = null;
         $balance = 0;
         foreach ($balacc as $acc) {
-            $ac[$j] = $acc;
-            foreach ($ac as $a) {
-                $i = 0;
-                foreach ($a as $x) {
-                    $labelret[$i] = $x['label'];
-                    if( $labelret[$i] == $label){
-                        $amt[$i] = number_format($x['amount'], 8, '.', '');
-                        $balance += $amt[$i];
-                        $i++; 
-                    }
-                }
+            foreach ($acc as $a) {
+                if($a['label'] == $label){$amt[] = number_format($a['amount'], 8, '.', '');}
             }
-            $j++;
         }
-        if($amt != null) {$balance = $balance;}
+        if($amt != null) {$balance = array_sum($amt);}
         else {$balance = 0;}
+
         $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
@@ -212,32 +216,34 @@ function getbalance($crypto, $label) {
         return $wallet_balance;
     }
     elseif($crypto == 'DOGE'){
-        $j = 0;
         $balacc[] = bitcoind()->client('dogecoin')->listunspent()->get();
+        $amt = null;
         $balance = 0;
         foreach ($balacc as $acc) {
-            $ac[$j] = $acc;
-            foreach ($ac as $a) {
-                $i = 0;
-                foreach ($a as $x) {
-                    $labelret[$i] = $x['account'];
-                    if( $labelret[$i] == $label){
-                        $amt[$i] = number_format($x['amount'], 8, '.', '');
-                        $balance += $amt[$i];
-                        $i++; 
-                    }
-                }
+            foreach ($acc as $a) {
+                if($a['account'] == $label){$amt[] = number_format($a['amount'], 8, '.', '');}
             }
-            $j++;
         }
-        if($amt != null) {$balance = $balance;}
+        if($amt != null) {$balance = array_sum($amt);}
         else {$balance = 0;}
+
         $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
     elseif($crypto == 'LTC'){
-        $wallet_balance = bitcoind()->client('litecoin')->getbalance($label)->get();
+        $balacc[] = bitcoind()->client('litecoin')->listunspent()->get();
+        $amt = null;
+        $balance = 0;
+        foreach ($balacc as $acc) {
+            foreach ($acc as $a) {
+                if($a['account'] == $label){$amt[] = number_format($a['amount'], 8, '.', '');}
+            }
+        }
+        if($amt != null) {$balance = array_sum($amt);}
+        else {$balance = 0;}
+
+        $wallet_balance = (int)number_format($balance*100000000, 8, '.', '');
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
@@ -611,8 +617,8 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
-        dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance);
+        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
+        //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance);
         if($balance >= $total){   
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
                 $txin,
@@ -624,7 +630,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             )->get();  
             $signing = bitcoind()->client('bitcoin')->signrawtransactionwithwallet($createraw)->get();
             $decode = bitcoind()->client('bitcoin')->decoderawtransaction($signing['hex'])->get();
-            dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
+            //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
                 getbalance($crypto, $label);
@@ -674,7 +680,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[0];
+        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
         if($balance >= $total){  
             $createraw = bitcoind()->client('bitabc')->createrawtransaction(
                 $txin,
@@ -735,7 +741,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[0];
+        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
         if($balance >= $total){  
             $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
                 $txin,

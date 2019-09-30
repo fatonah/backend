@@ -1422,7 +1422,7 @@ class ApiController extends Controller{
 			 	return $datamsg->content();
 			}
 
-		 }			 
+		}			 
 		 
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
