@@ -1643,13 +1643,7 @@ function fundlightning001($crypto, $label, $recvaddress, $cryptoamount, $memo, $
     $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
     $estfee = getestimatefee($crypto);
     $total =  number_format(($cryptoamount/100000000)+$estfee+$pxfee, 8, '.', '');
-// dd(
-//     $cryptoamount/100000000,
-//     $pxfee,
-//     $estfee,
-//     $balance,
-//     $total
-// );
+    
     $j = 0;
     $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
     $prevtxn[] = null;

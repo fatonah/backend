@@ -42,7 +42,7 @@ class RefillLNDUpdate extends Command
     {
         ########################RefillLNDUpdate COMMAND####################################
         //update funding lnd txid n balance
-        $alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->where('remarks', 'FUND_LND')->get();
+        $alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->get();
         foreach ($alltrans as $trans) {
             $transdet[] = getLightningTXDet($trans['txid']);
             foreach ($transdet as $txdet) {
