@@ -55,26 +55,29 @@ class RefillLNDUpdate extends Command
                             'balance' => $after_bal
                         ]);
 
-                    $trans = TransLND::create([
-                        'uid' => $userdet->uid,
-                        'type' => $trans['type'],
-                        'crypto' => 'LND',
-                        'category' => 'refill',
-                        'using' => $trans['using'],
-                        'status' => $trans['status'],
-                        'recipient' => $txdet['dest_addresses'][0],
-                        'txid' => $txdet['tx_hash'],
-                        'amount' => $txdet['amount'],
-                        'before_bal' => $userdet->balance,
-                        'after_bal' => $after_bal,
-                        'myr_amount' => $trans['myr_amount'],
-                        'rate' => $trans['rate'],
-                        'currency' => $trans['currency'],
-                        'netfee' => $trans['netfee'],
-                        'walletfee' => $trans['walletfee'],
-                        'remarks' => $trans['remarks'],
+                    $checktx = TransLND::where('category', 'refill')->where('status', 'success')->where('txid', $txdet['tx_hash'])->count();
+                    if($checktx == 0){
+                        $trans = TransLND::create([
+                            'uid' => $userdet->uid,
+                            'type' => $trans['type'],
+                            'crypto' => 'LND',
+                            'category' => 'refill',
+                            'using' => $trans['using'],
+                            'status' => $trans['status'],
+                            'recipient' => $txdet['dest_addresses'][0],
+                            'txid' => $txdet['tx_hash'],
+                            'amount' => $txdet['amount'],
+                            'before_bal' => $userdet->balance,
+                            'after_bal' => $after_bal,
+                            'myr_amount' => $trans['myr_amount'],
+                            'rate' => $trans['rate'],
+                            'currency' => $trans['currency'],
+                            'netfee' => $trans['netfee'],
+                            'walletfee' => $trans['walletfee'],
+                            'remarks' => $trans['remarks'],
 
-                    ]);
+                        ]);
+                    }
                 }
 
             }
