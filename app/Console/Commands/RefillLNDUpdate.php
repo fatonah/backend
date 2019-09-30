@@ -4,7 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Withdrawal; 
-use App\WalletAddress; 
+use App\WalletAddress;
+use App\TransLND;  
 
 class RefillLNDUpdate extends Command
 {
@@ -47,11 +48,33 @@ class RefillLNDUpdate extends Command
             foreach ($transdet as $txdet) {
                 if($txdet['num_confirmations'] >= 6){
                     $userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
-                    $newbalance = $userdet->balance + $txdet['amount'];
+                    $after_bal = $userdet->balance + $txdet['amount'];
+                    
                     $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
                         ->update([
-                            'balance' => $newbalance
+                            'balance' => $after_bal
                         ]);
+
+                    $trans = TransLND::create([
+                        'uid' => $userdet->uid,
+                        'type' => $trans['type'],
+                        'crypto' => 'LND',
+                        'category' => 'refill',
+                        'using' => $trans['using'],
+                        'status' => $trans['status'],
+                        'recipient' => $txdet['dest_addresses'][0],
+                        'txid' => $txdet['tx_hash'],
+                        'amount' => $txdet['amount'],
+                        'before_bal' => $userdet->balance,
+                        'after_bal' => $after_bal,
+                        'myr_amount' => $trans['myr_amount'],
+                        'rate' => $trans['rate'],
+                        'currency' => $trans['currency'],
+                        'netfee' => $trans['netfee'],
+                        'walletfee' => $trans['walletfee'],
+                        'remarks' => $trans['remarks'],
+
+                    ]);
                 }
 
             }
