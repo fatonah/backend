@@ -149,7 +149,7 @@ class LNDAvtClient
     }
     public function sendOnChain($sendall, $amount, $address) {
         $payload =  json_encode(array(
-            'send_all' => 0,
+            'send_all' => $sendall,
             'amount' => $amount,
             //'sat_per_byte' => $satperbyte,
             'addr' => $address

@@ -1872,13 +1872,11 @@ class ApiController extends Controller{
 	//	
 	#################Send Crypto LND TO Bitcoin #########################
 	public function sendLNDBTC(Request $request){ 
-	 
 		$crypto = $request->crypto;
 		$cryptoSend = 'BTC';
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
-		$amount = $request->amount;
-		$remarks = $request->remarks;
+		$amount = $request->amountcrypto;
 		$secretpin = $request->secretpin; 
 		$sat = 100000000;
 	 
@@ -1924,12 +1922,13 @@ class ApiController extends Controller{
 				]);
 			 	return $datamsg->content();
 			}
-		}			 
-		 
+		}
+ 
 		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
-		$totalfunds = number_format($amount, 8, '.', ''); // in sat
 		$satfees = number_format(getestimatefee($crypto)*$sat, 8, '.', ''); // in sat
-		$after_bal =  number_format($userbalance - $totalfunds - $satfees, 8, '.', '');  // in sat
+		$totalfunds = number_format($amount + $satfees, 8, '.', ''); // in sat
+		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
+		$remarks = 'REFUND_LND';
 		 
 		$tokenORI = apiToken($useruid->id); 
 		if($request->tokenAPI==$tokenORI){
@@ -1942,8 +1941,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				 
-				$crypto_txid = 1;//refundlightning001($label, $catPayment, $amount, $recipient);
+				$crypto_txid = refundlightning001($label, $amount, $recipient);
 				$myr_amount = ($amount/$sat)*$price;
 	 
 				if($crypto_txid=='' || array_key_exists("error", $crypto_txid) || array_key_exists("payment_error", $crypto_txid)){ //failed withdraw
@@ -1958,7 +1956,7 @@ class ApiController extends Controller{
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'failed';
 					$withdraw->error_code = $error;
-					$withdraw->amount= $totalfunds; 
+					$withdraw->amount= $amount; 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal; 
 					$withdraw->recipient = $recipient; 
@@ -1991,11 +1989,11 @@ class ApiController extends Controller{
 					$withdraw = new TransLND;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'success';
-					$withdraw->amount= $totalfunds; 
+					$withdraw->amount= $amount; 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal;
 					$withdraw->recipient = $recipient;
-					$withdraw->txid = $crypto_txid;
+					$withdraw->txid = $crypto_txid['txid'];
 					$withdraw->netfee = $satfees; 
 					$withdraw->walletfee = 0; 
 					$withdraw->invoice_id = '0';
@@ -2355,7 +2353,7 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
  
-		$crypto_txid = 1;//closechanlightning001($idHash);
+		$crypto_txid = closechanlightning001($idHash);
 
 		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
 			$error = $crypto_txid['error'];

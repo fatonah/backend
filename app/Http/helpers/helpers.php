@@ -1721,11 +1721,15 @@ function fundlightning001($crypto, $label, $recvaddress, $cryptoamount, $memo, $
 /////////////////////////////////////////////////////////////////////
 ///  REFUND LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-function refundlightning001($label, $sendall, $amount, $recepient){
+function refundlightning001($label, $amount, $recepient){
     $lnrest = new LNDAvtClient();
     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
     $balance = number_format($userdet->balance, 8, '.', '');
-    if($balance >= $amount){
+    $fee = number_format(getestimatefee('LND')*100000000, 8, '.', '');
+    $totalfunds = number_format($amount + $fee, 8, '.', '');
+    $sendall = false;
+
+    if($balance >= $totalfunds){
         $sendchain = $lnrest->sendOnChain($sendall, $amount, $recepient);
         return $sendchain;
     }
