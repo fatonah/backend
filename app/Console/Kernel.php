@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
        Commands\currentPrice::class,
        Commands\InvoiceUpdate::class,
        Commands\CloseChanUpdate::class,
-        //
+       Commands\RefillLNDUpdate::class,
     ];
 
     /**
@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:currentPrice')->everyMinute();
         $schedule->command('command:InvoiceUpdate')->everyMinute();
         $schedule->command('command:CloseChanUpdate')->everyMinute();
+        $schedule->command('command:RefillLNDUpdate')->everyMinute();
     }
 
     /**

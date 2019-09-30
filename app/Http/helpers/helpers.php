@@ -781,11 +781,12 @@ function checkAddress($crypto, $address) {
 ////////////////////////////////////////////////////////////////////
 function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC'){ 
-        $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
         $total =  number_format(($cryptoamount+$estfee+$pxfee), 8, '.', '');
+
         $j = 0;
         $balacc[] = bitcoind()->client('bitcoin')->listunspent()->get();
         $prevtxn[] = null;
@@ -814,6 +815,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
         $change = number_format($totalin-$total, 8, '.', '');
         $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[0];
+        dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance);
         if($balance >= $total){   
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
                 $txin,
@@ -825,7 +827,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             )->get();  
             $signing = bitcoind()->client('bitcoin')->signrawtransactionwithwallet($createraw)->get();
             $decode = bitcoind()->client('bitcoin')->decoderawtransaction($signing['hex'])->get();
-           //  dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
+            dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance, $decode, $createraw, $signing);
             if($signing['complete'] == true){
                 $txid = bitcoind()->client('bitcoin')->sendrawtransaction($signing['hex'])->get();
                 getbalance($crypto, $label);
@@ -843,7 +845,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
    
     } 
     elseif ($crypto == 'BCH') {
-        $pxfeeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount('usr_doradofees')->get()[0],12);
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -904,7 +906,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'DOGE') {
-        $pxfeeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -965,7 +967,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'DASH') {
-        $pxfeeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -1026,7 +1028,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         }
     }
     elseif ($crypto == 'LTC') {
-        $pxfeeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount('usr_doradofees')->get()[0];
+        $pxfeeaddr = WalletAddress::where('crypto', $crypto)->where('label', 'usr_doradofees')->first()->address;;
         $pxfee = $comm_fee;
         $balance = number_format(getbalance($crypto, $label)/100000000, 8, '.', '');
         $estfee = getestimatefee($crypto);
@@ -1091,7 +1093,7 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
         return $result;
     }
 }
-
+////////////////////////////////////////////////////////////////////
 function sendtomanyaddress($crypto, $sendlabel, $recvaddress, $cryptoamount, $memo, $comm_fee) {
     if ($crypto == 'BTC') {
         $pxfeeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel('usr_doradofees')->get())[0];
@@ -1628,24 +1630,24 @@ function getbalanceAll($crypto) {
 /////////////////////////////////////////////////////////////////////
 ///  FUND LIGHTNING WALLET         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-// function fundlightning001($label, $inv){
-//     $txid = sendtoaddressRAW('BTC', $label, $recvaddress, $cryptoamount, $memo, $comm_fee)
-//     $lnrest = new LNDAvtClient();
-//     $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
-//     $balance = $userdet->balance;
-//     $paymentdet = $lnrest->decodeInvoice($inv);
-//     if($balance >= $paymentdet['num_satoshis']){
-//         $res = $lnrest->sendPayment($inv);
-//         if(array_key_exists("payment_error", $res)){return $res['payment_error'];}
-//         if(array_key_exists("error", $res)){return $res['error'];}
-//         return $res['payment_hash'];
-//     }
-//     else{return "error: insuffucient balance";}
-
-
-
-
-// }
+function fundlightning001($label, $cryptoamount, $memo, $comm_fee){ 
+    $userdet = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    $recvaddress = $userdet->address;
+    $balance = getbalance('BTC', $label);
+    $amount = number_format($cryptoamount/100000000, 8, '.', '');
+    // dd( 
+    //     $recvaddress,
+    //     $balance,
+    //     $cryptoamount,
+    //     $amount,
+    //     $balance >= $cryptoamount,
+    //     $memo,
+    //     $comm_fee
+    // );
+    
+    if($balance >= $cryptoamount){$txid = sendtoaddressRAW('BTC', $label, $recvaddress, $amount, $memo, $comm_fee);}
+    else{return "error: insuffucient balance";}
+}
 
 /////////////////////////////////////////////////////////////////////
 ///  REFUND LIGHTNING WALLET         ///////////////////////////////////////
@@ -1686,8 +1688,7 @@ function getInvoiceDet($inv){
 ////////////////////////////////////////////////////////////////////
 function getLightningTXDet($txid){
     $lnrest = new LNDAvtClient();
-    $alltx = $lnrest->getTransactions();
-    dd($alltx);
+    $alltx = $lnrest->getTransactions();;
     foreach ($alltx as $tx) {
         foreach ($tx as $t) {
             if($t['tx_hash'] == $txid){return $t;}
@@ -1784,26 +1785,6 @@ function listchannel($crypto, $label){
 function listClosedChannel(){
     $lnrest = new LNDAvtClient();
     $closedchan = $lnrest->getChanClosed();
-    //$user = WalletAddress::where('label', $label)->first();
-    //$transaction = TransLND::where('uid',$user->uid)->where('status','success')->where('category','open')->get();
-
-    // if(!$transaction){
-    //     $msg = array('error'=>"No Transaction Found for Channel");
-    //     return $msg;
-    // }
-    // foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
-   
-    // //closed channel match
-    // foreach ($closedchan as $cchan ) {
-    //     foreach ($cchan as $cch ) {
-    //         $cchan_txid[] = $cch['closing_tx_hash'];
-    //         if(array_intersect($trans_txid,$cchan_txid)){$clmatch[] = $cch;}
-    //         else{$clmatch=null;}
-    //     }
-    // }
-    //dd($clmatch, $cchan_txid, $trans_txid);
-    //$channel = array('closed_channels' => $clmatch);
-    //return $channel;
     return $closedchan;
 }
 
@@ -1861,14 +1842,7 @@ function closechanlightning001($chanpoint){
         }
         if(in_array($chanpoint, $remotechanpoint, true)){
             $cchantxid = $lnrest->closeChannel($chanpoint);
-            return $cchantxid;
-            // if(!empty($cchantxid)) {
-            //     return $cchantxid;
-            // }
-            // else{
-            //     $msg = array('error'=>"No Data");
-            //     return $msg;
-            // } 
+            return $cchantxid; 
         }
         else{
             $msg = array('error'=>"Channel not existed on this node");
