@@ -414,7 +414,7 @@ function listransactionall($crypto) {
     if ($crypto == 'BTC'){
         $crycode = 'bitcoin';
         //GET all transaction
-        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        $transaction = bitcoind()->client($crycode)->listtransactions("*", 10000, 0)->get();
         if($transaction){return $transaction;}
         else{return null;}
     }
@@ -467,7 +467,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
     if ($crypto == 'BTC'){
         $crycode = 'bitcoin';
         //GET label transaction
-        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        $transaction = bitcoind()->client($crycode)->listtransactions()->get();
+        foreach ($transaction as $trans) {
+            $test[] = gettransaction_crypto($crypto, $trans['txid']);
+        } 
+        dd($test, $transaction);
         if($transaction){
             if(!isset($transaction[0]['time'])){
                 if(array_key_exists('time',$transaction)){
@@ -820,7 +824,12 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
+        if(array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[1]){
+            $changeaddr = array_keys(bitcoind()->client('bitcoin')->getaddressesbylabel($label)->get())[1];
+        }
+        else{
+            $changeaddr = bitcoind()->client('bitcoin')->getnewaddress($label)->get();
+        }
         //dd("Fee: ".$estfee, "Cost: ".$total, "Input: ".$totalin, "Change: ".$change, "Before Balance: ".$balance);
         if($balance >= $total){   
             $createraw = bitcoind()->client('bitcoin')->createrawtransaction(
@@ -883,7 +892,12 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
+        if(substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[1],12)){
+            $changeaddr = substr(bitcoind()->client('bitabc')->getaddressesbyaccount($label)->get()[1],12);
+        }
+        else{
+            $changeaddr = substr(bitcoind()->client('bitabc')->getnewaddress($label)->get(),12);
+        }
         if($balance >= $total){  
             $createraw = bitcoind()->client('bitabc')->createrawtransaction(
                 $txin,
@@ -944,7 +958,12 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = WalletAddress::where('crypto', $crypto)->where('label', $label)->first()->address;
+        if(bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[1]){
+            $changeaddr = bitcoind()->client('dogecoin')->getaddressesbyaccount($label)->get()[1];
+        }
+        else{
+            $changeaddr = bitcoind()->client('dogecoin')->getnewaddress($label)->get();
+        }
         if($balance >= $total){  
             $createraw = bitcoind()->client('dogecoin')->createrawtransaction(
                 $txin,
@@ -1005,7 +1024,12 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('dashcoin')->getaddressesbylabel($label)->get())[0];
+        if(bitcoind()->client('dashcoin')->getaddressesbyaccount($label)->get()[1]){
+            $changeaddr = bitcoind()->client('dashcoin')->getaddressesbyaccount($label)->get()[1];
+        }
+        else{
+            $changeaddr = bitcoind()->client('dashcoin')->getnewaddress($label)->get();
+        }
         if($balance >= $total){  
             $createraw = bitcoind()->client('dashcoin')->createrawtransaction(
                 $txin,
@@ -1066,7 +1090,12 @@ function sendtoaddressRAW($crypto, $label, $recvaddress, $cryptoamount, $memo, $
             $txin = array_filter($prevtxn);
         }
         $change = number_format($totalin-$total, 8, '.', '');
-        $changeaddr = array_keys(bitcoind()->client('litecoin')->getaddressesbylabel($label)->get())[0];
+        if(bitcoind()->client('litecoin')->getaddressesbyaccount($label)->get()[1]){
+            $changeaddr = bitcoind()->client('litecoin')->getaddressesbyaccount($label)->get()[1];
+        }
+        else{
+            $changeaddr = bitcoind()->client('litecoin')->getnewaddress($label)->get();
+        }
         if($balance >= $total){  
             $createraw = bitcoind()->client('litecoin')->createrawtransaction(
                 $txin,
