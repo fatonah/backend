@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TransUser extends Model
 {
-	protected $table = 'trans_lnd';
+	protected $table = 'trans_user';
 	protected $fillable = [
 		'uid', 
 		'type', 
@@ -22,12 +22,14 @@ class TransUser extends Model
 		'amount', 
 		'before_bal', 
 		'after_bal', 
-		'myr_amt', 
+		'myr_amount', 
 		'rate', 
 		'currency', 
 		'netfee', 
-		'wallet_fee', 
-		'remarks', 
-		'timestamp'
+		'walletfee', 
+		'remarks',
+		'time', 
+		'timereceived',
+		'txdate'
 	];
 }

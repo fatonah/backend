@@ -27,6 +27,7 @@ use App\Ticket;
 use App\Setting; 
 use App\Appver;
 use App\TransLND; 
+use App\TransUser; 
 use App\InvoiceLND;
 
 class ApiController extends Controller{ 
@@ -50,15 +51,56 @@ class ApiController extends Controller{
 		// ########################TXUpdate COMMAND####################################
         //update all other crypto txid and details
         $sendtrans = Withdrawal::whereNotNull('txid')->get();
-        //dd($sendtrans);
+        foreach ($sendtrans as $strans ) {
+        	$userdet = WalletAddress::where('crypto', $strans['crypto'])->where('address', $strans['recipient'])->first();
+        	$checksendtx = TransUser::where('crypto', $strans['crypto'])->where('category', 'send')->where('txid', $strans['txid'])->count();
+        	if($checksendtx == 0){
+        		if(!$userdet['label']){
+        			$lnddet = WalletAddress::where('crypto', 'LND')->where('address', $strans['recipient'])->first();
+        			$recipientlabel = $lnddet['label'];
+        		}
+        		else{$recipientlabel = $userdet['label'];}
 
+        		$sendtx = TransUser::create([
+		        	'uid' => $strans['uid'],
+					'status' => $strans['status'],
+					'crypto' => $strans['crypto'],
+					'type' => $strans['type'],
+					'using' => $strans['using'],
+					'remarks' => $strans['remarks'],
+					'before_bal' => $strans['before_bal'],
+					'after_bal' => $strans['after_bal'],
+					'myr_amount' => $strans['myr_amount'],
+					'netfee' => $strans['netfee'],
+					'walletfee' => $strans['walletfee'],
+					'rate' => $strans['rate'],
+					'currency' => $strans['currency'],
+					'recipient' => $strans['recipient'],
+					'category' => 'send',
+					'amount' => $strans['amount'],
+					'recipient_id' => $recipientlabel,
+					'txid' => $strans['txid'],
+					'time' => Carbon::parse($strans['created_at'])->timestamp,
+					'timereceived' => Carbon::parse($strans['created_at'])->timestamp,
+					'txdate' => date_format($strans['created_at'], "Y-m-d H:i:s"),
+				]);
+        	}
+        	else{
+        		if(strlen($strans['txid']) == 64) {
+        			$txdet = gettransaction_crypto($strans['crypto'], $strans['txid']);
+        			if($txdet){
+        				$sendtx = TransUser::
+        				where('crypto', $strans['crypto'])->where('category', 'send')->where('txid', $strans['txid'])
+        				->update(['confirmation' => $txdet['confirmations']]);
+        			}
+        		}
+        	}
+        }
 
         $crypto = array('bitcoin','bitabc','dogecoin');
         $alluserdet = User::all();
-        $tx = null;
         foreach ($alluserdet as $userdet) {
         	$alltransbtc[] = bitcoind()->client($crypto[0])->listtransactions($userdet['label'], 1000000, 0)->get();
-        	$i=0;
         	foreach ($alltransbtc as $transbtc) {
         		if(!array_key_exists('address', $transbtc)){
 	        		foreach ($transbtc as $tbtc) {
@@ -67,181 +109,237 @@ class ApiController extends Controller{
 		        		if(isset($tbtc['txid'])){$txid = $tbtc['txid'];}
 		        		if(isset($tbtc['timereceived'])){$timereceived = $tbtc['timereceived'];}
 
-		        		//$userdet = WalletAddress::where('label', $label)->first();
-		        		//$recvuid = $userdet->uid;
+		        		$crosscheck = TransUser::where('category', 'send')->where('txid', $txid)->count();
+		        		if($crosscheck == 0) {
+		        			$checktx = TransUser::where('category', 'receive')->where('txid', $txid)->count();
+		        			if($checktx == 0) {
+		        				$userdet = WalletAddress::where('crypto', 'BTC')->where('label', $label)->first();
+		        				$recvuid = $userdet->uid;
+		        				$amount = number_format($tbtc['amount'], 8, '.', '');
+		        				$before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+		        				$after_bal = $before_bal + $amount;
 
-	        			$btctx[$i] = array(
-	        				'uid' => 23,
-        					'status' => 'success',
-		        			'crypto' => 'BTC',
-		        			'type' => 'external',
-		        			'remarks' => 'RECEIVE',
-		        			'before_bal' => '0.01538660',
-					        'after_bal' => '0.0145559',
-					        'myr_amount' => '0.07',
-					        'rate' => '1302.6',
-					        'currency' => '130',
-		        			'recipient' => $tbtc['address'],
-		        			'category' => $tbtc['category'],
-		        			'amount' => number_format($tbtc['amount'], 8, '.', ''),
-		        			'recipient_id' => $label,
-			        		'confirmations' => $confirmations,
-			        		'txid' => $txid,
-			        		'timestamp' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
-		        		);
-		        		$i++;
+		        				$useruid = User::where('label',$label)->first();   
+								$priceApi = PriceCrypto::where('crypto','BTC')->first(); 	 
+								$currency = Currency::where('id',$useruid->currency)->first();
+								$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+								$jsondata = file_get_contents($json_string);
+								$obj = json_decode($jsondata, TRUE); 
+								$price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+								$myr_amt = number_format($amount*$price, 2, '.', '');
+
+			        			$btctx = TransUser::create([
+				        			'uid' => $userdet->uid,
+			        				'status' => 'success',
+					        		'crypto' => 'BTC',
+					        		'type' => 'external',
+					        		'remarks' => 'RECEIVE',
+					        		'before_bal' => $before_bal,
+					        		'after_bal' => $after_bal,
+					        		'myr_amount' => $myr_amt,
+					        		'netfee' => getestimatefee('BTC'),
+									'walletfee' => 0,
+					        		'rate' => $price,
+					        		'currency' => $useruid->currency,
+					        		'recipient' => $tbtc['address'],
+					        		'category' => $tbtc['category'],
+					        		'amount' => $amount,
+					        		'recipient_id' => $label,
+						        	'confirmations' => $confirmations,
+						        	'txid' => $txid,
+						        	'time' => $timereceived,
+						        	'timereceived' => $timereceived,
+						        	'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s")
+					        	]);
+			        		}
+			        		else {$btctx = TransUser::where('category', 'receive')->where('txid', $txid)->update(['confirmation' => $confirmations]);}
+			        	}			
 	        		}
 	        	}
 	        	else {
-	        		//$userdet = WalletAddress::where('label', $transbtc['label'])->first();
-		        	//$recvuid = $userdet->uid;
+		        	$crosscheck = TransUser::where('category', 'send')->where('txid', $transbtc['txid'])->count();
+		        	if($crosscheck == 0) {
+		        		$checktx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->count();
+		        		if($checktx == 0) {
+		        			$userdet = WalletAddress::where('crypto', 'BTC')->where('label', $transbtc['label'])->first();
+		        			$recvuid = $userdet->uid;
+		        			$amount = number_format($tbtc['amount'], 8, '.', '');
+		        			$before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+		        			$after_bal = $before_bal + $amount;
 
-	        		$btctx[$i] = array(
-	        			'uid' => 23,
-        				'status' => 'success',
-		        		'crypto' => 'BTC',
-		        		'type' => 'external',
-		        		'remarks' => 'RECEIVE',
-		        		'before_bal' => '0.01538660',
-					    'after_bal' => '0.0145559',
-					    'myr_amount' => '0.07',
-					    'rate' => '1302.6',
-					    'currency' => '130',
-	        			'recipient' => $transbtc['address'],
-	        			'category' => $transbtc['category'],
-	        			'amount' => number_format($transbtc['amount'], 8, '.', ''),
-	        			'recipient_id' => $transbtc['label'],
-	        			'confirmations' => $transbtc['confirmations'],
-	        			'txid' => $transbtc['txid'],
-	        			'timestamp' => date_format(Carbon::createFromTimestamp($transbtc['timereceived']), "Y-m-d H:i:s"),
-	        		);
-	        		$i++;
+		        			$useruid = User::where('label',$transbtc['label'])->first();   
+							$priceApi = PriceCrypto::where('crypto','BTC')->first(); 	 
+							$currency = Currency::where('id',$useruid->currency)->first();
+							$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+							$jsondata = file_get_contents($json_string);
+							$obj = json_decode($jsondata, TRUE); 
+							$price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+							$myr_amt = number_format($amount*$price, 2, '.', '');
+
+					        $btctx = TransUser::create([
+					        	'uid' => $userdet->uid,
+		        				'status' => 'success',
+				        		'crypto' => 'BTC',
+						        'type' => 'external',
+						        'remarks' => 'RECEIVE',
+						        'before_bal' => $before_bal,
+					        	'after_bal' => $after_bal,
+					        	'myr_amount' => $myr_amt,
+					        	'netfee' => getestimatefee('BTC'),
+								'walletfee' => 0,
+					        	'rate' => $price,
+					        	'currency' => $useruid->currency,
+			        			'recipient' => $transbtc['address'],
+			        			'category' => $transbtc['category'],
+			        			'amount' => number_format($transbtc['amount'], 8, '.', ''),
+			        			'recipient_id' => $transbtc['label'],
+			        			'confirmations' => $transbtc['confirmations'],
+			        			'txid' => $transbtc['txid'],
+			        			'time' => $transbtc['timereceived'],
+			        			'timereceived' => $transbtc['timereceived'],
+						        'txdate' => date_format(Carbon::createFromTimestamp($transbtc['timereceived']), "Y-m-d H:i:s")
+			        		]);
+					    }
+					    else{
+			        		$btctx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->update(['confirmation' => $transbtc['confirmations']]);
+			        	}
+	        		}
 	        	}
         	}
         }
-        foreach ($alluserdet as $userdet) {
-        	$alltransbch[] = bitcoind()->client($crypto[1])->listtransactions($userdet['label'], 1000000, 0)->get();
-        	$i=0;
-        	if($alltransbch){
-	        	foreach ($alltransbch as $transbch) {
-	        		if(!array_key_exists('account', $transbch)){
-		        		foreach ($transbch as $tbch) {
-		        			if(isset($tbch['address'])){$address = $tbch['address'];}
-		        			if(isset($tbch['label'])){$label = $tbch['label'];}
-		        			if(isset($tbch['confirmations'])){$confirmations = $tbch['confirmations'];}
-		        			if(isset($tbch['txid'])){$txid = $tbch['txid'];}
-		        			if(isset($tbch['timereceived'])){$timereceived = $tbch['timereceived'];}
+        dd($crosscheck, $checktx);
+        //dd($strans_txid,$txid_arr);
+        dd($btctx, $txid_arr);
 
-		        			$bchtx[$i] = array(
-		        				'uid' => 23,
-        						'status' => 'success',
-		        				'crypto' => 'BCH',
-		        				'type' => 'external',
-		        				'remarks' => 'RECEIVE',
-		        				'before_bal' => '0.01538660',
-						        'after_bal' => '0.0145559',
-						        'myr_amount' => '0.07',
-						        'rate' => '1302.6',
-						        'currency' => '130',
-			        			'recipient' => substr($address,12),
-			        			'category' => $tbch['category'],
-			        			'amount' => number_format($tbch['amount'], 8, '.', ''),
-			        			'recipient_id' => $label,
-			        			'confirmations' => $confirmations,
-			        			'txid' => $txid,
-			        			'timestamp' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
-			        		);
-			        		$i++;
-		        		}
-		        	}
-		        	else {
-		        		$bchtx[$i] = array(
-		        			'uid' => 23,
-        					'status' => 'success',
-		        			'crypto' => 'BCH',
-		        			'type' => 'external',
-		        			'remarks' => 'RECEIVE',
-		        			'before_bal' => '0.01538660',
-					        'after_bal' => '0.0145559',
-					        'myr_amount' => '0.07',
-					        'rate' => '1302.6',
-					        'currency' => '130',
-		        			'recipient' => substr($transbch['address'],12),
-		        			'category' => $transbch['category'],
-		        			'amount' => number_format($transbch['amount'], 8, '.', ''),
-		        			'recipient_id' => $transbch['label'],
-		        			'confirmations' => $transbch['confirmations'],
-		        			'txid' => $transbch['txid'],
-		        			'timestamp' => date_format(Carbon::createFromTimestamp($transbch['timereceived']), "Y-m-d H:i:s"),
-		        		);
-		        		$i++;
-		        	}
-	        	}
-	        }
-        }
-        foreach ($alluserdet as $userdet) {
-        	$alltransdoge[] = bitcoind()->client($crypto[2])->listtransactions($userdet['label'], 1000000, 0)->get();
-        	$i=0;
-        	if($alltransdoge){
-	        	foreach ($alltransdoge as $transdoge) {
-	        		if(!array_key_exists('account', $transdoge)){
-		        		foreach ($transdoge as $tdoge) {
-		        			if(isset($tdoge['address'])){$address = $tdoge['address'];}
-		        			if(isset($tdoge['label'])){$label = $tdoge['label'];}
-		        			if(isset($tdoge['confirmations'])){$confirmations = $tdoge['confirmations'];}
-		        			if(isset($tdoge['txid'])){$txid = $tdoge['txid'];}
-		        			if(isset($tdoge['timereceived'])){$timereceived = $tdoge['timereceived'];}
 
-		        			$dogetx[$i] = array(
-		        				'uid' => 23,
-        						'status' => 'success',
-		        				'crypto' => 'DOGE',
-		        				'type' => 'external',
-		        				'remarks' => 'RECEIVE',
-		        				'before_bal' => '0.01538660',
-						        'after_bal' => '0.0145559',
-						        'myr_amount' => '0.07',
-						        'rate' => '1302.6',
-						        'currency' => '130',
-			        			'recipient' => $address,
-			        			'using' => 'mobile',
-			        			'category' => $tdoge['category'],
-			        			'amount' => number_format($tdoge['amount'], 8, '.', ''),
-			        			'recipient_id' => $label,
-			        			'confirmations' => $confirmations,
-			        			'txid' => $txid,
-			        			'timestamp' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
-			        		);
-			        		$i++;
-		        		}
-		        	}
-		        	else {
-		        		$dogetx[$i] = array(
-		        			'uid' => 23,
-        					'status' => 'success',
-		        			'crypto' => 'DOGE',
-		        			'type' => 'external',
-		        			'remarks' => 'RECEIVE',
-		        			'before_bal' => '0.01538660',
-					        'after_bal' => '0.0145559',
-					        'myr_amount' => '0.07',
-					        'rate' => '1302.6',
-					        'currency' => '130',
-		        			'recipient' => $transdoge['address'],
-		        			'category' => $transdoge['category'],
-		        			'amount' => number_format($transdoge['amount'], 8, '.', ''),
-		        			'recipient_id' => $transdoge['label'],
-		        			'confirmations' => $transdoge['confirmations'],
-		        			'txid' => $transdoge['txid'],
-		        			'timestamp' => date_format(Carbon::createFromTimestamp($transdoge['timereceived']), "Y-m-d H:i:s"),
-		        		);
-		        		$i++;
-		        	}
-	        	}
-	        }
-        }
-        dd($btctx, $bchtx, $dogetx);
-		$transaction = bitcoind()->client($crycode)->listtransactions("*", 10000, 0)->get();
+
+
+
+
+
+
+        // foreach ($alluserdet as $userdet) {
+        // 	$alltransbch[] = bitcoind()->client($crypto[1])->listtransactions($userdet['label'], 1000000, 0)->get();
+        // 	$i=0;
+        // 	if($alltransbch){
+	       //  	foreach ($alltransbch as $transbch) {
+	       //  		if(!array_key_exists('account', $transbch)){
+		      //   		foreach ($transbch as $tbch) {
+		      //   			if(isset($tbch['address'])){$address = $tbch['address'];}
+		      //   			if(isset($tbch['label'])){$label = $tbch['label'];}
+		      //   			if(isset($tbch['confirmations'])){$confirmations = $tbch['confirmations'];}
+		      //   			if(isset($tbch['txid'])){$txid = $tbch['txid'];}
+		      //   			if(isset($tbch['timereceived'])){$timereceived = $tbch['timereceived'];}
+
+		      //   			$bchtx[$i] = array(
+		      //   				'uid' => 23,
+        // 						'status' => 'success',
+		      //   				'crypto' => 'BCH',
+		      //   				'type' => 'external',
+		      //   				'remarks' => 'RECEIVE',
+		      //   				'before_bal' => '0.01538660',
+						  //       'after_bal' => '0.0145559',
+						  //       'myr_amount' => '0.07',
+						  //       'rate' => '1302.6',
+						  //       'currency' => '130',
+			     //    			'recipient' => substr($address,12),
+			     //    			'category' => $tbch['category'],
+			     //    			'amount' => number_format($tbch['amount'], 8, '.', ''),
+			     //    			'recipient_id' => $label,
+			     //    			'confirmations' => $confirmations,
+			     //    			'txid' => $txid,
+			     //    			'timestamp' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+			     //    		);
+			     //    		$i++;
+		      //   		}
+		      //   	}
+		      //   	else {
+		      //   		$bchtx[$i] = array(
+		      //   			'uid' => 23,
+        // 					'status' => 'success',
+		      //   			'crypto' => 'BCH',
+		      //   			'type' => 'external',
+		      //   			'remarks' => 'RECEIVE',
+		      //   			'before_bal' => '0.01538660',
+					   //      'after_bal' => '0.0145559',
+					   //      'myr_amount' => '0.07',
+					   //      'rate' => '1302.6',
+					   //      'currency' => '130',
+		      //   			'recipient' => substr($transbch['address'],12),
+		      //   			'category' => $transbch['category'],
+		      //   			'amount' => number_format($transbch['amount'], 8, '.', ''),
+		      //   			'recipient_id' => $transbch['label'],
+		      //   			'confirmations' => $transbch['confirmations'],
+		      //   			'txid' => $transbch['txid'],
+		      //   			'timestamp' => date_format(Carbon::createFromTimestamp($transbch['timereceived']), "Y-m-d H:i:s"),
+		      //   		);
+		      //   		$i++;
+		      //   	}
+	       //  	}
+	       //  }
+        // }
+        // foreach ($alluserdet as $userdet) {
+        // 	$alltransdoge[] = bitcoind()->client($crypto[2])->listtransactions($userdet['label'], 1000000, 0)->get();
+        // 	$i=0;
+        // 	if($alltransdoge){
+	       //  	foreach ($alltransdoge as $transdoge) {
+	       //  		if(!array_key_exists('account', $transdoge)){
+		      //   		foreach ($transdoge as $tdoge) {
+		      //   			if(isset($tdoge['address'])){$address = $tdoge['address'];}
+		      //   			if(isset($tdoge['label'])){$label = $tdoge['label'];}
+		      //   			if(isset($tdoge['confirmations'])){$confirmations = $tdoge['confirmations'];}
+		      //   			if(isset($tdoge['txid'])){$txid = $tdoge['txid'];}
+		      //   			if(isset($tdoge['timereceived'])){$timereceived = $tdoge['timereceived'];}
+
+		      //   			$dogetx[$i] = array(
+		      //   				'uid' => 23,
+        // 						'status' => 'success',
+		      //   				'crypto' => 'DOGE',
+		      //   				'type' => 'external',
+		      //   				'remarks' => 'RECEIVE',
+		      //   				'before_bal' => '0.01538660',
+						  //       'after_bal' => '0.0145559',
+						  //       'myr_amount' => '0.07',
+						  //       'rate' => '1302.6',
+						  //       'currency' => '130',
+			     //    			'recipient' => $address,
+			     //    			'using' => 'mobile',
+			     //    			'category' => $tdoge['category'],
+			     //    			'amount' => number_format($tdoge['amount'], 8, '.', ''),
+			     //    			'recipient_id' => $label,
+			     //    			'confirmations' => $confirmations,
+			     //    			'txid' => $txid,
+			     //    			'timestamp' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+			     //    		);
+			     //    		$i++;
+		      //   		}
+		      //   	}
+		      //   	else {
+		      //   		$dogetx[$i] = array(
+		      //   			'uid' => 23,
+        // 					'status' => 'success',
+		      //   			'crypto' => 'DOGE',
+		      //   			'type' => 'external',
+		      //   			'remarks' => 'RECEIVE',
+		      //   			'before_bal' => '0.01538660',
+					   //      'after_bal' => '0.0145559',
+					   //      'myr_amount' => '0.07',
+					   //      'rate' => '1302.6',
+					   //      'currency' => '130',
+		      //   			'recipient' => $transdoge['address'],
+		      //   			'category' => $transdoge['category'],
+		      //   			'amount' => number_format($transdoge['amount'], 8, '.', ''),
+		      //   			'recipient_id' => $transdoge['label'],
+		      //   			'confirmations' => $transdoge['confirmations'],
+		      //   			'txid' => $transdoge['txid'],
+		      //   			'timestamp' => date_format(Carbon::createFromTimestamp($transdoge['timereceived']), "Y-m-d H:i:s"),
+		      //   		);
+		      //   		$i++;
+		      //   	}
+	       //  	}
+	       //  }
+        // }
+        // dd($alltransbtc, $btctx, $bchtx, $dogetx);
 		// ########################RefillLNDUpdate COMMAND####################################
   //       //update funding lnd txid n balance
   //       $alltrans = Withdrawal::where('crypto', 'BTC')->where('status', 'success')->whereNotNull('txid')->get();
