@@ -663,7 +663,7 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                             'blockhash' => '0000000000000000005fca13b9f9fe8a5763730f15cc41182f0ea4bf90789564',
                             'blockindex' => 89,
                             'blocktime' => 1567400116,
-                            'txid' => '72eafdd519b98d0e125921359a60d8b6d218d9534dbe4953bb3fd91edc0a2883',
+                            'txid' => $trans['txid'],
                             'walletconflicts' => [],
                             'time' =>  intval($trans['time']),
                             'timereceived' =>  intval($trans['timereceived'])
