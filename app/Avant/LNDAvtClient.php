@@ -20,8 +20,10 @@ class LNDAvtClient
 
     private function LnRest($add,$post= ""){
         $url = $this->rest_url.$add;
+        //$capath = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-tls.cert");
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        //curl_setopt($ch, CURLOPT_CAPATH, $capath);
         curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);
         $machex = bin2hex($this->macaroon);
@@ -40,6 +42,7 @@ class LNDAvtClient
         $url = $this->rest_url.$add;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        //curl_setopt($ch, CURLOPT_CAPATH, $capath);
         curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);
         $machex = bin2hex($this->macaroon);
