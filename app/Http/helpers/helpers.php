@@ -579,7 +579,7 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
             //     }
             // }
         //}
-        $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','desc')->get();
+        $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->get();
         //dd($transaction[0]['time']);
         if($transaction){
             if(!isset($transaction[0]['time'])){
