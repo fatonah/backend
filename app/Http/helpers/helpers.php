@@ -616,27 +616,47 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 );
             }
             else{
-                foreach($transaction as $trans){
+                foreach($transaction as $key => $trans){ 
                     if(array_key_exists('time',$trans)){
                         $starT = $trans['time'] - 10000;
                         $endT = $trans['time'] + 10000;                
-                    }else{
+                    }
+                    else{
                         $starT = $trans['timereceived'] - 10000;
                         $endT = $trans['timereceived'] + 10000;
                     }
-                }
-                asort($smallest); 
-                $ids = array_search(key($smallest),$price);
-              
-                $info[] = array(
-                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
-                    'tran' => $trans,
-                );
+
+                    $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                    $jsondata = file_get_contents($json_string);
+                    $obj = json_decode($jsondata, TRUE); 
+                    $priceA = $obj['prices'];
+
+                    for($i=0;$i<count($priceA);$i++){
+                        $price[] = $priceA[$i][0];
+                    }
+
+                    foreach ($price as $i) {
+                        if(array_key_exists('time',$trans)){
+                            $smallest[$i] = abs($i - $trans['time']);
+                        }
+                        else{
+                            $smallest[$i] = abs($i - $trans['timereceived']);    
+                        }
+                    }
+
+                    asort($smallest); 
+                    $ids = array_search(key($smallest),$price);
                 
+                    $info[] = array(
+                        'price_lock' => number_format($priceA[0][1], 2, '.', ''),
+                        'tran' => $trans,
+                    );
+                
+                }
             }
-            //dd($ids, $smallest, $priceA, $info);
+            //dd($priceA, $ids);
+            //dd($ids, $smallest, $priceA);
             //return $transaction;
-            //dd($info);
             return $info;
         }
         else{return null;}
@@ -745,7 +765,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'tran' => $transaction,
                 );
-            }else{
+            }
+            else{
                 foreach($transaction as $key => $trans){ 
                 if(array_key_exists('time',$trans)){
                     $starT = $trans['time'] - 10000;
