@@ -646,24 +646,27 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
 
                     asort($smallest); 
                     $ids = array_search(key($smallest),$price);
+
+                    $userdetfromuid = WalletAddress::where('uid', $trans['uid'])->first();
+                    $initlabel = $userdetfromuid->label;
                 
                     $info[] = array(
                         'price_lock' => number_format($priceA[0][1], 2, '.', ''),
                         'tran' => array(
-                            'account' => 'usr_bsod666',
-                            'address' => 'bitcoincash:qq0nfz9l2cvvv6qsa8mtwsu2e2axqah68yavlyy0h5',
-                            'category' => 'receive',
-                            'amount' => 0.00156,
-                            'label' => 'usr_bsod666',
+                            'account' => $initlabel,
+                            'address' =>  $trans['recipient'],
+                            'category' =>  $trans['category'],
+                            'amount' => floatval($trans['amount']),
+                            'label' =>  $trans['recipient_id'],
                             'vout' => 3,
-                            'confirmations' => 457,
+                            'confirmations' =>  intval($trans['confirmation']),
                             'blockhash' => '0000000000000000005fca13b9f9fe8a5763730f15cc41182f0ea4bf90789564',
                             'blockindex' => 89,
                             'blocktime' => 1567400116,
                             'txid' => '72eafdd519b98d0e125921359a60d8b6d218d9534dbe4953bb3fd91edc0a2883',
                             'walletconflicts' => [],
-                            'time' => 1567138029,
-                            'timereceived' => 1567138029
+                            'time' =>  intval($trans['time']),
+                            'timereceived' =>  intval($trans['timereceived'])
                         ),
                     );
                 
