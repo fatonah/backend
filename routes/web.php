@@ -34,6 +34,7 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::post('edit_currency','ApiController@update_currency');
 	Route::get('crypto/{uid}/{token}','ApiController@getcrypto');
 	Route::post('add_crypto','ApiController@create_asset');
+	Route::post('rename_crypto','ApiController@rename_asset');
 	Route::post('createInvoice','ApiController@create_inv');
 	Route::get('transLND/{crypto}/{uid}/{token}','ApiController@transactionLND');
 	Route::get('transInvLND/{crypto}/{uid}/{token}','ApiController@transactionInvLND');
@@ -43,6 +44,8 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::post('listChannel','ApiController@list_channel');
 	Route::post('addChannel','ApiController@create_channel');
 	Route::post('closeChannel','ApiController@close_channel');
+	Route::post('mail_trans','ApiController@mail_transaction');
+	Route::get('viewpdf', 'ApiController@viewpdf');
 });
   
 

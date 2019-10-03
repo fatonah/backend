@@ -11,6 +11,7 @@ class PriceCrypto extends Model
 		'name',
 		'crypto',
 		'price',
+		'value_display',
 		'logo',
 		'appear',
 		'percentage',

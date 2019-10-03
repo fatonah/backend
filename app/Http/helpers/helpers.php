@@ -525,7 +525,7 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 }
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
-               
+              
                 $info[] = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'tran' => $trans,

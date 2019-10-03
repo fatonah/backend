@@ -13,5 +13,7 @@ class WalletAddress extends Model
 		'address',
 		'balance',
 		'crypto', 
+		'title', 
+		'value_display',
 	];
 }
