@@ -30,6 +30,12 @@ class TransUser extends Model
 		'remarks',
 		'time', 
 		'timereceived',
-		'txdate'
+		'txdate',
+		'vout',
+		'blockhash',
+		'blockindex',
+		'blocktime',
+		'walletconflicts'
+
 	];
 }
