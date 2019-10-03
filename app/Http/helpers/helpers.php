@@ -649,7 +649,22 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 
                     $info[] = array(
                         'price_lock' => number_format($priceA[0][1], 2, '.', ''),
-                        'tran' => $trans,
+                        'tran' => array(
+                            'account' => '',
+                            'address' => '',
+                            'category' => '',
+                            'amount' => '',
+                            'label' => '',
+                            'vout' => '',
+                            'confirmations' => '',
+                            'blockhash' => '',
+                            'blockindex' => '',
+                            'blocktime' => '',
+                            'txid' => '',
+                            'walletconflicts' => '',
+                            'time' => '',
+                            'timereceived' => ''
+                        ),
                     );
                 
                 }
