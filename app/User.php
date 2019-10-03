@@ -27,6 +27,7 @@ class User extends Authenticatable
         'password', 
 		'noic',
 		'secretpin',
+		'mnemonic',
 		'email_verify',
 		'phone_verify',
 		'currency',

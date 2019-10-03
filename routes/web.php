@@ -44,8 +44,10 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::post('listChannel','ApiController@list_channel');
 	Route::post('addChannel','ApiController@create_channel');
 	Route::post('closeChannel','ApiController@close_channel');
-	Route::post('mail_trans','ApiController@mail_transaction');
-	Route::get('viewpdf', 'ApiController@viewpdf');
+	Route::post('mail_trans','ApiController@mail_transaction'); 
+	Route::post('mail_key','ApiController@mail_keys'); 
+	Route::post('displayValue','ApiController@display_value'); 
+	Route::get('mnemonic','ApiController@mnemonic_user'); 
 });
   
 

@@ -1,7 +1,7 @@
 <?php
-
-namespace App\Http\Controllers;
  
+namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator; 
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Images;
 use App\Lib\GoogleAuthenticator;
 use Denpa\Bitcoin\LaravelClient as BitcoinClient;
-use Carbon\Carbon;
+use Carbon\Carbon; 
 
 use DB;
 use Mail; 
@@ -31,6 +31,7 @@ use App\Appver;
 use App\TransLND; 
 use App\InvoiceLND; 
 use App\Exports\TransExport; 
+use App\TransUser; 
 
 class ApiController extends Controller{ 
 	
@@ -1202,7 +1203,20 @@ class ApiController extends Controller{
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
 
-						$results[] = array('idwallet' => $wallet->id,'title' => $wallet->title, 'price' => $price, 'imgCrypto' => $row['url_img'], 'nameCrypto' => $row['name'], 'crypto' => $row['crypto'], 'balance' => $displyCrypto, 'myrBalance' => $myrCrypto, 'addressCrypto' => $addressCrypto, 'feesCrypto' => $feesCrypto);	
+						$results[] = array(
+							'idwallet' => $wallet->id,
+							'title' => $wallet->title, 
+							'price' => $price, 
+							'imgCrypto' => $row['url_img'], 
+							'nameCrypto' => $row['name'], 
+							'crypto' => $row['crypto'], 
+							'balance' => $displyCrypto, 
+							'myrBalance' => $myrCrypto, 
+							'addressCrypto' => $addressCrypto, 
+							'feesCrypto' => $feesCrypto, 
+							'mnemonic' => $user->mnemonic, 
+							'value_display' => $wallet->value_display
+						);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
 					}
@@ -2745,52 +2759,20 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 	} 
-	
-	public function viewpdf(){
-		$userid = 9;
-		$walletid = 58;
-		$crypto = 'LND';
-		$file_name = 'transaction'.time().'.pdf';
+	 
 
-		$data = array('messages'=>"Virat Gandhixx");
-      Mail::send('mail', $data, function($message) {
-         $message->to('fatonah83@yahoo.com.my', 'Tutorials Point')->subject
-            ('Laravel Testing Mail with Attachment');
-         $message->attach(storage_path('app/public/invoices.xlsx')); 
-         $message->from('xyz@gmail.com','Virat Gandhi');
-	  });
-	  unlink(storage_path('app/public/invoices.xlsx'));
-      echo "Email Sent with attachment. Check your inbox.";
-
-		$trans_data = TransLND::where('uid',9)->orderBy('id','desc')->get();
-					$customer_array[] = array('Category', 'Status', 'Error Code', 'Invoice', 'Txid', 'Amount', 'Balance', 'Rate', 'Fees', 'Remarks', 'Created At');
-					foreach($trans_data as $data)
-					{
-					 $customer_array[] = array(
-					  'Category'  => $data->category,
-					  'Status'   => $data->status,
-					  'Error Code'    => $data->error_code,
-					  'Invoice'  => $data->recipient,
-					  'Txid'   => $data->txid,
-					  'Amount'   => $data->amount,
-					  'Balance'   => $data->after_bal,
-					  'Rate'   => $data->rate,
-					  'Fees'   => $data->netfee,
-					  'Remarks'   => $data->remarks,
-					  'Created At'   => $data->created_at
-					 );
-					}
-					
-		$export = new TransExport($customer_array);
-
-		return Excel::store($export, 'invoices.xlsx', 'public');
-		 
-	}
-	
-	#################send pdf mail #########################
+	#################send transaction xlsx mail #########################
 	public function mail_transaction(Request $request){ 
 		$user = User::where('id',$request->uid)->first();
 		$trans = null; 
+
+		if($request->sendto=='' || $request->mesej=='' || $request->subject==''){
+			$datamsg = response()->json([ 
+				'mesej' => 'All field a required',
+			]); 
+        	return $datamsg->content();
+		}
+
         if($user){
 			$tokenORI = apiToken($user->id);		  
 			if($request->tokenAPI==$tokenORI){ 
@@ -2798,35 +2780,77 @@ class ApiController extends Controller{
 				if($wallet){
 					$userid = $request->uid;
 					$walletid = $wallet->id;
-					$file_name = 'transaction'.$request->crypto.'.pdf';
+					$crypto = $request->crypto;
+					$file_name = 'transaction'.$crypto.'_'.time().'.xlsx';
+					$sendto = $request->sendto;
+					$subject = $request->subject;
+					$msj = $request->mesej;
+
+					if($crypto=='LND'){ 
+						$val_crypto = 'SAT'; 
+					 
+						$trans_data = TransLND::where('uid',$userid)->orderBy('id','desc')->get();
+						$customer_array[] = array('Category', 'Status', 'Error Code', 'Invoice', 'Txid', 'Amount', 'Balance', 'Rate', 'Fees', 'Remarks', 'Created At');
+						foreach($trans_data as $data)
+						{
+							$fees = $data->netfee + $data->walletfee;
+							$currency = Currency::where('id',$data->currency)->first();
+
+							$customer_array[] = array(
+							'Category'  => $data->category,
+							'Status'   => $data->status,
+							'Error Code'    => $data->error_code,
+							'Invoice'  => $data->recipient,
+							'Txid'   => $data->txid,
+							'Amount'   => $data->amount.' '.$val_crypto,
+							'Balance'   => $data->after_bal,
+							'Rate'   => $data->rate.' '.$currency->code,
+							'Fees'   => $fees,
+							'Remarks'   => $data->remarks,
+							'Created At'   => $data->created_at
+							);
+						}
+					}else{ 
+						$val_crypto = $crypto; 
+
+						$trans_data = TransUser::where('uid',$userid)->where('crypto',$crypto)->orderBy('id','desc')->get();
+						$customer_array[] = array('Category', 'Status', 'Error Code', 'Recipient', 'Txid', 'Amount', 'Balance', 'Rate', 'Fees', 'Remarks', 'Created At');
+						foreach($trans_data as $data)
+						{
+							$fees = $data->netfee + $data->walletfee;
+							$currency = Currency::where('id',$data->currency)->first();
+
+							$customer_array[] = array(
+							'Category'  => $data->category,
+							'Status'   => $data->status,
+							'Error Code'    => $data->error_code,
+							'Invoice'  => $data->recipient,
+							'Txid'   => $data->txid,
+							'Amount'   => $data->amount.' '.$val_crypto,
+							'Balance'   => $data->after_bal,
+							'Rate'   => $data->rate.' '.$currency->code,
+							'Fees'   => $fees,
+							'Remarks'   => $data->remarks,
+							'Created At'   => $data->created_at
+							);
+						}
 					
-					$trans_data = TransLND::where('uid',$request->uid)->orderBy('id','desc')->get()->toArray();
-					$customer_array[] = array('Category', 'Status', 'Error Code', 'Invoice', 'Txid', 'Amount', 'Balance', 'Rate', 'Fees', 'Remarks', 'Created At');
-					foreach($trans_data as $data)
-					{
-					 $customer_array[] = array(
-					  'Category'  => $data->category,
-					  'Status'   => $data->status,
-					  'Error Code'    => $data->error_code,
-					  'Invoice'  => $data->recipient,
-					  'Txid'   => $data->txid,
-					  'Amount'   => $data->amount,
-					  'Balance'   => $data->after_bal,
-					  'Rate'   => $data->rate,
-					  'Fees'   => $data->netfee,
-					  'Remarks'   => $data->remarks,
-					  'Created At'   => $data->created_at
-					 );
 					}
-					$file = Excel::create('Customer Data', function($excel) use ($customer_array){
-					 $excel->setTitle('Customerz Data');
-					 $excel->sheet('Customer Data', function($sheet) use ($customer_array){
-					 $sheet->setOrientation('landscape');
-					  $sheet->fromArray($customer_array, null, 'A4', false, false);
-					 });
-					})->store('xls', storage_path('app/public/tester/'));
-		
-					//Excel::download(new UsersExport, 'users.xlsx');
+
+					$export = new TransExport($customer_array);
+
+					Excel::store($export, $file_name, 'public');	
+			
+					$storage_path = 'app/public/'.$file_name;
+
+					$data = array('messages'=>$msj);
+					Mail::send('mail', $data, function($message) use($storage_path,$sendto,$subject,$user) {
+						$message->to($sendto, 'Users')->subject
+						($subject);
+						$message->attach(storage_path($storage_path)); 
+						$message->from($user->email,ucwords($user->name));
+					});
+					unlink(storage_path($storage_path));
 
 					$datamsg = response()->json([ 
 						'mesej' => 'jaya',
@@ -2853,5 +2877,127 @@ class ApiController extends Controller{
         return $datamsg->content();
 	}
 
+	
+	#################send KEYS xlsx mail #########################
+	public function mail_keys(Request $request){ 
+		$user = User::where('id',$request->uid)->first();
+		$trans = null; 
+
+		if($request->sendto=='' || $request->mesej=='' || $request->subject=='' || $request->secretpin==''){
+			$datamsg = response()->json([ 
+				'mesej' => 'All field a required',
+			]); 
+        	return $datamsg->content();
+		}
+
+        if($user){	  
+			if($request->secretpin==$user->secretpin){
+				$tokenORI = apiToken($user->id);		  
+				if($request->tokenAPI==$tokenORI){ 
+					$wallet = WalletAddress::where('uid',$request->uid)->where('crypto',$request->crypto)->first();
+					if($wallet){
+						$userid = $request->uid;
+						$walletid = $wallet->id;
+						$crypto = $request->crypto;
+						$file_name = 'privatekey'.$crypto.'_'.time().'.xlsx';
+						$sendto = $request->sendto;
+						$subject = $request->subject;
+						$msj = $request->mesej;
+ 
+						$customer_array[] = array('Address', 'Key'); 
+						$customer_array[] = dumpkey($crypto, $user->label);  
+									
+						$export = new TransExport($customer_array);
+
+						Excel::store($export, $file_name, 'public');	
+				
+						$storage_path = 'app/public/'.$file_name;
+
+						$data = array('messages'=>$msj);
+						Mail::send('mail', $data, function($message) use($storage_path,$sendto,$subject,$user) {
+							$message->to($sendto, 'Users')->subject
+							($subject);
+							$message->attach(storage_path($storage_path)); 
+							$message->from($user->email,ucwords($user->name));
+						});
+						unlink(storage_path($storage_path));
+
+						$datamsg = response()->json([ 
+							'mesej' => 'jaya',
+							'display_msj' => 'Send Successfully',
+						]);
+					}
+					else{
+						$datamsg = response()->json([ 
+							'mesej' => $request->crypto.' user does not exist',
+						]);
+					}
+				}
+				else{
+					$datamsg = response()->json([ 
+						'mesej' => 'No Access',
+					]);	
+				}
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'Wrond Secret Pin',
+				]);	
+			}
+		}
+		else{
+            $datamsg = response()->json([ 
+				'mesej' => 'User does not exist',
+			]);
+        }
+        return $datamsg->content();
+	}
+
+	
+	#################Mnemonic User #########################
+	public function mnemonic_user(){ 
+	echo 'ddsds';
+
+	}
+
+	
+	#################Display Value #########################
+	public function display_value(Request $request){ 
+		$user = User::where('id',$request->uid)->first();
+	 
+        if($user){	   
+			$tokenORI = apiToken($user->id);		  
+			if($request->tokenAPI==$tokenORI){ 
+				$wallet = WalletAddress::where('id',$request->idwallet)->where('crypto',$request->crypto)->first();
+				if($wallet){
+					$upt = WalletAddress::findorFail($request->idwallet);
+					$upt->value_display = $request->valradio;
+					$upt->save(); 
+
+					$datamsg = response()->json([ 
+						'mesej' => 'jaya',
+						'display_msj' => 'Update Successfully',
+					]);
+				}
+				else{
+					$datamsg = response()->json([ 
+						'mesej' => $request->crypto.' user does not exist',
+					]);
+				}
+			}
+			else{
+				$datamsg = response()->json([ 
+					'mesej' => 'No Access',
+				]);	
+			} 
+		}
+		else{
+            $datamsg = response()->json([ 
+				'mesej' => 'User does not exist',
+			]);
+        }
+        return $datamsg->content();
+
+	}
 
 }  // tag
