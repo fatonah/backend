@@ -2196,8 +2196,16 @@ function genseed($session_uid){
     $binval = implode('', $binarr);
     $crccheck = str_pad(decbin(strlen($entr)/32), 4, 0, STR_PAD_LEFT);
     $crc = $binval.$crccheck;
-    $splitbin =str_split($crc, 11);
-    foreach ($splitbin as $split) {$mnemonic[] = $wordlist[bindec($split)];}
+    $splitbin = str_split($crc, 11);
+    $mnemonic = '';
+    foreach ($splitbin as $split) {
+        if($mnemonic == ''){
+            $mnemonic = $wordlist[bindec($split)];
+        }else{
+            $mnemonic = $mnemonic.' '.$wordlist[bindec($split)];
+        }
+        //$mnemonic[] = $wordlist[bindec($split)];
+    }  
     return  $mnemonic;
 }  
 

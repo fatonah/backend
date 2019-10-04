@@ -1147,6 +1147,7 @@ class ApiController extends Controller{
 			 		"power_pin"=>$user->power_pin,
 			 		"power_auth"=>$user->power_auth,
 			 		"power_fp"=>$user->power_fp,
+					"mnemonic" => $user->mnemonic,
 			 		"mesej"=>"jaya"
 			 	); 
 				$datamsg = response()->json([
@@ -1204,6 +1205,8 @@ class ApiController extends Controller{
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
 
+						$totaldis = $this->disply_convert($row['crypto'],$wallet->value_display,$displyCrypto);
+
 						$results[] = array(
 							'idwallet' => $wallet->id,
 							'title' => $wallet->title, 
@@ -1214,9 +1217,9 @@ class ApiController extends Controller{
 							'balance' => $displyCrypto, 
 							'myrBalance' => $myrCrypto, 
 							'addressCrypto' => $addressCrypto, 
-							'feesCrypto' => $feesCrypto, 
-							'mnemonic' => $user->mnemonic, 
-							'value_display' => $wallet->value_display
+							'feesCrypto' => $feesCrypto,  
+							'value_display' => $wallet->value_display,
+							'totaldis' => number_format($totaldis, 8, '.', '')
 						);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
@@ -1237,6 +1240,7 @@ class ApiController extends Controller{
 					"power_pin"=>$user->power_pin,
 					"power_auth"=>$user->power_auth,
 					"power_fp"=>$user->power_fp,
+					'mnemonic' => $user->mnemonic,
 					'mesej' => 'jaya',
 				]);
 				
@@ -1265,6 +1269,7 @@ class ApiController extends Controller{
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('crypto',$crypto)->first();
 				$currency = Currency::where('id',$user->currency)->first();
+				$wallet = WalletAddress::where('uid',$userid)->where('crypto',$crypto)->first();
 				   
 				$json_string = settings('url_gecko').'simple/price?ids='.$priceapi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 				$jsondata = file_get_contents($json_string);
@@ -1283,7 +1288,9 @@ class ApiController extends Controller{
 						
 				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
-				$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
+				$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', '');
+				
+				$totaldis = $this->disply_convert($priceapi->crypto,$wallet->value_display,$displyCrypto);
 			 
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
@@ -1299,9 +1306,12 @@ class ApiController extends Controller{
 					'username' => $user->username,
 					'fullname' => $user->name,
 					'label' => $user->label,
-					"power_pin"=>$user->power_pin,
-					"power_auth"=>$user->power_auth,
-					"power_fp"=>$user->power_fp,
+					'power_pin' =>$user->power_pin,
+					'power_auth' =>$user->power_auth,
+					'power_fp' =>$user->power_fp,
+					'mnemonic' => $user->mnemonic,
+					'value_display' => $wallet->value_display,
+					'totaldis' => number_format($totaldis, 8, '.', ''),
 					'mesej' => 'jaya',
 				]);
 				
@@ -2953,14 +2963,7 @@ class ApiController extends Controller{
         }
         return $datamsg->content();
 	}
-
-	
-	#################Mnemonic User #########################
-	public function mnemonic_user(){ 
-	echo 'ddsds';
-
-	}
-
+ 
 	
 	#################Display Value #########################
 	public function display_value(Request $request){ 
@@ -2999,6 +3002,47 @@ class ApiController extends Controller{
         }
         return $datamsg->content();
 
+	}
+ 
+	
+	#################Convert Display #########################
+	public function disply_convert($crypto,$toconv,$nilai){   
+		if($crypto=='BTC'){
+			if($toconv=='bits'){
+				$total = $nilai * 1000000;
+			}
+			else if($toconv=='mbtc'){
+				$total = $nilai * 1000;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+		else if($crypto=='LND'){
+			if($toconv=='bits'){
+				$total = $nilai * 0.01;
+			}
+			else if($toconv=='mbtc'){
+				$total = $nilai * 0.00001;
+			}
+			else if($toconv=='btc'){
+				$total = $nilai * 0.00000001;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+		else{
+			if($toconv=='mdoge' || $toconv=='mdash' || $toconv=='mltc' || $toconv=='mbch'){
+				$total = $nilai * 1000;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+
+		return $total;
+ 
 	}
 
 }  // tag
