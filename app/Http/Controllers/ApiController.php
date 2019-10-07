@@ -615,6 +615,23 @@ class ApiController extends Controller{
 		]);
 		return $datamsg->content();
 	}
+	
+	
+	#################Login2 #########################
+	public function login_back($uid){
+		$user = User::where('id',$uid)->first();
+		$tokenAPI = apiToken($user->id);
+		$msg = array(
+			"id"=>$user->id,
+			"label"=>$user->label,
+			"username"=>$user->username,
+			"tokenAPI"=>$tokenAPI, 
+		);
+		$datamsg = response()->json([
+			'data' => $msg
+		]);
+		return $datamsg->content();
+	}
 
 	
 	#################Login #########################
