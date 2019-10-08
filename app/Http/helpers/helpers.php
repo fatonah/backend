@@ -583,6 +583,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
         //dd($transaction[0]['time']);
         if($transaction){
             if(!isset($transaction[0]['time'])){
+                $userdetfromuid = WalletAddress::where('uid', $transaction['uid'])->where('crypto', $crypto)->first();
+
                 if(array_key_exists('time',$transaction)){
                     $starT = $transaction['time'] - 10000;
                     $endT = $transaction['time'] + 10000;                
@@ -610,8 +612,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
 
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
+                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }
@@ -647,11 +652,14 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     asort($smallest); 
                     $ids = array_search(key($smallest),$price);
 
-                    $userdetfromuid = WalletAddress::where('uid', $trans['uid'])->first();
+                    $userdetfromuid = WalletAddress::where('uid', $trans['uid'])->where('crypto', $crypto)->first();
                     $initlabel = $userdetfromuid->label;
                 
+                    $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+
                     $info[] = array(
                         'price_lock' => number_format($priceA[0][1], 2, '.', ''),
+                        'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                         'tran' => array(
                             'account' => $initlabel,
                             'address' =>  $trans['recipient'],
@@ -2208,4 +2216,80 @@ function genseed($session_uid){
     }  
     return  $mnemonic;
 }  
+
+/////////////////////////////////////////////////////////////////////
+///  CONVERT DISPLAY         ///////////////////////////////////////
+//////////////////////////////////////////////////////////////////// 
+	function disply_convert($fromconv,$toconv,$nilai){   
+		if($fromconv=='BTC'){
+			if($toconv=='Bits'){
+				$total = $nilai * 1000000;
+			}
+			else if($toconv=='mBTC'){
+				$total = $nilai * 1000;
+			}
+			else if($toconv=='SAT'){
+				$total = $nilai * 100000000;
+			}
+			else{
+				$total = $nilai;
+			}
+		}  
+		if($fromconv=='mBTC'){
+			if($toconv=='Bits'){
+				$total = $nilai * 1000;
+			}
+			else if($toconv=='BTC'){
+				$total = $nilai * 0.001;
+			}
+			else if($toconv=='SAT'){
+				$total = $nilai * 100000;
+			}
+			else{
+				$total = $nilai;
+			}
+		}  
+		if($fromconv=='Bits'){
+			if($toconv=='BTC'){
+				$total = $nilai * 0.000001;
+			}
+			else if($toconv=='mBTC'){
+				$total = $nilai * 0.001;
+			}
+			else if($toconv=='SAT'){
+				$total = $nilai * 100;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+		else if($fromconv=='SAT'){
+			if($toconv=='Bits'){
+				$total = $nilai * 0.01;
+			}
+			else if($toconv=='mBTC'){
+				$total = $nilai * 0.00001;
+			}
+			else if($toconv=='BTC'){
+				$total = $nilai * 0.00000001;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+		else{
+			if($toconv=='mDOGE' || $toconv=='mDASH' || $toconv=='mLTC' || $toconv=='mBCH'){
+				$total = $nilai * 1000;
+            }
+            else if($fromconv=='mDOGE' || $fromconv=='mDASH' || $fromconv=='mLTC' || $fromconv=='mBCH'){
+				$total = $nilai * 0.001;
+			}
+			else{
+				$total = $nilai;
+			}
+		}
+
+		return $total;
+ 
+	}
 
