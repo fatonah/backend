@@ -1865,6 +1865,7 @@ function getbalanceAll($crypto) {
     }
     elseif ($crypto == 'LND') {
         $lnrest = new LNDAvtClient();
+        dd($lnrest->getinfo());
         $wallet_balance = $lnrest->getWalletBalance();
         return $wallet_balance;
     }
