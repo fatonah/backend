@@ -10,6 +10,7 @@ header('Access-Control-Allow-Headers: Content-Type, x-xsrf-token, x_csrftoken');
 Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::get('debug','ApiController@debug');
 	Route::post('login','ApiController@login');
+	Route::get('info_secret/{uid}','ApiController@login_back');
 	Route::get('appversion','ApiController@appversion');
 	Route::post('signup','ApiController@signup');
 	Route::get('userkey/{crypto}/{uid}/{tokenAPI}','ApiController@userPrivateKey');
@@ -46,8 +47,7 @@ Route::group(['middleware'=>'cors','prefix' => 'api'], function () {
 	Route::post('closeChannel','ApiController@close_channel');
 	Route::post('mail_trans','ApiController@mail_transaction'); 
 	Route::post('mail_key','ApiController@mail_keys'); 
-	Route::post('displayValue','ApiController@display_value'); 
-	Route::get('mnemonic','ApiController@mnemonic_user'); 
+	Route::post('displayValue','ApiController@display_value');  
 });
   
 

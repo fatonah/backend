@@ -37,7 +37,8 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		dd(getbalanceAll('BTC'));
+		//dd(getbalanceAll('BTC'));
+	//	dd(genseed(23));
 		//dd(listransactionall('BTC'));
 		//dd(listchannel('LND','usr_bsod666'));
 		//c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8
@@ -615,6 +616,23 @@ class ApiController extends Controller{
 		]);
 		return $datamsg->content();
 	}
+	
+	
+	#################Login2 #########################
+	public function login_back($uid){
+		$user = User::where('id',$uid)->first();
+		$tokenAPI = apiToken($user->id);
+		$msg = array(
+			"id"=>$user->id,
+			"label"=>$user->label,
+			"username"=>$user->username,
+			"tokenAPI"=>$tokenAPI, 
+		);
+		$datamsg = response()->json([
+			'data' => $msg
+		]);
+		return $datamsg->content();
+	}
 
 	
 	#################Login #########################
@@ -1147,6 +1165,7 @@ class ApiController extends Controller{
 			 		"power_pin"=>$user->power_pin,
 			 		"power_auth"=>$user->power_auth,
 			 		"power_fp"=>$user->power_fp,
+					"mnemonic" => $user->mnemonic,
 			 		"mesej"=>"jaya"
 			 	); 
 				$datamsg = response()->json([
@@ -1203,6 +1222,12 @@ class ApiController extends Controller{
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
+						
+						if($row['crypto']=='LND'){
+						$totaldis = disply_convert('SAT',$wallet->value_display,$displyCrypto);
+						}else{
+						$totaldis = disply_convert($row['crypto'],$wallet->value_display,$displyCrypto);
+						}
 
 						$results[] = array(
 							'idwallet' => $wallet->id,
@@ -1214,9 +1239,9 @@ class ApiController extends Controller{
 							'balance' => $displyCrypto, 
 							'myrBalance' => $myrCrypto, 
 							'addressCrypto' => $addressCrypto, 
-							'feesCrypto' => $feesCrypto, 
-							'mnemonic' => $user->mnemonic, 
-							'value_display' => $wallet->value_display
+							'feesCrypto' => $feesCrypto,  
+							'value_display' => $wallet->value_display,
+							'totaldis' => number_format($totaldis, 8, '.', '')
 						);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
@@ -1237,6 +1262,7 @@ class ApiController extends Controller{
 					"power_pin"=>$user->power_pin,
 					"power_auth"=>$user->power_auth,
 					"power_fp"=>$user->power_fp,
+					'mnemonic' => $user->mnemonic,
 					'mesej' => 'jaya',
 				]);
 				
@@ -1265,6 +1291,7 @@ class ApiController extends Controller{
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('crypto',$crypto)->first();
 				$currency = Currency::where('id',$user->currency)->first();
+				$wallet = WalletAddress::where('uid',$userid)->where('crypto',$crypto)->first();
 				   
 				$json_string = settings('url_gecko').'simple/price?ids='.$priceapi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 				$jsondata = file_get_contents($json_string);
@@ -1283,7 +1310,15 @@ class ApiController extends Controller{
 						
 				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
-				$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', ''); 
+				$feesCryptORI = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', '');
+				 
+				if($crypto=='LND'){
+				$totaldis = number_format(disply_convert('SAT',$wallet->value_display,$displyCrypto), 8, '.', '');
+				$feesCrypto = number_format(disply_convert('BTC',$wallet->value_display,$feesCryptORI), 8, '.', '');
+				}else{
+				$totaldis = number_format(disply_convert($crypto,$wallet->value_display,$displyCrypto), 8, '.', '');
+				$feesCrypto = number_format(disply_convert($crypto,$wallet->value_display,$feesCryptORI), 8, '.', '');
+				}
 			 
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
@@ -1299,9 +1334,12 @@ class ApiController extends Controller{
 					'username' => $user->username,
 					'fullname' => $user->name,
 					'label' => $user->label,
-					"power_pin"=>$user->power_pin,
-					"power_auth"=>$user->power_auth,
-					"power_fp"=>$user->power_fp,
+					'power_pin' =>$user->power_pin,
+					'power_auth' =>$user->power_auth,
+					'power_fp' =>$user->power_fp,
+					'mnemonic' => $user->mnemonic,
+					'value_display' => $wallet->value_display,
+					'totaldis' => number_format($totaldis, 8, '.', ''),
 					'mesej' => 'jaya',
 				]);
 				
@@ -1728,7 +1766,8 @@ class ApiController extends Controller{
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first();		
 		$user = User::where('id',$uid)->first(); 
 		$currency = Currency::where('id',$user->currency)->first();
-				   
+		$wallet = WalletAddress::where('uid',$user->id)->where('crypto',$crypto)->first();
+ 
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
@@ -1738,20 +1777,29 @@ class ApiController extends Controller{
 		$net_fee = getestimatefee($crypto);
 		
 		if($user){
-			$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
-			$fee = number_format($comm_fee+$net_fee, 8, '.', '');
-			$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
 
 			if($crypto=='LND'){
-				$disCrypto = number_format(getbalance($crypto, $user->label), 8, '.', '');
+				$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', '');
+				$userbalanceBTC = disply_convert('SAT','BTC',$userbalance);
+				$fee = number_format($comm_fee+$net_fee, 8, '.', '');
+				$maxDraw =  number_format($userbalanceBTC - $fee, 8, '.', '');  
+				$disCrypto = disply_convert('BTC',$wallet->value_display,$maxDraw);
 			}else{
-				$disCrypto = $userbalance;
+				$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
+				$fee = number_format($comm_fee+$net_fee, 8, '.', '');
+				$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
+				$disCrypto = disply_convert($crypto,$wallet->value_display,$maxDraw);
 			}
-
-			if($maxDraw<=0){ $maxWithdraw =0; $displyCrypto =0; }else{ $maxWithdraw =$maxDraw; $displyCrypto = $disCrypto; }
+ 
+			if($maxDraw<=0){ $maxWithdraw =0; $displyCrypto = 0; }
+			else{ 
+				$maxWithdraw =$maxDraw; 
+				$displyCrypto = number_format($disCrypto, 8, '.', '');
+			}
 
 			$priceWithdraw = $maxWithdraw*$price;
 			$datamsg = response()->json([
+				'mesej' => 'jaya',
 				"totalMyr"=>number_format($priceWithdraw, 2, '.', ''),
 				"totalCrypto"=>$displyCrypto
 			]);
@@ -1767,7 +1815,7 @@ class ApiController extends Controller{
 	#################Send Crypto #########################
 	public function sendCrypto(Request $request){ 
 		$crypto = $request->crypto;
-		$amount = $request->amountcrypto;
+		$amountDis = $request->amountcrypto;
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
 		$remarks = $request->remarks;
@@ -1775,7 +1823,7 @@ class ApiController extends Controller{
 	 
 		$useruid = User::where('label',$label)->first();   
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
-		$currency = Currency::where('id',$useruid->currency)->first();
+		$currency = Currency::where('id',$useruid->currency)->first();  
 				   
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
@@ -1784,16 +1832,8 @@ class ApiController extends Controller{
 
 		$amountset = 0.01;
 		$minwithdraw = number_format($amountset/$price, 8, '.', '');
-	
-		if($amount<=$minwithdraw){
-			$m = 'Minimum withdraw must more than '.$minwithdraw;
-		 	$msg = array("mesej"=>$m);
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-		 	return $datamsg->content();	
-		}
-		else if(!isset($useruid)){
+		
+		if(!isset($useruid)){
 		 	$msg = array("mesej"=>"Id Sender does not exist!");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -1823,10 +1863,24 @@ class ApiController extends Controller{
 					'data' => $msg
 				]);
 			 	return $datamsg->content();
+			}else{
+				$minwithdrawDis = disply_convert($crypto,$wuserF->value_display,$minwithdraw);
+				if($amountDis<=$minwithdrawDis){
+					$m = 'Minimum withdraw must more than '.$minwithdrawDis;
+					 $msg = array("mesej"=>$m);
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+					 return $datamsg->content();	
+				}
 			}
 
 		}			 
 		 
+		$wallet = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
+
+		$amount = disply_convert($wuserF->value_display,$crypto,$amountDis);
+
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 		$net_fee = getestimatefee($crypto);
@@ -1922,28 +1976,35 @@ class ApiController extends Controller{
 		$priceApi = PriceCrypto::where('crypto',$request->crypto)->first();		
 		$user = User::where('id',$request->uid)->first(); 
 		$currency = Currency::where('id',$user->currency)->first();
+		$wallet = WalletAddress::where('uid',$request->uid)->where('crypto',$request->crypto)->first();
 	
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
 		$priceCrypto = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 	 
-		if($request->crypto!='LND'){
+		if($request->crypto=='LND'){
 			if($request->type=='crypto'){ 
-				$jum = number_format($request->nilai*$priceCrypto, 2, '.', '');  
+				$convetDis = disply_convert($wallet->value_display,'BTC',$request->nilai);
+				$amount = number_format($convetDis, 8, '.', '');
+				$jum = number_format($amount*$priceCrypto, 2, '.', '');  
 			}
 			else{
-				$jum = number_format($request->nilai/$priceCrypto, 8, '.', '');
+				$amount = number_format($request->nilai/$priceCrypto, 8, '.', '');
+				$convetDis = disply_convert('BTC',$wallet->value_display,$amount);
+				$jum = number_format($convetDis, 8, '.', '');
 			}
 		}
 		else{
 			if($request->type=='crypto'){ 
-				$bit = number_format($request->nilai/$sat, 8, '.', ''); 
-				$jum = number_format($bit*$priceCrypto, 2, '.', '');  
+				$convetDis = disply_convert($wallet->value_display,$request->crypto,$request->nilai);
+				$amount = number_format($convetDis, 8, '.', '');
+				$jum = number_format($amount*$priceCrypto, 2, '.', '');  
 			}
 			else{
-				$bit = number_format($request->nilai/$priceCrypto, 8, '.', '');
-				$jum = number_format($bit*$sat, 8, '.', ''); 
+				$amount = number_format($request->nilai/$priceCrypto, 8, '.', '');
+				$convetDis = disply_convert($request->crypto,$wallet->value_display,$amount);
+				$jum = number_format($convetDis, 8, '.', ''); 
 			}
 		}
 		
@@ -1967,6 +2028,9 @@ class ApiController extends Controller{
 					$transX = TransLND::where('uid',$uid)->orderBy('id','desc')->get();
 
 					foreach($transX as $tran){
+						$totaldis = disply_convert('SAT',$wallet->value_display,$tran->amount);
+						$totaldisAfter = disply_convert('SAT',$wallet->value_display,$tran->after_bal);
+
 						$currency = Currency::where('id',$tran->currency)->first()->code;
 						$totalfees = $tran->netfee + $tran->walletfee;
 						$trans[] = array(
@@ -1977,8 +2041,10 @@ class ApiController extends Controller{
 							'status' => $tran->status,
 							'invoice_id' => $tran->invoice_id,
 							'amount' => $tran->amount,
+							'totaldis' => number_format($totaldis, 8, '.', '').' '.$wallet->value_display,
 							'before_bal' => $tran->before_bal,
 							'after_bal' => $tran->after_bal,
+							'totaldisAfter' => number_format($totaldisAfter, 8, '.', '').' '.$wallet->value_display,
 							'myr_amount' => $tran->myr_amount,
 							'remarks' => $tran->remarks,
 							'rate' => $tran->rate,
@@ -2264,7 +2330,7 @@ class ApiController extends Controller{
 		$cryptoSend = 'BTC';
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
-		$amount = $request->amountcrypto;
+		$amountDis = $request->amountcrypto;
 		$secretpin = $request->secretpin; 
 		$sat = 100000000;
 	 
@@ -2311,7 +2377,10 @@ class ApiController extends Controller{
 			 	return $datamsg->content();
 			}
 		}
- 
+
+		$wallet = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
+		$amount = disply_convert($wallet->value_display,'SAT',$amountDis); // in sat
+
 		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
 		$satfees = number_format(getestimatefee($crypto)*$sat, 8, '.', ''); // in sat
 		$totalfunds = number_format($amount + $satfees, 8, '.', ''); // in sat
@@ -2402,7 +2471,7 @@ class ApiController extends Controller{
 					
 					$msg = array(
 						"mesej"=>"jaya",
-						"display_msj"=>'Successfully withdraw. Amount '.$amount .' '.$crypto .' was sent to '.$recipient
+						"display_msj"=>'Successfully withdraw. Amount '.$amountDis .' '.$wallet->value_display .' was sent to '.$recipient
 					);
 					$datamsg = response()->json([
 						'data' => $msg
@@ -2423,7 +2492,7 @@ class ApiController extends Controller{
 	#################Send BTC to LND #########################
 	public function sendBTCLND(Request $request){ 
 		$crypto = $request->crypto;
-		$amount = $request->amountcrypto;
+		$amountDis = $request->amountcrypto;
 		$label = $request->sendfrom; 
 		$recipient = $request->sendto;
 		$secretpin = $request->secretpin;
@@ -2440,15 +2509,7 @@ class ApiController extends Controller{
 		$amountset = 0.01;
 		$minwithdraw = number_format($amountset/$price, 8, '.', '');
 	
-		if($amount<=$minwithdraw){
-			$m = 'Minimum withdraw must more than '.$minwithdraw;
-		 	$msg = array("mesej"=>$m);
-			$datamsg = response()->json([
-				'data' => $msg
-			]);
-		 	return $datamsg->content();	
-		}
-		else if(!isset($useruid)){
+		if(!isset($useruid)){
 		 	$msg = array("mesej"=>"Id Sender does not exist!");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -2471,19 +2532,32 @@ class ApiController extends Controller{
 					'data' => $msg
 				]);
 			 	return $datamsg->content();
+			}else{
+				$minwithdrawDis = disply_convert('BTC',$wuserF->value_display,$minwithdraw);
+				if($amountDis<=$minwithdrawDis){
+					$m = 'Minimum withdraw must more than '.$minwithdraw;
+					$msg = array("mesej"=>$m);
+					$datamsg = response()->json([
+						'data' => $msg
+					]);
+					return $datamsg->content();	
+				}
 			}
 
 		 }			 
-		 
+		
+		$wallet = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
+		$amount = disply_convert($wuserF->value_display,'SAT',$amountDis); // in sat
+
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
 		$net_fee = getestimatefee($crypto);
 		$remarks = 'FUND_LND';
 		
-		$fee = number_format(($comm_fee+$net_fee)*100000000, 8, '.', '');
-		$userbalance = number_format(getbalance($crypto, $label), 8, '.', '');
-		$totalfunds = number_format($amount + $fee, 8, '.', '');
-		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', ''); 
+		$fee = number_format(($comm_fee+$net_fee)*100000000, 8, '.', ''); // in sat
+		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
+		$totalfunds = number_format($amount + $fee, 8, '.', ''); // in sat
+		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
 		
 		$tokenORI = apiToken($useruid->id); 
 		if($request->tokenAPI==$tokenORI){
@@ -2510,7 +2584,7 @@ class ApiController extends Controller{
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
 					$withdraw->txid = $crypto_txid;
-					$withdraw->crypto = $crypto;
+					$withdraw->crypto = 'BTC';
 					$withdraw->remarks = $remarks;
 					$withdraw->currency = $useruid->currency;
 					$withdraw->rate = number_format($price, 2, '.', '');
@@ -2535,7 +2609,7 @@ class ApiController extends Controller{
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
 					$withdraw->txid = $crypto_txid;
-					$withdraw->crypto = $crypto;
+					$withdraw->crypto = 'BTC';
 					$withdraw->remarks = $remarks;
 					$withdraw->currency = $useruid->currency;
 					$withdraw->rate = number_format($price, 2, '.', '');
@@ -2669,7 +2743,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$amount = 230;
+				$amount = $localsat;
 
 				$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
 				$totalfunds = number_format($amount, 8, '.', ''); // in sat
@@ -2953,14 +3027,7 @@ class ApiController extends Controller{
         }
         return $datamsg->content();
 	}
-
-	
-	#################Mnemonic User #########################
-	public function mnemonic_user(){ 
-	echo 'ddsds';
-
-	}
-
+ 
 	
 	#################Display Value #########################
 	public function display_value(Request $request){ 
@@ -3000,5 +3067,7 @@ class ApiController extends Controller{
         return $datamsg->content();
 
 	}
+ 
+	
 
 }  // tag

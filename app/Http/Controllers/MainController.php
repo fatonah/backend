@@ -19,7 +19,13 @@ class MainController extends Controller
 		$user = User::findorFail($users->id);
 		$user->email_verify = '1';
 		$user->save();
-		 		
+		  
+		if(is_null($users->mnemonic) || $users->mnemonic == ''){
+			$upt = User::findorFail($user->id);
+			$upt->mnemonic = genseed($users->id);
+			$upt->save(); 
+		}
+
 		$mesej = "Congratulations!! Successfully Active your account...";
 		
 		return view('verifyEmail',compact('mesej'));
