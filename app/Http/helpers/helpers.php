@@ -2111,12 +2111,11 @@ function openchanlightning001($peers, $localsat, $pushsat){
     $lnrest = new LNDAvtClient();
     $peerspub = explode("@",$peers)[0];
     $balance = $lnrest->getWalletBalance();
-    // $connpeers = $lnrest->connectPeers($peers);
-    // $allpeers = $lnrest->getPeers();
-    //dd($connpeers,$allpeers);
-    // foreach ($allpeers as $peer) {
-    //     foreach ($peer as $p) {
-    //         if($p['pub_key'] == $peerspub){
+    $connpeers = $lnrest->connectPeers($peers);
+    $allpeers = $lnrest->getPeers();
+    foreach ($allpeers as $peer) {
+        foreach ($peer as $p) {
+            if($p['pub_key'] == $peerspub){
                 $allchan = $lnrest->getAllChannels();
                 foreach ($allchan as $chan) {
                     $i = 0;
@@ -2125,13 +2124,13 @@ function openchanlightning001($peers, $localsat, $pushsat){
                         $i++;
                     }
                 }
-    //         }
-    //         else{
-    //             $msg = array('error'=>"Peer not found");
-    //             return $msg;
-    //         }
-    //     }
-    // }
+            }
+            else{
+                $msg = array('error'=>"Peer not found");
+                return $msg;
+            }
+        }
+    }
  
         if(!in_array($peerspub, $remotepub, true)){
             $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
