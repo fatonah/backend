@@ -37,7 +37,7 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		dd(genseed(23));
+	//	dd(genseed(23));
 		//dd(listransactionall('BTC'));
 		//dd(listchannel('LND','usr_bsod666'));
 		//c3da7372d65dbeae090c769acb755d39d04181ce559bc647dd7c1882a36acca8
@@ -1221,8 +1221,12 @@ class ApiController extends Controller{
 						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
-
+						
+						if($row['crypto']=='LND'){
+						$totaldis = disply_convert('SAT',$wallet->value_display,$displyCrypto);
+						}else{
 						$totaldis = disply_convert($row['crypto'],$wallet->value_display,$displyCrypto);
+						}
 
 						$results[] = array(
 							'idwallet' => $wallet->id,
@@ -1305,9 +1309,15 @@ class ApiController extends Controller{
 						
 				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
 				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
-				$feesCrypto = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', '');
-				
-				$totaldis = disply_convert($priceapi->crypto,$wallet->value_display,$displyCrypto);
+				$feesCryptORI = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', '');
+				 
+				if($crypto=='LND'){
+				$totaldis = number_format(disply_convert('SAT',$wallet->value_display,$displyCrypto), 8, '.', '');
+				$feesCrypto = number_format(disply_convert('BTC',$wallet->value_display,$feesCryptORI), 8, '.', '');
+				}else{
+				$totaldis = number_format(disply_convert($crypto,$wallet->value_display,$displyCrypto), 8, '.', '');
+				$feesCrypto = number_format(disply_convert($crypto,$wallet->value_display,$feesCryptORI), 8, '.', '');
+				}
 			 
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
@@ -1755,8 +1765,8 @@ class ApiController extends Controller{
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first();		
 		$user = User::where('id',$uid)->first(); 
 		$currency = Currency::where('id',$user->currency)->first();
-		$wallet = WalletAddress::where('id',$user->id)->where('crypto',$crypto)->first();
-				   
+		$wallet = WalletAddress::where('uid',$user->id)->where('crypto',$crypto)->first();
+ 
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
 		$obj = json_decode($jsondata, TRUE); 
@@ -1777,13 +1787,13 @@ class ApiController extends Controller{
 				$userbalance = number_format(getbalance($crypto, $user->label)/100000000, 8, '.', '');
 				$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 				$maxDraw =  number_format($userbalance - $fee, 8, '.', ''); 
-				$disCrypto = disply_convert($crypto,$wallet->value_display,$userbalance);
+				$disCrypto = disply_convert($crypto,$wallet->value_display,$maxDraw);
 			}
-
+ 
 			if($maxDraw<=0){ $maxWithdraw =0; $displyCrypto = 0; }
 			else{ 
 				$maxWithdraw =$maxDraw; 
-				$displyCrypto = disply_convert($crypto,$toconv,$disCrypto); 
+				$displyCrypto = number_format($disCrypto, 8, '.', '');
 			}
 
 			$priceWithdraw = $maxWithdraw*$price;
@@ -1965,7 +1975,7 @@ class ApiController extends Controller{
 		$priceApi = PriceCrypto::where('crypto',$request->crypto)->first();		
 		$user = User::where('id',$request->uid)->first(); 
 		$currency = Currency::where('id',$user->currency)->first();
-		$wallet = WalletAddress::where('id',$request->uid)->where('crypto',$request->crypto)->first();
+		$wallet = WalletAddress::where('uid',$request->uid)->where('crypto',$request->crypto)->first();
 	
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
@@ -2732,7 +2742,7 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$amount = 230;
+				$amount = $localsat;
 
 				$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
 				$totalfunds = number_format($amount, 8, '.', ''); // in sat

@@ -50,10 +50,7 @@ class RefillLNDUpdate extends Command
                     $userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
                     $after_bal = $userdet->balance + $txdet['amount'];
                     
-                    $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
-                        ->update([
-                            'balance' => $after_bal
-                        ]);
+                    
 
                     $checktx = TransLND::where('category', 'refill')->where('status', 'success')->where('txid', $txdet['tx_hash'])->count();
                     if($checktx == 0){
@@ -77,7 +74,18 @@ class RefillLNDUpdate extends Command
                             'remarks' => $trans['remarks'],
 
                         ]);
+
+                        $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
+                        ->update([
+                            'balance' => $after_bal
+                        ]);
+                        
                     }
+
+                    $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
+                        ->update([
+                            'balance' => $after_bal
+                        ]);
                 }
             }
         }

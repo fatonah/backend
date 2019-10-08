@@ -2110,11 +2110,12 @@ function openchanlightning001($peers, $localsat, $pushsat){
     $lnrest = new LNDAvtClient();
     $peerspub = explode("@",$peers)[0];
     $balance = $lnrest->getWalletBalance();
-    $connpeers = $lnrest->connectPeers($peers);
-    $allpeers = $lnrest->getPeers();
-    foreach ($allpeers as $peer) {
-        foreach ($peer as $p) {
-            if($p['pub_key'] == $peerspub){
+    // $connpeers = $lnrest->connectPeers($peers);
+    // $allpeers = $lnrest->getPeers();
+    //dd($connpeers,$allpeers);
+    // foreach ($allpeers as $peer) {
+    //     foreach ($peer as $p) {
+    //         if($p['pub_key'] == $peerspub){
                 $allchan = $lnrest->getAllChannels();
                 foreach ($allchan as $chan) {
                     $i = 0;
@@ -2123,13 +2124,13 @@ function openchanlightning001($peers, $localsat, $pushsat){
                         $i++;
                     }
                 }
-            }
-            else{
-                $msg = array('error'=>"Peer not found");
-                return $msg;
-            }
-        }
-    }
+    //         }
+    //         else{
+    //             $msg = array('error'=>"Peer not found");
+    //             return $msg;
+    //         }
+    //     }
+    // }
  
         if(!in_array($peerspub, $remotepub, true)){
             $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
@@ -2222,8 +2223,8 @@ function genseed($session_uid){
 //////////////////////////////////////////////////////////////////// 
 	function disply_convert($fromconv,$toconv,$nilai){   
 		if($fromconv=='BTC'){
-			if($toconv=='Bits'){
-				$total = $nilai * 1000000;
+			if($toconv=='Bits'){ 
+                $total = $nilai * 1000000; 
 			}
 			else if($toconv=='mBTC'){
 				$total = $nilai * 1000;
@@ -2235,7 +2236,7 @@ function genseed($session_uid){
 				$total = $nilai;
 			}
 		}  
-		if($fromconv=='mBTC'){
+		else if($fromconv=='mBTC'){
 			if($toconv=='Bits'){
 				$total = $nilai * 1000;
 			}
@@ -2249,7 +2250,7 @@ function genseed($session_uid){
 				$total = $nilai;
 			}
 		}  
-		if($fromconv=='Bits'){
+		else if($fromconv=='Bits'){
 			if($toconv=='BTC'){
 				$total = $nilai * 0.000001;
 			}
