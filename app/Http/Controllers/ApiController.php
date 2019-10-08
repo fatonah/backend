@@ -2724,7 +2724,7 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 		else if(!$peerExp){
-			$msg = array("mesej"=>"Please make sure Peer like as ' dsfds@1 ' ");
+			$msg = array("mesej"=>"Please make sure Peer like as ' <public_key>@<ip_address>:<port_number> ' ");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	
