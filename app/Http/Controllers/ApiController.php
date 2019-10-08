@@ -2715,6 +2715,7 @@ class ApiController extends Controller{
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
 		$peerExp = preg_match("/[a-zA-Z0-9]@[a-zA-Z0-9]/", $peers); 
+
 		if($pushsat>$localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
 			$datamsg = response()->json([
@@ -2733,7 +2734,7 @@ class ApiController extends Controller{
 			$crypto_txid = openchanlightning001($peers, $localsat, $pushsat);
  
 			if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
-				$error = $crypto_txid['error'];
+				$error = $crypto_txid['error'].'='.$peers.'='.$localsat.'='.$pushsat;
 
 				$msg = array("mesej"=>"jaya","mesej"=>$error);
 				$datamsg = response()->json([
