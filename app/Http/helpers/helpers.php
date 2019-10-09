@@ -2132,6 +2132,7 @@ function openchanlightning001($peers, $localsat, $pushsat){
             // }
         }
     }
+ 
         if(!in_array($peerspub, $remotepub, true)){
             $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
             return $chantxid;
