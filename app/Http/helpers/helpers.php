@@ -2126,10 +2126,10 @@ function openchanlightning001($peers, $localsat, $pushsat){
                     }
                 }
             }
-            else{
-                $msg = array('error'=>"Peer not found");
-                return $msg;
-            }
+            // else{
+            //     $msg = array('error'=>"Peer not found");
+            //     return $msg;
+            // }
         }
     }
         if(!in_array($peerspub, $remotepub, true)){
