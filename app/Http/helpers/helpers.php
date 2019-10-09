@@ -2113,7 +2113,7 @@ function openchanlightning001($peers, $localsat, $pushsat){
     $balance = $lnrest->getWalletBalance();
     $connpeers = $lnrest->connectPeers($peers);
     $allpeers = $lnrest->getPeers();
-   
+
     foreach ($allpeers as $peer) {
         foreach ($peer as $p) {
             if($p['pub_key'] == $peerspub){

@@ -2736,7 +2736,7 @@ class ApiController extends Controller{
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
 		$peerExp = preg_match("/[a-zA-Z0-9]@[a-zA-Z0-9]/", $peers); 
-//dd($pushsat,$localsat);
+
 		if($pushsat>$localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
 			$datamsg = response()->json([
@@ -2745,7 +2745,7 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 		else if(!$peerExp){
-			$msg = array("mesej"=>"Please make sure Peer like as ' <public_key>@<ip_address>:<port_number> ' ");
+			$msg = array("mesej"=>"Please make sure Peer like as '<public_key>@<ip_address>:<port_number>' or '<public_key>' ");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	
