@@ -1879,7 +1879,7 @@ class ApiController extends Controller{
 		 
 		$wallet = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
 
-		$amount = disply_convert($wuserF->value_display,$crypto,$amountDis);
+		$amount = number_format(disply_convert($wuserF->value_display,$crypto,$amountDis), 8, '.', '');
 
 		$wuserF = getaddress($crypto,$label); 
 		$comm_fee = number_format(settings('commission_withdraw')/$price, 8, '.', '');
@@ -1933,7 +1933,7 @@ class ApiController extends Controller{
 					$withdraw = new Withdrawal;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'success';
-					$withdraw->amount= $amount; 
+					$withdraw->amount = $amount; 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal;
 					$withdraw->recipient = $recipient;
@@ -2094,9 +2094,30 @@ class ApiController extends Controller{
 				$wallet = WalletAddress::where('uid',$uid)->where('crypto',$crypto)->first();
 				if($wallet){
 					$invoice = InvoiceLND::where('uid',$uid)->orderBy('id','desc')->get();
+					$trans_inv = array();
+
+					foreach($invoice as $data){
+						$nilconv = disply_convert('SAT',$wallet->value_display,$data->amount);
+
+						$trans_inv[] = array(
+							"id" => $data->id,
+							"uid" => $data->uid,
+							"hash" => $data->hash,
+							"amount" => $data->amount,
+							"amountDis" => $nilconv.' '.$wallet->value_display,
+							"expired" => $data->expired,
+							"date_expired" => $data->date_expired,
+							"memo" => $data->memo,
+							"status" => $data->status,
+							"txid" => $data->txid,
+							"created_at" => $data->created_at,
+							"updated_at" => $data->updated_at,
+						);
+					}
+
 					$datamsg = response()->json([ 
 						'mesej' => 'jaya',
-						'info' => $invoice,
+						'info' => $trans_inv,
 					]);
 				}else{
 					$datamsg = response()->json([ 
@@ -2413,7 +2434,7 @@ class ApiController extends Controller{
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'failed';
 					$withdraw->error_code = $error;
-					$withdraw->amount= $amount; 
+					$withdraw->amount= number_format($amount, 8, '.', ''); 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal; 
 					$withdraw->recipient = $recipient; 
@@ -2446,7 +2467,7 @@ class ApiController extends Controller{
 					$withdraw = new TransLND;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'success';
-					$withdraw->amount= $amount; 
+					$withdraw->amount= number_format($amount, 8, '.', ''); 
 					$withdraw->before_bal = $userbalance;
 					$withdraw->after_bal = $after_bal;
 					$withdraw->recipient = $recipient;
@@ -2577,9 +2598,9 @@ class ApiController extends Controller{
 					$withdraw = new Withdrawal;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'failed';
-					$withdraw->amount= $amount/100000000; 
-					$withdraw->before_bal = $userbalance/100000000;
-					$withdraw->after_bal = $after_bal/100000000; 
+					$withdraw->amount= number_format($amount/100000000, 8, '.', ''); 
+					$withdraw->before_bal = number_format($userbalance/100000000, 8, '.', '');
+					$withdraw->after_bal = number_format($after_bal/100000000, 8, '.', ''); 
 					$withdraw->recipient = $recipient;
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
@@ -2602,9 +2623,9 @@ class ApiController extends Controller{
 					$withdraw = new Withdrawal;
 					$withdraw->uid = $useruid->id;
 					$withdraw->status = 'success';
-					$withdraw->amount= $amount/100000000; 
-					$withdraw->before_bal = $userbalance/100000000;
-					$withdraw->after_bal = $after_bal/100000000; 
+					$withdraw->amount= number_format($amount/100000000, 8, '.', ''); 
+					$withdraw->before_bal = number_format($userbalance/100000000, 8, '.', '');
+					$withdraw->after_bal = number_format($after_bal/100000000, 8, '.', ''); 
 					$withdraw->recipient = $recipient;
 					$withdraw->netfee = $net_fee; 
 					$withdraw->walletfee = $comm_fee; 
@@ -2734,7 +2755,7 @@ class ApiController extends Controller{
 			$crypto_txid = openchanlightning001($peers, $localsat, $pushsat);
  
 			if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
-				$error = $crypto_txid['error'].'='.$peers.'='.$localsat.'='.$pushsat;
+				$error = $crypto_txid['error'];
 
 				$msg = array("mesej"=>"jaya","mesej"=>$error);
 				$datamsg = response()->json([
