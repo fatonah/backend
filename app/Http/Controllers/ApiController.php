@@ -585,11 +585,11 @@ class ApiController extends Controller{
 		if($user){  
 			$pwordnew = 'Dor'.time().'Ado#';
 
-			// $upt = User::findorFail($user->id);
-			// $upt->password = bcrypt($pwordnew);
-			// $upt->save(); 
+			$upt = User::findorFail($user->id);
+			$upt->password = bcrypt($pwordnew);
+			$upt->save(); 
 
-			$message = 'Hello, \nBy Mnemonic bring back your wallet key.Below is your key to login Dorado Wallet: \nUsername: '.$user->username.'\nPassword: '.$pwordnew;
+			$message = 'Hello, <p></p>Mnemonic bring back your wallet key. Below is your key to login Dorado Wallet: <p></p>Username: '.$user->username.'<br>Password: '.$pwordnew.'<p></p>';
 
 			$template1 = settings('template_email');
 			$template2 = str_replace("{{title}}",settings('title'),$template1);
