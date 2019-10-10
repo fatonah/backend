@@ -37,7 +37,8 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-		//dd(getbalanceAll('BTC'));
+		//dd(test());
+		dd(getconnection('BTC'));
 	//	dd(genseed(23));
 		//dd(listransactionall('BTC'));
 		//dd(listchannel('LND','usr_bsod666'));
