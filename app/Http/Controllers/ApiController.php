@@ -578,6 +578,49 @@ class ApiController extends Controller{
 		return $datamsg->content();
 	}
 	
+	#################Reset Wallet #########################
+	public function reset_mnemonic(Request $request){
+		$user = User::where('mnemonic',$request->mnemonic)->first(); 
+
+		if($user){  
+			$pwordnew = 'Dor'.time().'Ado#';
+
+			$upt = User::findorFail($user->id);
+			$upt->password = bcrypt($pwordnew);
+			$upt->save(); 
+
+			$message = 'Hello, <p></p>Mnemonic bring back your wallet key. Below is your key to login Dorado Wallet: <p></p>Username: '.$user->username.'<br>Password: '.$pwordnew.'<p></p>';
+
+			$template1 = settings('template_email');
+			$template2 = str_replace("{{title}}",settings('title'),$template1);
+			$template3 = str_replace("{{logo}}",asset('asset/assets/images/logo.png'),$template2); 
+			$template4 = str_replace("{{logotext}}",asset('asset/assets/images/logo-text.png'),$template3); 
+			$template = str_replace("{{message}}",$message,$template4);
+	 
+			$subject = 'Reset Wallet';
+
+			$data = array('messages'=>$template);
+			Mail::send('mail', $data, function($message) use($subject,$user) {
+				$message->to($user->email, ucwords($user->name))->subject
+				($subject); 
+				$message->from(settings('supportemail'), settings('title'));
+			});
+
+			$msg = array("mesej"=>"jaya","display_msj"=>"Please check your email, to get back your username and password");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			return $datamsg->content(); 	
+		}
+		else{
+			$msg = array("mesej"=>"Sorry, this mnemonic does not exist.");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			return $datamsg->content();
+		}
+	}
+	
 	#################SecretPin #########################
 	public function send_secretpin(Request $request){
 		$user = User::where('id',$request->uid)->where('secretpin',$request->secretpin)->first();
@@ -695,18 +738,16 @@ class ApiController extends Controller{
 		$email = $request->email;
 		$password = $request->password;
 		$cpassword = $request->cpassword;
-		$boxagree = $request->boxagree;
 		$secretpin = $request->secretpin;
+		$boxagree = $request->boxagree;
 			  
 		$secret_pin2 = preg_match('/^[0-9]{6}$/', $secretpin);
 		$pword1 = preg_match("/[a-zA-Z0-9]/", $password); 
 		$pword2 = preg_match("/[^\da-zA-Z]/", $password); 
-		 
-		if(!isValidUsername($username)) { echo '{"data":{"mesej":"Please enter valid username."}}'; }
-		elseif(strlen($username)<6) { echo '{"data":{"mesej":"Username must be more than 6 characters."}}'; }
+	  
+		if(strlen($username)<6) { echo '{"data":{"mesej":"Username must be more than 6 characters."}}'; }
 		elseif(strlen($secretpin)!=6) { echo '{"data":{"mesej":"Secret PIN must be 6 digits."}}'; }
 		elseif(!$secret_pin2) { echo '{"data":{"mesej":"Secret PIN must be digits only."}}'; }
-		elseif(!isValidEmail($email)) { echo '{"data":{"mesej":"Please enter valid email address."}}'; }
 		elseif(strlen($password)<8) { echo '{"data":{"mesej":"Password must be more than 8 characters."}}'; }
 		elseif(!$pword1) { echo '{"data":{"mesej":"Password must have at least one symbol, one capital letter,one number, one letter."}}'; }
 		elseif(!$pword2) { echo '{"data":{"mesej":"Password must have at least one symbol, one capital letter,one number, one letter."}}'; }
