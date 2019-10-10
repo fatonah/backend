@@ -2112,11 +2112,11 @@ function openchanlightning001($peers, $localsat, $pushsat){
     $peerspub = explode("@",$peers)[0];
     $balance = $lnrest->getWalletBalance();
     $connpeers = $lnrest->connectPeers($peers);
-    $allpeers = $lnrest->getPeers();
+    //$allpeers = $lnrest->getPeers();
 
-    foreach ($allpeers as $peer) {
-        foreach ($peer as $p) {
-            if($p['pub_key'] == $peerspub){
+    // foreach ($allpeers as $peer) {
+    //     foreach ($peer as $p) {
+    //         if($p['pub_key'] == $peerspub){
                 $allchan = $lnrest->getAllChannels();
                 foreach ($allchan as $chan) {
                     $i = 0;
@@ -2125,22 +2125,23 @@ function openchanlightning001($peers, $localsat, $pushsat){
                         $i++;
                     }
                 }
-            }
-            // else{
-            //     $msg = array('error'=>"Peer not found");
-            //     return $msg;
-            // }
-        }
-    }
+    //         }
+    //         // else{
+    //         //     $msg = array('error'=>"Peer not found");
+    //         //     return $msg;
+    //         // }
+    //     }
+    // }
+    //dd($remotepub, $c['remote_pubkey'], $c, $chan, $allchan);
  
-        if(!in_array($peerspub, $remotepub, true)){
-            $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
-            return $chantxid;
-        }
-        else{
-            $msg = array('error'=>"Channel already established with this node");
-            return $msg;
-        }
+    if(!in_array($peerspub, $remotepub, true)){
+        $chantxid = $lnrest->openChannel($peerspub, $localsat, $pushsat);
+        return $chantxid;
+    }
+    else{
+        $msg = array('error'=>"Channel already established with this node");
+        return $msg;
+    }
  
 }
 
