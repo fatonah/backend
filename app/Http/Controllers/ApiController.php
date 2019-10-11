@@ -36,7 +36,7 @@ use App\TransUser;
 class ApiController extends Controller{ 
 	
 	#################Debug #########################
-	public function debug(){
+	public function debug(){ 
 		//dd(test());
 		dd(getconnection('BTC'));
 	//	dd(genseed(23));
@@ -1227,6 +1227,7 @@ class ApiController extends Controller{
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('appear','1')->get();
 				$currency = Currency::where('id',$user->currency)->first();
+				$results = array();
 				 
 				foreach($priceapi as $row){
 					$wallet = WalletAddress::where('uid',$user->id)->where('crypto',$row['crypto'])->first();
