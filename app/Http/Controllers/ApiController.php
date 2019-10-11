@@ -2728,7 +2728,8 @@ class ApiController extends Controller{
     }
 		
 	#################Add Channel #########################
-	public function create_channel(Request $request){ 
+	public function create_channel(Request $request){
+		$sat = 100000000; 
 		$uid = $request->uid;
 		$peers = $request->peer;
 		$localsat = $request->localF;
@@ -2763,7 +2764,14 @@ class ApiController extends Controller{
 		$obj = json_decode($jsondata, TRUE); 
 		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
 
-		$peerExp = preg_match("/[a-zA-Z0-9]@[a-zA-Z0-9]/", $peers); 
+		$peerExp = preg_match("/[a-zA-Z0-9]@[a-zA-Z0-9]/", $peers);
+
+		$net_fee = number_format(getestimatefee('BTC')*$sat, 8, '.', ''); // in sat
+		$amount = $localsat+$pushsat;
+		$userbalance = number_format(getbalance($crypto, $useruid->label), 8, '.', ''); // in sat
+		$totalfunds = number_format($amount + $net_fee, 8, '.', ''); // in sat
+		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
+		$myr_amount = ($amount/$sat)*$price; 
 
 		if($pushsat>$localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
@@ -2792,14 +2800,6 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
-				$amount = $localsat;
-
-				$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
-				$totalfunds = number_format($amount, 8, '.', ''); // in sat
-				$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
-		
-				$myr_amount = ($amount/$sat)*$price;
-
 				$withdraw = new TransLND;
 				$withdraw->uid = $useruid->id;
 				$withdraw->status = 'success';
@@ -2808,7 +2808,7 @@ class ApiController extends Controller{
 				$withdraw->after_bal = $after_bal;
 				$withdraw->recipient = $peers;
 				$withdraw->txid = $crypto_txid;
-				$withdraw->netfee = 0; 
+				$withdraw->netfee = $net_fee; 
 				$withdraw->walletfee = 0; 
 				$withdraw->invoice_id = '0';
 				$withdraw->type = 'external';
