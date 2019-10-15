@@ -1355,14 +1355,14 @@ class ApiController extends Controller{
 				$totaldis = number_format(disply_convert('BTC',$wallet->value_display,$displyCrypto), 8, '.', '');
 				$totaldisLND = number_format(disply_convert('BTC',$wallet->value_display,$displyCryptoLND), 8, '.', '');
 				$feesCrypto = number_format(disply_convert('BTC',$wallet->value_display,$feesCryptORI), 8, '.', '');
-				$totalbalance = bcdiv($totaldis + $totaldisLND,1,5);
-				$totalmyrBalance = bcdiv($myrCryptoLND + $myrCrypto,1,2);
+				$totalbalance = number_format($totaldis + $totaldisLND, 8, '.', '');
+				$totalmyrBalance = number_format($myrCryptoLND + $myrCrypto, 2, '.', '');
 				}else{
 				$totaldis = number_format(disply_convert($crypto,$wallet->value_display,$displyCrypto), 8, '.', '');
 				$totaldisLND = number_format(disply_convert($crypto,$wallet->value_display,$displyCryptoLND), 8, '.', '');
 				$feesCrypto = number_format(disply_convert($crypto,$wallet->value_display,$feesCryptORI), 8, '.', '');
-				$totalbalance = bcdiv($totaldisLND + $totaldis,1,5);
-				$totalmyrBalance = bcdiv($myrCryptoLND + $myrCrypto,1,2);
+				$totalbalance = number_format($totaldisLND + $totaldis, 8, '.', '');
+				$totalmyrBalance = number_format($myrCryptoLND + $myrCrypto, 2, '.', '');
 				}
 
 				if($crypto=='LND'){
@@ -1384,8 +1384,6 @@ class ApiController extends Controller{
 					'myrBalance' => $myrCrypto,
 					'balanceLND' => $displyCryptoLND,
 					'myrBalanceLND' => $myrCryptoLND,
-					'totalbalance' => $totalbalance,
-					'totalmyrBalance' => $totalmyrBalance,
 					'uid' => $user->id,
 					'email' => $user->email,
 					'username' => $user->username,
@@ -1398,6 +1396,8 @@ class ApiController extends Controller{
 					'value_display' => $wallet->value_display,
 					'totaldis' => number_format($totaldis, 8, '.', ''),
 					'totaldisLND' => number_format($totaldisLND, 8, '.', ''),
+					'totalbalance' => $totalbalance,
+					'totalmyrBalance' => $totalmyrBalance,
 					'localfund_app' => round($local_fund, 8).' '.$wallet->value_display, //20000SAT
 					'remotefund_app' => round($remote_fund, 8).' '.$wallet->value_display, //0SAT
 					'mesej' => 'jaya',
