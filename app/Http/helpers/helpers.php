@@ -249,51 +249,12 @@ function getbalance($crypto, $label) {
         WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
         return $wallet_balance;
     }
-    elseif($crypto == 'LND'){
-        $lnrest = new LNDAvtClient();
-        $allchan = $lnrest->getAllChannels();
-        $user = WalletAddress::where('label', $label)->first();
-        $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
-        if(!$transaction){
-            $msg = array('error'=>"No Transaction Found for Channel");
-            return $msg;
-        }
-        foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
-        foreach ($allchan as $achan ) {
-            foreach ($achan as $ach ) {
-                $achan_txid[] = explode(":",$ach['channel_point'])[0];
-                if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
-                else{$match=null;}  
-            }
-        }
-        $lnd_balance = 0;
-        foreach ($match as $m ) {
-            $lnd_balance += number_format($m['local_balance'], 8, '.', '');
-        }
-
-        $user = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
-        //$trans = TransLND::where('uid', $user->uid)->where('status', 'success')->latest()->first();
-        $transdb = TransLND::where('uid', $user->uid)->latest()->first();
-        if(!$transdb) {
-            $wallet_balance = 0;
-            WalletAddress::where('label', $label)->where('crypto', $crypto)->update([
-                'balance' => $wallet_balance,
-                'lightning_balance' => $lnd_balance
-            ]);
-            return $wallet_balance; 
-        }
-        $wallet_balance = $transdb->after_bal;
-        WalletAddress::where('label', $label)->where('crypto', $crypto)->update([
-             'balance' => $wallet_balance,
-            'lightning_balance' => $lnd_balance
-        ]);
-        return $wallet_balance;
-    }
     else {
         $wallet_balance = null;
         return $wallet_balance;
     }
 }
+
  
 
 /////////////////////////////////////////////////////////////////////
@@ -967,7 +928,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
         $crycode = 'lightning';
         //GET label transaction
         $user = WalletAddress::where('label', $label)->first();
-        $transaction = TransLND::where('uid',$user->uid)->get(); 
+        $transaction = TransLND::where('uid',$user->uid)->get();
+        dd($transaction); 
         if($transaction){return $transaction;}
         else{return null;}
     }
@@ -2193,24 +2155,67 @@ function openchanlightning001($peers, $localsat, $pushsat){
 ///  CLOSE LIGHTNING PAYMENT CHANNEL         ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 function closechanlightning001($chanpoint){
-        $lnrest = new LNDAvtClient();
-        $allchan = $lnrest->getAllChannels();
-        foreach ($allchan as $chan) {
-            $i = 0;
-            foreach ($chan as $c) {
-                $remotechanpoint[$i] = $c['channel_point'];
-                $i++;
-            }
-        }
-        if(in_array($chanpoint, $remotechanpoint, true)){
-            $cchantxid = $lnrest->closeChannel($chanpoint);
-            return $cchantxid; 
-        }
-        else{
-            $msg = array('error'=>"Channel not existed on this node");
-            return $msg;
+    $lnrest = new LNDAvtClient();
+    $allchan = $lnrest->getAllChannels();
+    foreach ($allchan as $chan) {
+        $i = 0;
+        foreach ($chan as $c) {
+            $remotechanpoint[$i] = $c['channel_point'];
+            $i++;
         }
     }
+    if(in_array($chanpoint, $remotechanpoint, true)){
+        $cchantxid = $lnrest->closeChannel($chanpoint);
+        return $cchantxid; 
+    }
+    else{
+        $msg = array('error'=>"Channel not existed on this node");
+        return $msg;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+///  GETBALANCE LIGHTNING                      ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function getbalance_lndbtc($label) {
+    $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    $transactionbtc = TransLND::where('uid',$user->uid)->latest()->first();
+    if(!$transactionbtc) {$lndbtc_bal = 0.00000000;}
+    else{$lndbtc_bal = $transactionbtc->after_bal;}
+    
+    $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
+        'balance' => $lndbtc_bal
+    ]);
+    return $lndbtc_bal;
+}
+
+
+function getbalance_lndlnd($label) {
+    $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    $lnrest = new LNDAvtClient();
+    $allchan = $lnrest->getAllChannels();
+    $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
+    if(!$transaction){$lndlnd_bal = 0.00000000;}
+    else{
+        foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
+        foreach ($allchan as $achan ) {
+            foreach ($achan as $ach ) {
+                $achan_txid[] = explode(":",$ach['channel_point'])[0];
+                if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
+                else{$match=null;}  
+            }
+        }
+        $lndlnd_bal = 0;
+        foreach ($match as $m ) {
+            $lndlnd_bal += number_format($m['local_balance'], 8, '.', '');
+        }
+    }
+        
+    $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
+        'lightning_balance' => number_format($lndlnd_bal, 8, '.', '')
+    ]);
+    return $lndlnd_bal;
+}
 
 /////////////////////////////////////////////////////////////////////
 ///  API FUNCTION          ///////////////////////////////////////
