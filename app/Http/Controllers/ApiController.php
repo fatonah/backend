@@ -37,7 +37,108 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){ 
-		//dd(getbalance_lndbtc('usr_niha_pinkexc'),getbalance_lndlnd('usr_niha_pinkexc'));
+		dd(listchannel('LND', 'usr_bsod666'));
+		########################CloseChanUpdate COMMAND####################################
+        //update close chan tx
+        $crypto = 'LND';
+        $alltrans = TransLND::where('category', 'open')->get();
+        foreach ($alltrans as $trans) {
+            $sat = 100000000;
+            $user = User::where('id', $trans['uid'])->first();
+
+            $priceApi = PriceCrypto::where('crypto',$crypto)->first(); 
+            $currency = Currency::where('id',$user->currency)->first();
+
+            $obj = json_decode(file_get_contents(settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code)), TRUE); 
+            $price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
+
+            $closedchan = listClosedChannel();
+            foreach ($closedchan as $chan) {
+                foreach ($chan as $c) {
+                    if(explode(':', $c['channel_point'])[0] == $trans['txid']){
+                        $checktx = TransLND::where('category', 'closed')->where('status', 'success')->where('txid', $c['closing_tx_hash'])->count();
+                        if($checktx == 0){
+
+                            // $userbalance = number_format(getbalance($crypto, $user->label), 8, '.', ''); // in sat
+                            // $totalfunds = number_format($c['settled_balance'], 8, '.', ''); // in sat
+                            // $after_bal =  number_format($userbalance + $totalfunds, 8, '.', '');  // in sat
+                            // $myr_amount = ($c['settled_balance']/$sat)*$price;
+
+                            // dd(json_decode(file_get_contents('https://api.blockchair.com/bitcoin/dashboards/transaction/'.$c['closing_tx_hash']), TRUE));
+
+                            $txdet = json_decode(file_get_contents('https://api.blockchair.com/bitcoin/dashboards/transaction/'.$c['closing_tx_hash']), TRUE);
+                            if($txdet['data']) {
+                            	$cap_change = number_format($txdet->data->$c['closing_tx_hash']->inputs[0]->value, 8, '.', ''); // in sat
+	                            $net_fee = number_format($txdet->data->$c['closing_tx_hash']->transaction->fee, 8, '.', ''); // in sat
+	                            $return_bal = number_format($txdet->data->$c['closing_tx_hash']->outputs[0]->value, 8, '.', ''); // in sat
+
+	                            $latesttx = TransLND::where('status', 'success')->latest()->first();
+	                            $before_cap = $latesttx->lnd_cap;
+	                            $capacity = number_format($before_cap - $cap_change, 8, '.', ''); // in sat
+	                            $lndlnd_bal = number_format(getbalance_lndlnd($label), 8, '.', ''); // in sat
+	                            $lndbtc_bal = number_format(getbalance_lndbtc($label), 8, '.', ''); // in sat
+	                            $after_bal =  number_format($lndbtc_bal + $return_bal, 8, '.', '');  // in sat
+	                            $myr_amount = ($return_bal/$sat)*$price; 
+
+	                            if(array_key_exists('close_type', $c)){$remarks = $c['close_type'];}
+	                            else{$remarks = 'NEGOTIABLE _CLOSE';}
+
+	                            $withdraw = new TransLND;
+	                            $withdraw->uid = $useruid->id;
+	                            $withdraw->status = 'success';
+	                            $withdraw->amount = $return_bal; 
+	                            $withdraw->before_bal = $lndbtc_bal;
+	                            $withdraw->after_bal = $after_bal;
+	                            $withdraw->lnd_cap = $capacity;
+	                            $withdraw->lnd_bal = $lndlnd_bal;
+	                            $withdraw->recipient = $c['remote_pubkey'];
+	                            $withdraw->txid = $c['closing_tx_hash'];
+	                            $withdraw->netfee = $net_fee; 
+	                            $withdraw->walletfee = 0.00000000; 
+	                            $withdraw->invoice_id = '0';
+	                            $withdraw->type = 'external';
+	                            $withdraw->using = 'mobile';
+	                            $withdraw->category = 'closed';
+	                            $withdraw->remarks = 'NEGOTIABLE _CLOSE';
+	                            $withdraw->currency = $trans['currency'];
+	                            $withdraw->rate = number_format($price, 2, '.', '');
+	                            $withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
+	                            $withdraw->save();
+
+                            }
+                            
+
+
+                            // $withdraw = new TransLND;
+                            // $withdraw->uid = $trans['uid'];
+                            // $withdraw->status = 'success';
+                            // $withdraw->amount= $totalfunds; 
+                            // $withdraw->before_bal = $userbalance;
+                            // $withdraw->after_bal = $after_bal;
+                            // $withdraw->lnd_cap = $capacity ;
+                            // $withdraw->lnd_bal = $lndlnd_bal;
+                            // $withdraw->recipient = $c['remote_pubkey'];
+                            // $withdraw->txid = $c['closing_tx_hash'];
+                            // $withdraw->netfee = 0; 
+                            // $withdraw->walletfee = 0; 
+                            // $withdraw->remarks = $remarks; 
+                            // $withdraw->invoice_id = '0';
+                            // $withdraw->type = 'external';
+                            // $withdraw->using = 'mobile';
+                            // $withdraw->category = 'closed';
+                            // $withdraw->currency = $trans['currency'];
+                            // $withdraw->rate = number_format($price, 2, '.', '');
+                            // $withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 
+                            // $withdraw->save();
+
+                     
+                        }
+                    }
+                }
+            }
+        }
+        dd(TransLND::where('category', 'closed')->where('status', 'success')->latest()->get());
+		dd(getbalance_lndbtc('usr_niha_pinkexc'),getbalance_lndlnd('usr_niha_pinkexc'));
 	    //dd(getbalance('LND','usr_bsod666'));
 	    dd(listransaction('LND', 'usr_bsod666', 130, 'bitcoin'));
 		dd(getconnection('BTC'));
@@ -2841,12 +2942,24 @@ class ApiController extends Controller{
 				return $datamsg->content();
 			}
 			else{
+				$prevtn = TransLND::where('status', 'success')->latest()->first();
+				if($prevtn->count() == 0) {
+					$capacity = 0.00000000;
+					$lndlnd_bal = 0.000000000;
+				}
+				else{
+					$capacity = $prevtn->lnd_cap + $amount;
+					$lndlnd_bal = getbalance_lndlnd($label);
+				}
+				
 				$withdraw = new TransLND;
 				$withdraw->uid = $useruid->id;
 				$withdraw->status = 'success';
 				$withdraw->amount = $amount; 
 				$withdraw->before_bal = $userbalance;
 				$withdraw->after_bal = $after_bal;
+				$withdraw->lnd_cap = $capacity ;
+				$withdraw->lnd_bal = $lndlnd_bal;
 				$withdraw->recipient = $peers;
 				$withdraw->txid = $crypto_txid;
 				$withdraw->netfee = $net_fee; 
@@ -2873,7 +2986,8 @@ class ApiController extends Controller{
 	
 	
 	#################Close Channel #########################
-	public function close_channel(Request $request){ 
+	public function close_channel(Request $request){
+		$sat = 100000000;  
 		$uid = $request->uid; 
 		$idHash = $request->idHash;
 		$crypto = $request->crypto;
@@ -2897,14 +3011,6 @@ class ApiController extends Controller{
 			}
 		}
 
-		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
-		$currency = Currency::where('id',$useruid->currency)->first();
-	 
-		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
-		$jsondata = file_get_contents($json_string);
-		$obj = json_decode($jsondata, TRUE); 
-		$price = $obj[$priceApi->id_gecko][strtolower($currency->code)];
- 
 		$crypto_txid = closechanlightning001($idHash);
 
 		if($crypto_txid=='' || array_key_exists("error", $crypto_txid)){
@@ -2917,7 +3023,7 @@ class ApiController extends Controller{
 			return $datamsg->content();
 		}
 		else{
-			$msg = array("mesej"=>"jaya","mesej"=>"Pending Closed!");
+			$msg = array("mesej"=>"jaya","mesej"=>"Pending Closing!");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	

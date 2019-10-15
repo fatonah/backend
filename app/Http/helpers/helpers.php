@@ -2070,8 +2070,8 @@ function listchannel($crypto, $label){
     foreach ($allchan as $achan ) {
         foreach ($achan as $ach ) {
             $achan_txid[] = explode(":",$ach['channel_point'])[0];
-            if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
-            else{$match=null;}  
+            if(array_intersect($trans_txid,$achan_txid)){$matcha[] = $ach;}
+            else{$matcha=null;}  
         }
     }
     // dd($match, $achan_txid, $trans_txid);
@@ -2091,13 +2091,17 @@ function listchannel($crypto, $label){
     foreach ($closedchan as $cchan ) {
         foreach ($cchan as $cch ) {
             $cchan_txid[] = $cch['closing_tx_hash'];
-            if(array_intersect($trans_txid,$cchan_txid)){$match[] = $cch;}
-            else{$match=null;}
+            if(array_intersect($trans_txid,$cchan_txid)){$matchc[] = $cch;}
+            else{$matchc=null;}
         }
     }
+    $channels = array(
+        'active' => $matcha,
+        'closed' => $matchc
+    );
     //dd($match, $cchan_txid, $trans_txid);
      
-    return $match;
+    return $channels;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -2147,7 +2151,6 @@ function openchanlightning001($peers, $localsat, $pushsat){
         $msg = array('error'=>"Channel already established with this node");
         return $msg;
     }
- 
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -2211,9 +2214,20 @@ function getbalance_lndlnd($label) {
     }
         
     $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
-        'lightning_balance' => number_format($lndlnd_bal, 8, '.', '')
+        'lightning_balance' => $lndlnd_bal
     ]);
-    return $lndlnd_bal;
+    return number_format($lndlnd_bal, 8, '.', '');
+}
+
+
+/////////////////////////////////////////////////////////////////////
+///  GET ON CHAIN TXN         ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+function onchain_trans(){
+    $lnrest = new LNDAvtClient();
+    $transaction = $lnrest->getTransactions();
+    if(!$transaction){return null; }
+    else{return $transaction;}
 }
 
 /////////////////////////////////////////////////////////////////////
