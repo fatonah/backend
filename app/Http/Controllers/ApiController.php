@@ -1341,22 +1341,23 @@ class ApiController extends Controller{
 					
 						$price = $obj[$row["id_gecko"]][strtolower($currency->code)];
 						
-						$jumCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
+						//$jumCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
 
 						if($row['crypto']=='LND'){
-						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label));
+						$dipCryptoSAT = str_replace("\n","",getbalance_lndlnd($user->label)) + str_replace("\n","",getbalance_lndbtc($user->label));
+						$dipCrypto = disply_convert('SAT','BTC',$dipCryptoSAT);
 						}else{
-						$dipCrypto = $jumCrypto; 
+						$dipCrypto = str_replace("\n","",getbalance($row['crypto'],$user->label)/100000000); 
 						}
 
-						if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0;  }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
+						if($dipCrypto<=0){ $displyCrypto = 0;  }else{ $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
 						
-						$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
+						$myrCrypto = number_format($displyCrypto * $price, 2, '.', '');  
 						$addressCrypto = getaddress($row['crypto'], $user->label); 
 						$feesCrypto = getestimatefee($row['crypto']) + number_format(strval(settings('commission_withdraw')/$price), 8, '.', '');
 						
 						if($row['crypto']=='LND'){
-						$totaldis = disply_convert('SAT',$wallet->value_display,$displyCrypto);
+						$totaldis = disply_convert('BTC',$wallet->value_display,$displyCrypto);
 						}else{
 						$totaldis = disply_convert($row['crypto'],$wallet->value_display,$displyCrypto);
 						}
@@ -1368,11 +1369,11 @@ class ApiController extends Controller{
 							'imgCrypto' => $row['url_img'], 
 							'nameCrypto' => $row['name'], 
 							'crypto' => $row['crypto'], 
-							'balance' => $displyCrypto, 
+							'balance' => $displyCrypto,  
 							'myrBalance' => $myrCrypto, 
 							'addressCrypto' => $addressCrypto, 
-							'feesCrypto' => $feesCrypto,  
-							'value_display' => $wallet->value_display,
+							'feesCrypto' => number_format($feesCrypto, 8, '.', ''),  
+							'value_display' => $wallet->value_display,  
 							'totaldis' => number_format($totaldis, 8, '.', '')
 						);	
 						$jumMYR = $jumMYR + $myrCrypto;
@@ -1430,26 +1431,39 @@ class ApiController extends Controller{
 				$obj = json_decode($jsondata, TRUE); 
 					
 				$price = $obj[$priceapi->id_gecko][strtolower($currency->code)];		
-				$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
+				//$jumCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
  
 				if($crypto=='LND'){
-					$dipCrypto = str_replace("\n","",getbalance($crypto,$user->label));
+					$dipCryptoLNDSAT = str_replace("\n","",getbalance_lndlnd($user->label));
+					$dipCryptoLND = disply_convert('SAT','BTC',$dipCryptoLNDSAT);
+
+					$dipCryptoSAT = str_replace("\n","",getbalance_lndbtc($user->label));
+					$dipCrypto = disply_convert('SAT','BTC',$dipCryptoSAT);
 				}else{
-					$dipCrypto = $jumCrypto; 
+					$dipCryptoLND = 0;
+					$dipCrypto = str_replace("\n","",getbalance($priceapi->crypto,$user->label)/100000000); 
 				}
 					
-				if($jumCrypto<=0){ $totalCrypto = 0; $displyCrypto = 0; }else{ $totalCrypto = number_format($jumCrypto, 8, '.', ''); $displyCrypto = number_format($dipCrypto, 8, '.', ''); } 	
+				if($dipCrypto<=0){ $displyCrypto = 0; $displyCryptoLND = 0; }else{ $displyCrypto = number_format($dipCrypto, 8, '.', ''); $displyCryptoLND = number_format($dipCryptoLND, 8, '.', ''); } 	
 						
-				$myrCrypto = number_format($totalCrypto * $price, 2, '.', '');  
+				$myrCrypto = number_format($displyCrypto * $price, 2, '.', '');  
+				$myrCryptoLND = number_format($displyCryptoLND * $price, 2, '.', '');  
+
 				$addressCrypto = getaddress($priceapi->crypto, $user->label);   
 				$feesCryptORI = number_format(getestimatefee($priceapi->crypto) + settings('commission_withdraw')/$price, 8, '.', '');
 				 
 				if($crypto=='LND'){
-				$totaldis = number_format(disply_convert('SAT',$wallet->value_display,$displyCrypto), 8, '.', '');
+				$totaldis = number_format(disply_convert('BTC',$wallet->value_display,$displyCrypto), 8, '.', '');
+				$totaldisLND = number_format(disply_convert('BTC',$wallet->value_display,$displyCryptoLND), 8, '.', '');
 				$feesCrypto = number_format(disply_convert('BTC',$wallet->value_display,$feesCryptORI), 8, '.', '');
+				$totalbalance = bcdiv($totaldis + $totaldisLND,1,5);
+				$totalmyrBalance = bcdiv($myrCryptoLND + $myrCrypto,1,2);
 				}else{
 				$totaldis = number_format(disply_convert($crypto,$wallet->value_display,$displyCrypto), 8, '.', '');
+				$totaldisLND = number_format(disply_convert($crypto,$wallet->value_display,$displyCryptoLND), 8, '.', '');
 				$feesCrypto = number_format(disply_convert($crypto,$wallet->value_display,$feesCryptORI), 8, '.', '');
+				$totalbalance = bcdiv($totaldisLND + $totaldis,1,5);
+				$totalmyrBalance = bcdiv($myrCryptoLND + $myrCrypto,1,2);
 				}
 
 				if($crypto=='LND'){
@@ -1469,6 +1483,10 @@ class ApiController extends Controller{
 					'feesCrypto' => $feesCrypto,
 					'balance' => $displyCrypto,
 					'myrBalance' => $myrCrypto,
+					'balanceLND' => $displyCryptoLND,
+					'myrBalanceLND' => $myrCryptoLND,
+					'totalbalance' => $totalbalance,
+					'totalmyrBalance' => $totalmyrBalance,
 					'uid' => $user->id,
 					'email' => $user->email,
 					'username' => $user->username,
@@ -1480,6 +1498,7 @@ class ApiController extends Controller{
 					'mnemonic' => $user->mnemonic,
 					'value_display' => $wallet->value_display,
 					'totaldis' => number_format($totaldis, 8, '.', ''),
+					'totaldisLND' => number_format($totaldisLND, 8, '.', ''),
 					'localfund_app' => round($local_fund, 8).' '.$wallet->value_display, //20000SAT
 					'remotefund_app' => round($remote_fund, 8).' '.$wallet->value_display, //0SAT
 					'mesej' => 'jaya',
