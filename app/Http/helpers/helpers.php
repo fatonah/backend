@@ -580,8 +580,9 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
             // }
         //}
         $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->get();
-        //dd($transaction[0]['time']);
-        if($transaction){
+        $transaction_count = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->count();
+        //dd($transaction[0]['time']); 
+        if($transaction_count>0){ 
             if(!isset($transaction[0]['time'])){
                 $userdetfromuid = WalletAddress::where('uid', $transaction['uid'])->where('crypto', $crypto)->first();
 
@@ -612,7 +613,7 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
 
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
-                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
 
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
@@ -786,9 +787,13 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 }
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
+
+                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
             
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }
@@ -818,9 +823,13 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 }
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
+                
+                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
             
                 $info[] = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                     'tran' => $trans,
                 );
                 
@@ -869,9 +878,13 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 }
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
+
+                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
             
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                    'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }else{
@@ -900,9 +913,13 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     }
                     asort($smallest); 
                     $ids = array_search(key($smallest),$price);
+
+                    $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+                    $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
                 
                     $info[] = array(
                         'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                        'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                         'tran' => $trans,
                     );
                 }

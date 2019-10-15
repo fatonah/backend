@@ -37,7 +37,7 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){ 
-		//dd(test());
+	    //dd(test());
 		dd(getconnection('BTC'));
 	//	dd(genseed(23));
 		//dd(listransactionall('BTC'));
@@ -1764,9 +1764,9 @@ class ApiController extends Controller{
 	public function transaction($crypto,$usr_crypto,$tokenAPI){ 
 		$user = User::where('label',$usr_crypto)->first();
 		$currency = Currency::where('id',$user->currency)->first();
-		$priCrypto = PriceCrypto::where('crypto',$crypto)->first();
+		$priCrypto = PriceCrypto::where('crypto',$crypto)->first(); 
 		$trans = listransaction($crypto,$usr_crypto,strtolower($currency->code),$priCrypto->id_gecko);
-        
+      
         if($user){
 			$tokenORI = apiToken($user->id);		  
 			if($tokenAPI==$tokenORI){
