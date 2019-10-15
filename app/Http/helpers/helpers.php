@@ -929,7 +929,6 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
         //GET label transaction
         $user = WalletAddress::where('label', $label)->first();
         $transaction = TransLND::where('uid',$user->uid)->get();
-        dd($transaction); 
         if($transaction){return $transaction;}
         else{return null;}
     }
