@@ -1350,6 +1350,14 @@ class ApiController extends Controller{
 				$totaldis = number_format(disply_convert($crypto,$wallet->value_display,$displyCrypto), 8, '.', '');
 				$feesCrypto = number_format(disply_convert($crypto,$wallet->value_display,$feesCryptORI), 8, '.', '');
 				}
+
+				if($crypto=='LND'){
+					$local_fund = disply_convert('SAT',$wallet->value_display,20000);
+					$remote_fund = disply_convert('SAT',$wallet->value_display,0);
+				}else{
+					$local_fund = 0;
+					$remote_fund = 0;
+				}
 			 
 				$datamsg = response()->json([  
 					'currency' => $currency->code,
@@ -1371,6 +1379,8 @@ class ApiController extends Controller{
 					'mnemonic' => $user->mnemonic,
 					'value_display' => $wallet->value_display,
 					'totaldis' => number_format($totaldis, 8, '.', ''),
+					'localfund_app' => round($local_fund, 8).' '.$wallet->value_display, //20000SAT
+					'remotefund_app' => round($remote_fund, 8).' '.$wallet->value_display, //0SAT
 					'mesej' => 'jaya',
 				]);
 				
@@ -2271,7 +2281,7 @@ class ApiController extends Controller{
 			}
 		 }			 
 		 
-		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
+		$userbalance = number_format(getbalance_lndlnd($label), 8, '.', ''); // in sat
 		$totalfunds = number_format($amount, 8, '.', ''); // in sat
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
 		 
@@ -2433,7 +2443,7 @@ class ApiController extends Controller{
 		$wallet = WalletAddress::where('uid',$useruid->id)->where('crypto',$crypto)->first();
 		$amount = disply_convert($wallet->value_display,'SAT',$amountDis); // in sat
 
-		$userbalance = number_format(getbalance($crypto, $label), 8, '.', ''); // in sat
+		$userbalance = number_format(getbalance_lndbtc($label), 8, '.', ''); // in sat
 		$satfees = number_format(getestimatefee($crypto)*$sat, 8, '.', ''); // in sat
 		$totalfunds = number_format($amount + $satfees, 8, '.', ''); // in sat
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
@@ -2735,8 +2745,6 @@ class ApiController extends Controller{
 		$sat = 100000000; 
 		$uid = $request->uid;
 		$peers = $request->peer;
-		$localsat = $request->localF;
-		$pushsat = $request->remoteF;
 		$crypto = $request->crypto;
 
 		$useruid = User::where('id',$uid)->first();
@@ -2759,8 +2767,12 @@ class ApiController extends Controller{
 			}
 		}
 
+		$wallet = WalletAddress::where('uid',$useruid->id)->first();
 		$priceApi = PriceCrypto::where('crypto',$crypto)->first(); 	 
 		$currency = Currency::where('id',$useruid->currency)->first();
+		
+		$localsat = disply_convert($wallet->value_display,'SAT',$request->localF);
+		$pushsat = disply_convert($wallet->value_display,'SAT',$request->remoteF);
 				   
 		$json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
 		$jsondata = file_get_contents($json_string);
