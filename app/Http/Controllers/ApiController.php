@@ -36,8 +36,8 @@ use App\TransUser;
 class ApiController extends Controller{ 
 	
 	#################Debug #########################
-	public function debug(){
-		//dd(test());
+	public function debug(){ 
+	    //dd(test());
 		dd(getconnection('BTC'));
 	//	dd(genseed(23));
 		//dd(listransactionall('BTC'));
@@ -580,45 +580,31 @@ class ApiController extends Controller{
 	
 	#################Reset Wallet #########################
 	public function reset_mnemonic(Request $request){
-		$user = User::where('mnemonic',$request->mnemonic)->first(); 
+		$mnemonic = $request->mnemonic;   
+		$user = User::where('mnemonic',$mnemonic)->first();
+		
+		if(isset($user)){
+			$hash = $user->email_hash;
+			$id = $user->id;
+ 
+			  $email_msj = ucwords($user->username).'<p> We received a request to reset your DORADO wallet. Below is your username to login Dorado Wallet: <p></p>Username: '.$user->username.' <p></p>Please click link below.</p><p><a href="'.settings('url').'password/reset/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Pasword</a></p>';
+		  	  send_email_basic($user->email, 'DORADO', settings('infoemail'), 'DORADO Account Reset Wallet', $email_msj);  
 
-		if($user){  
-			$pwordnew = 'Dor'.time().'Ado#';
-
-			$upt = User::findorFail($user->id);
-			$upt->password = bcrypt($pwordnew);
-			$upt->save(); 
-
-			$message = 'Hello, <p></p>Mnemonic bring back your wallet key. Below is your key to login Dorado Wallet: <p></p>Username: '.$user->username.'<br>Password: '.$pwordnew.'<p></p>';
-
-			$template1 = settings('template_email');
-			$template2 = str_replace("{{title}}",settings('title'),$template1);
-			$template3 = str_replace("{{logo}}",asset('asset/assets/images/logo.png'),$template2); 
-			$template4 = str_replace("{{logotext}}",asset('asset/assets/images/logo-text.png'),$template3); 
-			$template = str_replace("{{message}}",$message,$template4);
-	 
-			$subject = 'Reset Wallet';
-
-			$data = array('messages'=>$template);
-			Mail::send('mail', $data, function($message) use($subject,$user) {
-				$message->to($user->email, ucwords($user->name))->subject
-				($subject); 
-				$message->from(settings('supportemail'), settings('title'));
-			});
-
-			$msg = array("mesej"=>"jaya","display_msj"=>"Please check your email, to get back your username and password");
+			$msg = array(
+				"display_msj"=>"Please check your inbox, to get back your Dorado Wallet.",
+				"mesej"=>"jaya"
+			);
 			$datamsg = response()->json([
 				'data' => $msg
 			]);
-			return $datamsg->content(); 	
 		}
-		else{
-			$msg = array("mesej"=>"Sorry, this mnemonic does not exist.");
+		else{	
+			$msg = array("mesej"=>"No such user with this mnemonic.");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);
-			return $datamsg->content();
 		}
+		return $datamsg->content(); 
 	}
 	
 	#################SecretPin #########################
@@ -1241,6 +1227,7 @@ class ApiController extends Controller{
 			if($tokenAPI==$tokenORI){
 				$priceapi = PriceCrypto::where('appear','1')->get();
 				$currency = Currency::where('id',$user->currency)->first();
+				$results = array();
 				 
 				foreach($priceapi as $row){
 					$wallet = WalletAddress::where('uid',$user->id)->where('crypto',$row['crypto'])->first();
@@ -1777,9 +1764,9 @@ class ApiController extends Controller{
 	public function transaction($crypto,$usr_crypto,$tokenAPI){ 
 		$user = User::where('label',$usr_crypto)->first();
 		$currency = Currency::where('id',$user->currency)->first();
-		$priCrypto = PriceCrypto::where('crypto',$crypto)->first();
+		$priCrypto = PriceCrypto::where('crypto',$crypto)->first(); 
 		$trans = listransaction($crypto,$usr_crypto,strtolower($currency->code),$priCrypto->id_gecko);
-        
+      
         if($user){
 			$tokenORI = apiToken($user->id);		  
 			if($tokenAPI==$tokenORI){
