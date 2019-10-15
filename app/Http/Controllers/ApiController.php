@@ -37,8 +37,8 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){ 
-		dd(getbalance_lndbtc('usr_niha_pinkexc'),getbalance_lndlnd('usr_niha_pinkexc'));
-	    dd(getbalance('LND','usr_bsod666'));
+		//dd(getbalance_lndbtc('usr_niha_pinkexc'),getbalance_lndlnd('usr_niha_pinkexc'));
+	    //dd(getbalance('LND','usr_bsod666'));
 	    dd(listransaction('LND', 'usr_bsod666', 130, 'bitcoin'));
 		dd(getconnection('BTC'));
 	//	dd(genseed(23));
@@ -2802,12 +2802,12 @@ class ApiController extends Controller{
 
 		$net_fee = number_format(getestimatefee('BTC')*$sat, 8, '.', ''); // in sat
 		$amount = $localsat+$pushsat;
-		$userbalance = number_format(getbalance($crypto, $useruid->label), 8, '.', ''); // in sat
+		$userbalance = number_format(getbalance_lndbtc($label), 8, '.', ''); // in sat
 		$totalfunds = number_format($amount + $net_fee, 8, '.', ''); // in sat
 		$after_bal =  number_format($userbalance - $totalfunds, 8, '.', '');  // in sat
 		$myr_amount = ($amount/$sat)*$price; 
 
-		if($pushsat>$localsat){
+		if($pushsat > $localsat){
 			$msg = array("mesej"=>"Remote Funding must less than Local Funding");
 			$datamsg = response()->json([
 				'data' => $msg
@@ -2816,6 +2816,13 @@ class ApiController extends Controller{
 		}
 		else if(!$peerExp){
 			$msg = array("mesej"=>"Please make sure Peer like as '<public_key>@<ip_address>:<port_number>' or '<public_key>' ");
+			$datamsg = response()->json([
+				'data' => $msg
+			]);	
+			return $datamsg->content();
+		}
+		else if($userbalance < $totalfunds){
+			$msg = array("mesej"=>"Insufficient balance to perform transaction. Got ".$userbalance." SAT. Required ".$totalfunds." SAT.");
 			$datamsg = response()->json([
 				'data' => $msg
 			]);	
@@ -2837,18 +2844,18 @@ class ApiController extends Controller{
 				$withdraw = new TransLND;
 				$withdraw->uid = $useruid->id;
 				$withdraw->status = 'success';
-				$withdraw->amount= $totalfunds; 
+				$withdraw->amount = $amount; 
 				$withdraw->before_bal = $userbalance;
 				$withdraw->after_bal = $after_bal;
 				$withdraw->recipient = $peers;
 				$withdraw->txid = $crypto_txid;
 				$withdraw->netfee = $net_fee; 
-				$withdraw->walletfee = 0; 
+				$withdraw->walletfee = 0.00000000; 
 				$withdraw->invoice_id = '0';
 				$withdraw->type = 'external';
 				$withdraw->using = 'mobile';
 				$withdraw->category = 'open';
-				$withdraw->remarks = '';
+				$withdraw->remarks = 'OPEN_CHANNEL';
 				$withdraw->currency = $useruid->currency;
 				$withdraw->rate = number_format($price, 2, '.', '');
 				$withdraw->myr_amount = number_format($myr_amount, 2, '.', ''); 

@@ -14,6 +14,8 @@ class TransLND extends Model
 		'invoice_id',
 		'before_bal',
 		'after_bal',
+		'lnd_cap',
+		'lnd_bal',
 		'status',
 		'error_code',
 		'txid',
