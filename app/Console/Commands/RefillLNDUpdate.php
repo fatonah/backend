@@ -48,10 +48,9 @@ class RefillLNDUpdate extends Command
             foreach ($transdet as $txdet) {
                 if($txdet['num_confirmations'] >= 6){
                     $userdet = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])->first();
-                    $after_bal = $userdet->balance + $txdet['amount'];
+                    $amount = number_format($txdet['amount'], 8, '.', '');
+                    $after_bal = $userdet->balance + $amount;
                     
-                    
-
                     $checktx = TransLND::where('category', 'refill')->where('status', 'success')->where('txid', $txdet['tx_hash'])->count();
                     if($checktx == 0){
                         $trans = TransLND::create([
@@ -63,7 +62,7 @@ class RefillLNDUpdate extends Command
                             'status' => $trans['status'],
                             'recipient' => $txdet['dest_addresses'][0],
                             'txid' => $txdet['tx_hash'],
-                            'amount' => $txdet['amount'],
+                            'amount' => $amount,
                             'before_bal' => $userdet->balance,
                             'after_bal' => $after_bal,
                             'myr_amount' => $trans['myr_amount'],
@@ -75,17 +74,19 @@ class RefillLNDUpdate extends Command
 
                         ]);
 
+                        $translnd = TransLND::where('status', 'success')->latest()->first();
                         $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
                         ->update([
-                            'balance' => $after_bal
+                            'balance' => $translnd->after_bal
                         ]);
                         
                     }
 
+                    $translnd = TransLND::where('status', 'success')->latest()->first();
                     $walletupdate = WalletAddress::where('crypto', 'LND')->where('address', $txdet['dest_addresses'][0])
-                        ->update([
-                            'balance' => $after_bal
-                        ]);
+                    ->update([
+                        'balance' => $translnd->after_bal
+                    ]);
                 }
             }
         }

@@ -2180,7 +2180,7 @@ function closechanlightning001($chanpoint){
 function getbalance_lndbtc($label) {
     $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
     $transactionbtc = TransLND::where('uid',$user->uid)->latest()->first();
-    if(!$transactionbtc) {$lndbtc_bal = 0.00000000;}
+    if($transactionbtc->count() == 0) {$lndbtc_bal = 0.00000000;}
     else{$lndbtc_bal = $transactionbtc->after_bal;}
     
     $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
@@ -2195,7 +2195,7 @@ function getbalance_lndlnd($label) {
     $lnrest = new LNDAvtClient();
     $allchan = $lnrest->getAllChannels();
     $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
-    if(!$transaction){$lndlnd_bal = 0.00000000;}
+    if($transaction->count() == 0){$lndlnd_bal = 0.00000000;}
     else{
         foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
         foreach ($allchan as $achan ) {
