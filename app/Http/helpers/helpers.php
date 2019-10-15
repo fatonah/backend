@@ -250,16 +250,43 @@ function getbalance($crypto, $label) {
         return $wallet_balance;
     }
     elseif($crypto == 'LND'){
+        $lnrest = new LNDAvtClient();
+        $allchan = $lnrest->getAllChannels();
+        $user = WalletAddress::where('label', $label)->first();
+        $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
+        if(!$transaction){
+            $msg = array('error'=>"No Transaction Found for Channel");
+            return $msg;
+        }
+        foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
+        foreach ($allchan as $achan ) {
+            foreach ($achan as $ach ) {
+                $achan_txid[] = explode(":",$ach['channel_point'])[0];
+                if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
+                else{$match=null;}  
+            }
+        }
+        $lnd_balance = 0;
+        foreach ($match as $m ) {
+            $lnd_balance += number_format($m['local_balance'], 8, '.', '');
+        }
+
         $user = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
         //$trans = TransLND::where('uid', $user->uid)->where('status', 'success')->latest()->first();
-        $trans = TransLND::where('uid', $user->uid)->latest()->first();
-        if(!$trans) {
+        $transdb = TransLND::where('uid', $user->uid)->latest()->first();
+        if(!$transdb) {
             $wallet_balance = 0;
-            WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
+            WalletAddress::where('label', $label)->where('crypto', $crypto)->update([
+                'balance' => $wallet_balance,
+                'lightning_balance' => $lnd_balance
+            ]);
             return $wallet_balance; 
         }
-        $wallet_balance = $trans->after_bal;
-        WalletAddress::where('label', $label)->where('crypto', $crypto)->update(['balance' => $wallet_balance]);
+        $wallet_balance = $transdb->after_bal;
+        WalletAddress::where('label', $label)->where('crypto', $crypto)->update([
+             'balance' => $wallet_balance,
+            'lightning_balance' => $lnd_balance
+        ]);
         return $wallet_balance;
     }
     else {

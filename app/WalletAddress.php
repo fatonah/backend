@@ -12,6 +12,7 @@ class WalletAddress extends Model
 		'label',
 		'address',
 		'balance',
+		'lightning_balance',
 		'crypto', 
 		'title', 
 		'value_display',
