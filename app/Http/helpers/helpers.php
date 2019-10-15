@@ -2060,7 +2060,7 @@ function listchannel($crypto, $label){
 
     $user = WalletAddress::where('label', $label)->first();
     $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get();
-    
+    $match = array();
     if(!$transaction){
         $msg = array('error'=>"No Transaction Found for Channel");
         return $msg;
@@ -2070,11 +2070,9 @@ function listchannel($crypto, $label){
     foreach ($allchan as $achan ) {
         foreach ($achan as $ach ) {
             $achan_txid[] = explode(":",$ach['channel_point'])[0];
-            if(array_intersect($trans_txid,$achan_txid)){$matcha[] = $ach;}
-            else{$matcha=null;}  
+            if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
         }
     }
-    // dd($match, $achan_txid, $trans_txid);
     
     //pending channel match
     // foreach ($pendchan as $pchan ) {
@@ -2084,24 +2082,16 @@ function listchannel($crypto, $label){
     //         // else{$match=null;} 
     //     }
     // }
-    //dd($pendchan);
-    //dd($match, $pchan_txid, $trans_txid);
    
     //closed channel match
     foreach ($closedchan as $cchan ) {
         foreach ($cchan as $cch ) {
             $cchan_txid[] = $cch['closing_tx_hash'];
-            if(array_intersect($trans_txid,$cchan_txid)){$matchc[] = $cch;}
-            else{$matchc=null;}
+            if(array_intersect($trans_txid,$cchan_txid)){$match[] = $cch;}
+            //else{$match=null;}
         }
     }
-    $channels = array(
-        'active' => $matcha,
-        'closed' => $matchc
-    );
-    //dd($match, $cchan_txid, $trans_txid);
-     
-    return $channels;
+    return $match;
 }
 
 /////////////////////////////////////////////////////////////////////
