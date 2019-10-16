@@ -1269,7 +1269,7 @@ class ApiController extends Controller{
 	
 	#################Check API #########################
 	public function checkAPI(){
-		$json_string = settings('url_gecko').'pings'; 
+		$json_string = settings('url_gecko').'ping'; 
 		$headers = get_headers($json_string,1); 
         $http_code = explode(' ',$headers[0]);
 
