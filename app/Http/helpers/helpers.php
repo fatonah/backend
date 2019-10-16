@@ -606,6 +606,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                    'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                    'value_display' => $userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }
@@ -649,6 +651,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $info[] = array(
                         'price_lock' => number_format($priceA[0][1], 2, '.', ''),
                         'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                        'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                        'value_display' => $userdetfromuid->value_display,
                         'tran' => array(
                             'account' => $initlabel,
                             'address' =>  $trans['recipient'],
@@ -782,6 +786,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                    'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                    'value_display' => $userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }
@@ -818,6 +824,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $info[] = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                    'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                    'value_display' => $userdetfromuid->value_display,
                     'tran' => $trans,
                 );
                 
@@ -873,6 +881,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                    'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                    'value_display' => $userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
             }else{
@@ -908,6 +918,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $info[] = array(
                         'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                         'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                        'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                        'value_display' => $userdetfromuid->value_display,
                         'tran' => $trans,
                     );
                 }
@@ -2060,11 +2072,12 @@ function listchannel($crypto, $label){
 
     $user = WalletAddress::where('label', $label)->first();
     $transaction = TransLND::where('uid',$user->uid)->where('status','success')->get();
+    $transaction_count = TransLND::where('uid',$user->uid)->where('status','success')->count();
     $match = array();
-    if(!$transaction){
-        $msg = array('error'=>"No Transaction Found for Channel");
-        return $msg;
-    }
+    // if($transaction_count==0){
+    //     $msg = array('error'=>"No Transaction Found for Channel");
+    //     return $msg;
+    if($transaction_count>0){
     foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
     //active channel match
     foreach ($allchan as $achan ) {
@@ -2090,6 +2103,7 @@ function listchannel($crypto, $label){
             if(array_intersect($trans_txid,$cchan_txid)){$match[] = $cch;}
             //else{$match=null;}
         }
+    }
     }
     return $match;
 }
@@ -2172,7 +2186,8 @@ function closechanlightning001($chanpoint){
 function getbalance_lndbtc($label) {
     $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
     $transactionbtc = TransLND::where('uid',$user->uid)->latest()->first();
-    if($transactionbtc->count() == 0) {$lndbtc_bal = 0.00000000;}
+    $transactionbtc_count = TransLND::where('uid',$user->uid)->count();
+    if($transactionbtc_count == 0) {$lndbtc_bal = 0.00000000;}
     else{$lndbtc_bal = $transactionbtc->after_bal;}
     
     $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
@@ -2187,7 +2202,8 @@ function getbalance_lndlnd($label) {
     $lnrest = new LNDAvtClient();
     $allchan = $lnrest->getAllChannels();
     $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
-    if($transaction->count() == 0){$lndlnd_bal = 0.00000000;}
+    $transaction_count = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->count();
+    if($transaction_count == 0){$lndlnd_bal = 0.00000000;}
     else{
         foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
         foreach ($allchan as $achan ) {

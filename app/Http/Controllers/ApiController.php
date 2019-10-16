@@ -1374,7 +1374,8 @@ class ApiController extends Controller{
 							'addressCrypto' => $addressCrypto, 
 							'feesCrypto' => number_format($feesCrypto, 8, '.', ''),  
 							'value_display' => $wallet->value_display,  
-							'totaldis' => number_format($totaldis, 8, '.', '')
+							'totaldis' => number_format($totaldis, 8, '.', ''),  
+							'totaldis5D' => sprintf("%.5f", $totaldis)
 						);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
@@ -1496,8 +1497,11 @@ class ApiController extends Controller{
 					'mnemonic' => $user->mnemonic,
 					'value_display' => $wallet->value_display,
 					'totaldis' => number_format($totaldis, 8, '.', ''),
+					'totaldis5D' => sprintf("%.5f", $totaldis),
 					'totaldisLND' => number_format($totaldisLND, 8, '.', ''),
+					'totaldisLND5D' => sprintf("%.5f", $totaldisLND),
 					'totalbalance' => $totalbalance,
+					'totalbalance5D' => sprintf("%.5f", $totalbalance),
 					'totalmyrBalance' => $totalmyrBalance,
 					'localfund_app' => round($local_fund, 8).' '.$wallet->value_display, //20000SAT
 					'remotefund_app' => round($remote_fund, 8).' '.$wallet->value_display, //0SAT
@@ -1940,7 +1944,7 @@ class ApiController extends Controller{
 		if($user){
 
 			if($crypto=='LND'){
-				$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', '');
+				$userbalance = number_format(getbalance_lndbtc($user->label), 8, '.', '');
 				$userbalanceBTC = disply_convert('SAT','BTC',$userbalance);
 				$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 				$maxDraw =  number_format($userbalanceBTC - $fee, 8, '.', '');  
@@ -2203,6 +2207,7 @@ class ApiController extends Controller{
 							'invoice_id' => $tran->invoice_id,
 							'amount' => $tran->amount,
 							'totaldis' => number_format($totaldis, 8, '.', '').' '.$wallet->value_display,
+							'totaldis5D' => sprintf("%.5f", $totaldis).' '.$wallet->value_display,
 							'before_bal' => $tran->before_bal,
 							'after_bal' => $tran->after_bal,
 							'totaldisAfter' => number_format($totaldisAfter, 8, '.', '').' '.$wallet->value_display,
@@ -2210,6 +2215,7 @@ class ApiController extends Controller{
 							'remarks' => $tran->remarks,
 							'rate' => $tran->rate,
 							'currency' => $currency,
+							'value_display' => $wallet->value_display,
 							'recipient' => $tran->recipient,
 							'netfee' => $tran->netfee,
 							'walletfee' => $tran->walletfee,
@@ -2266,6 +2272,8 @@ class ApiController extends Controller{
 							"hash" => $data->hash,
 							"amount" => $data->amount,
 							"amountDis" => $nilconv.' '.$wallet->value_display,
+							"amountDis5D" => sprintf("%.5f", $nilconv).' '.$wallet->value_display,
+							"value_display" => $wallet->value_display,
 							"expired" => $data->expired,
 							"date_expired" => $data->date_expired,
 							"memo" => $data->memo,
@@ -2943,7 +2951,8 @@ class ApiController extends Controller{
 			}
 			else{
 				$prevtn = TransLND::where('status', 'success')->latest()->first();
-				if($prevtn->count() == 0) {
+				$prevtn_count = TransLND::where('status', 'success')->count();
+				if($prevtn_count == 0) {
 					$capacity = 0.00000000;
 					$lndlnd_bal = 0.000000000;
 				}
