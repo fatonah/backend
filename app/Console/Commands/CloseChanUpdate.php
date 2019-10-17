@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\TransLND; 
+use App\User;
+use App\PriceCrypto; 
+use App\Currency;
 
 class CloseChanUpdate extends Command
 {
@@ -60,15 +63,15 @@ class CloseChanUpdate extends Command
                         if($checktx == 0){
                             $txdet = json_decode(file_get_contents('https://api.blockchair.com/bitcoin/dashboards/transaction/'.$c['closing_tx_hash']), TRUE);
                             if($txdet['data']) {
-                                $cap_change = number_format($txdet->data->$c['closing_tx_hash']->inputs[0]->value, 8, '.', ''); // in sat
-                                $net_fee = number_format($txdet->data->$c['closing_tx_hash']->transaction->fee, 8, '.', ''); // in sat
-                                $return_bal = number_format($txdet->data->$c['closing_tx_hash']->outputs[0]->value, 8, '.', ''); // in sat
+                                $cap_change = number_format($txdet['data'][$c['closing_tx_hash']]['inputs'][0]['value'], 8, '.', ''); // in sat
+                                $net_fee = number_format($txdet['data'][$c['closing_tx_hash']]['transaction']['fee'], 8, '.', ''); // in sat
+                                $return_bal = number_format($txdet['data'][$c['closing_tx_hash']]['outputs'][0]['value'], 8, '.', ''); // in sat
 
-                                $latesttx = TransLND::where('status', 'success')->latest()->first();
+                                $latesttx = TransLND::where('status', 'success')->where('uid', $trans['uid'])->latest()->first();
                                 $before_cap = $latesttx->lnd_cap;
                                 $capacity = number_format($before_cap - $cap_change, 8, '.', ''); // in sat
-                                $lndlnd_bal = number_format(getbalance_lndlnd($label), 8, '.', ''); // in sat
-                                $lndbtc_bal = number_format(getbalance_lndbtc($label), 8, '.', ''); // in sat
+                                $lndlnd_bal = number_format(getbalance_lndlnd($user->label), 8, '.', ''); // in sat
+                                $lndbtc_bal = number_format(getbalance_lndbtc($user->label), 8, '.', ''); // in sat
                                 $after_bal =  number_format($lndbtc_bal + $return_bal, 8, '.', '');  // in sat
                                 $myr_amount = ($return_bal/$sat)*$price; 
 
@@ -76,7 +79,7 @@ class CloseChanUpdate extends Command
                                 else{$remarks = 'NEGOTIABLE _CLOSE';}
 
                                 $withdraw = new TransLND;
-                                $withdraw->uid = $useruid->id;
+                                $withdraw->uid = $trans['uid'];
                                 $withdraw->status = 'success';
                                 $withdraw->amount = $return_bal; 
                                 $withdraw->before_bal = $lndbtc_bal;
@@ -86,7 +89,7 @@ class CloseChanUpdate extends Command
                                 $withdraw->recipient = $c['remote_pubkey'];
                                 $withdraw->txid = $c['closing_tx_hash'];
                                 $withdraw->netfee = $net_fee; 
-                                $withdraw->walletfee = 0.00000000; 
+                                $withdraw->walletfee = '0.00000000'; 
                                 $withdraw->invoice_id = '0';
                                 $withdraw->type = 'external';
                                 $withdraw->using = 'mobile';
