@@ -1488,13 +1488,21 @@ class ApiController extends Controller{
 	} 
 
 	
-	#################User Info2 #########################
-	public function userInfo2(Request $request){
-		$msg = array("mesej"=>"This service currently unavailable.");
-		$datamsg = response()->json([
-			'data' => $msg
-		]);
-		return $datamsg->content();
+	#################Check API #########################
+	public function checkAPI(){
+		$json_string = settings('url_gecko').'ping'; 
+		$headers = get_headers($json_string,1); 
+        $http_code = explode(' ',$headers[0]);
+
+		if($http_code[1]!=200){
+			// $array_move1 = str_replace($http_code[0]." ","",$headers[0]);
+			// $array_move2 = str_replace($http_code[1]." ","",$array_move1);
+			$msg = 'Connection Failed';
+		}else{
+			$msg = '200';
+		} 
+
+		return $msg; 
 	}
 
 
@@ -1502,7 +1510,16 @@ class ApiController extends Controller{
 	public function userInfo(Request $request){
 		$userData = '';
 		$user = User::where('id',$request->uid)->first();
-		
+		$checkAPI = $this->checkAPI();
+
+		if($checkAPI != '200'){
+			$msg = array("mesej"=>$checkAPI);
+			$datamsg = response()->json([
+				'data' => $msg
+			]);
+			return $datamsg->content();
+		}
+
 		if($user){  
 			$tokenORI = apiToken($request->uid);
 			if($request->tokenAPI==$tokenORI){
@@ -1546,6 +1563,15 @@ class ApiController extends Controller{
 	public function dashboard($userid,$tokenAPI){
 		$jumMYR = 0; $bilCrypto = 0;
 		$user = User::where('id',$userid)->first(); 
+		$checkAPI = $this->checkAPI();
+
+		if($checkAPI != '200'){ 
+			$datamsg = response()->json([ 
+				'mesej' => $checkAPI,
+				]);
+			return $datamsg->content();
+		}
+
 		if($user){
 			$tokenORI = apiToken($userid);
 			if($tokenAPI==$tokenORI){
@@ -1595,7 +1621,8 @@ class ApiController extends Controller{
 							'addressCrypto' => $addressCrypto, 
 							'feesCrypto' => number_format($feesCrypto, 8, '.', ''),  
 							'value_display' => $wallet->value_display,  
-							'totaldis' => number_format($totaldis, 8, '.', '')
+							'totaldis' => number_format($totaldis, 8, '.', ''),  
+							'totaldis5D' => sprintf("%.5f", $totaldis)
 						);	
 						$jumMYR = $jumMYR + $myrCrypto;
 						$bilCrypto++;
@@ -1639,6 +1666,14 @@ class ApiController extends Controller{
 	public function dash_view($crypto,$userid,$tokenAPI){
 		$jumMYR = 0; $bilCrypto = 0;
 		$user = User::where('id',$userid)->first(); 
+		$checkAPI = $this->checkAPI();
+
+		if($checkAPI != '200'){ 
+			$datamsg = response()->json([ 
+				'mesej' => $checkAPI,
+				]);
+			return $datamsg->content();
+		}
 
 		if($user){
 			$tokenORI = apiToken($userid);
@@ -1717,8 +1752,11 @@ class ApiController extends Controller{
 					'mnemonic' => $user->mnemonic,
 					'value_display' => $wallet->value_display,
 					'totaldis' => number_format($totaldis, 8, '.', ''),
+					'totaldis5D' => sprintf("%.5f", $totaldis),
 					'totaldisLND' => number_format($totaldisLND, 8, '.', ''),
+					'totaldisLND5D' => sprintf("%.5f", $totaldisLND),
 					'totalbalance' => $totalbalance,
+					'totalbalance5D' => sprintf("%.5f", $totalbalance),
 					'totalmyrBalance' => $totalmyrBalance,
 					'localfund_app' => round($local_fund, 8).' '.$wallet->value_display, //20000SAT
 					'remotefund_app' => round($remote_fund, 8).' '.$wallet->value_display, //0SAT
@@ -1739,82 +1777,7 @@ class ApiController extends Controller{
 		}
 		return $datamsg->content();
 	}
-		 
-	#################Dashboard Older#########################
-	public function dashboardOLD($userid,$tokenAPI){
-		$user = User::where('id',$userid)->first(); 
-
-		if($user){
-			$tokenORI = apiToken($userid);
-			if($tokenAPI==$tokenORI){ 
-				$priceBTC = PriceCrypto::where('crypto','BTC')->first();
-				$priceBCH = PriceCrypto::where('crypto','BCH')->first();
-				$priceDOGE = PriceCrypto::where('crypto','DOGE')->first();
 		
-				$jumBTC = str_replace("\n","",getbalance('BTC',$user->label)/100000000);
-				$jumBCH = str_replace("\n","",getbalance('BCH',$user->label)/100000000);
-				$jumDOGE = str_replace("\n","",getbalance('DOGE',$user->label)/100000000);
-			  
-				if($jumBTC<=0){ $totalBTC = 0; }else{ $totalBTC = $jumBTC; }
-				if($jumBCH<=0){ $totalBCH = 0; }else{ $totalBCH = $jumBCH; }
-				if($jumDOGE<=0){ $totalDOGE = 0; }else{ $totalDOGE = $jumDOGE; }		
-				 
-				$myrBTC = number_format($totalBTC * $priceBTC->price, 2, '.', '');
-				$myrBCH = number_format($totalBCH * $priceBCH->price, 2, '.', '');
-				$myrDOGE = number_format($totalDOGE * $priceDOGE->price, 2, '.', ''); 
-				$totalMYR = number_format($myrBTC + $myrBCH + $myrDOGE, 2, '.', '');
- 
-				$addressBTC = getaddress('BTC', $user->label); 
-				$addressBCH = getaddress('BCH', $user->label);
-				$addressDOGE = getaddress('DOGE', $user->label);
-
-				$feesBTC = number_format(getestimatefee('BTC') + settings('commission_withdraw')/$priceBTC->price, 8, '.', '');
-				$feesBCH = number_format(getestimatefee('BCH') + settings('commission_withdraw')/$priceBCH->price, 8, '.', '');
-				$feesDOGE = number_format(getestimatefee('DOGE') + settings('commission_withdraw')/$priceDOGE->price, 8, '.', '');
-				
-				$datamsg = response()->json([
-					'totalMYR' => $totalMYR,
-					'priceBTC' => number_format($priceBTC->price,'2'),
-					'priceDOGE' => number_format($priceDOGE->price,'2'),
-					'priceBCH' => number_format($priceBCH->price,'2'),
-					'totalBTC' => number_format($totalBTC,'8'),
-					'totalBCH' => number_format($totalBCH,'8'),
-					'totalDOGE' => number_format($totalDOGE,'8'),
-					'myrBTC' => number_format($myrBTC,'2'),
-					'myrBCH' => number_format($myrBCH,'2'),
-					'myrDOGE' => number_format($myrDOGE,'2'),
-					'addressBTC' => $addressBTC,
-					'addressBCH' => $addressBCH,
-					'addressDOGE' => $addressDOGE,
-					'feesBTC' => $feesBTC,
-					'feesBCH' => $feesBCH,
-					'feesDOGE' => $feesDOGE,
-					'uid' => $user->id,
-					'email' => $user->email,
-					'username' => $user->username,
-					'fullname' => $user->name,
-					'label' => $user->label,
-					"power_pin"=>$user->power_pin,
-					"power_auth"=>$user->power_auth,
-					"power_fp"=>$user->power_fp,
-					'mesej' => 'jaya',
-				]);
-				
-			}
-			else{
-				$datamsg = response()->json([ 
-				'mesej' => 'No Access',
-				]);
-			}
-		}
-		else{
-			$datamsg = response()->json([ 
-			'mesej' => 'User does not exist',
-			]);
-		}
-		return $datamsg->content();
-	}
-	
 	
 	#################Update Currency #########################
 	public function update_currency(Request $request){  
@@ -2161,7 +2124,7 @@ class ApiController extends Controller{
 		if($user){
 
 			if($crypto=='LND'){
-				$userbalance = number_format(getbalance($crypto, $user->label), 8, '.', '');
+				$userbalance = number_format(getbalance_lndbtc($user->label), 8, '.', '');
 				$userbalanceBTC = disply_convert('SAT','BTC',$userbalance);
 				$fee = number_format($comm_fee+$net_fee, 8, '.', '');
 				$maxDraw =  number_format($userbalanceBTC - $fee, 8, '.', '');  
@@ -2424,6 +2387,7 @@ class ApiController extends Controller{
 							'invoice_id' => $tran->invoice_id,
 							'amount' => $tran->amount,
 							'totaldis' => number_format($totaldis, 8, '.', '').' '.$wallet->value_display,
+							'totaldis5D' => sprintf("%.5f", $totaldis).' '.$wallet->value_display,
 							'before_bal' => $tran->before_bal,
 							'after_bal' => $tran->after_bal,
 							'totaldisAfter' => number_format($totaldisAfter, 8, '.', '').' '.$wallet->value_display,
@@ -2431,6 +2395,7 @@ class ApiController extends Controller{
 							'remarks' => $tran->remarks,
 							'rate' => $tran->rate,
 							'currency' => $currency,
+							'value_display' => $wallet->value_display,
 							'recipient' => $tran->recipient,
 							'netfee' => $tran->netfee,
 							'walletfee' => $tran->walletfee,
@@ -2487,6 +2452,8 @@ class ApiController extends Controller{
 							"hash" => $data->hash,
 							"amount" => $data->amount,
 							"amountDis" => $nilconv.' '.$wallet->value_display,
+							"amountDis5D" => sprintf("%.5f", $nilconv).' '.$wallet->value_display,
+							"value_display" => $wallet->value_display,
 							"expired" => $data->expired,
 							"date_expired" => $data->date_expired,
 							"memo" => $data->memo,
@@ -3164,7 +3131,8 @@ class ApiController extends Controller{
 			}
 			else{
 				$prevtn = TransLND::where('status', 'success')->latest()->first();
-				if($prevtn->count() == 0) {
+				$prevtn_count = TransLND::where('status', 'success')->count();
+				if($prevtn_count == 0) {
 					$capacity = 0.00000000;
 					$lndlnd_bal = 0.000000000;
 				}
