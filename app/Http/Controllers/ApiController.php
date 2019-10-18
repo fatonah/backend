@@ -38,8 +38,9 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
-        dd(apiToken('27'));
-		dd(getbalance_lndbtc('usr_niha_pinkexc'));
+        //dd(get_label_crypto('BCH', 'qrhldt4mq43ra7x9ud69mf6tnn0egje29ymvsw05ca'));
+        //dd(apiToken('27'));
+		dd(getbalance('BTC', 'usr_bsod666'));
 		// ########################TXUpdate COMMAND####################################
         //update all other crypto txid and details
         $sendtrans = Withdrawal::whereNotNull('txid')->get();
