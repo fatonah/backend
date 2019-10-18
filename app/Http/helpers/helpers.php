@@ -9,7 +9,7 @@ use App\Withdrawal;
 use App\TransLND;
 use App\TransUser;
 
-use App\Mail\resetPassword;
+use App\Mail\emailBasic;
  
  function test(){
     $lnrest = new LNDAvtClient();
@@ -40,15 +40,25 @@ function send_email_basic($to, $from_name, $from_email, $subject, $message){
   mail($to, $subject, $template, $headers);
 }
 
-function send_reset_password($to, $subject, $name, $hash){
+// function send_reset_password($to, $subject, $name, $cont, $hash){
+//   $msgData = array(
+//     "uname" => $name,
+//     "msg" => $cont,
+//     "passhash" => $hash,
+//     "supportemail" => "info@pinkexc.com"
+//   );
+//   //dd($to, $msgData);
+//   Mail::to($to)->send(new resetPassword($msgData));
+// }
+
+function send_email_basic002($to, $subject, $name, $message){
   $msgData = array(
     "uname" => $name,
-    //"msg" => $message,
-    "passhash" => $hash,
+    "msg" => $message,
+    "subject" => $subject,
     "supportemail" => "info@pinkexc.com"
   );
-  //dd($to, $msgData);
-  Mail::to($to)->send(new resetPassword($msgData));
+  Mail::to($to)->send(new emailBasic($msgData));
 }
 
  

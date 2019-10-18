@@ -253,9 +253,9 @@ class SupportController extends Controller
 			Thank you for your patience.
 			<br>
 			';        
-					  
-					 
-			send_email_basic($to, 'DORADO', $from_email, $subject, $message);
+					  		 
+			//send_email_basic($to, 'DORADO', $from_email, $subject, $message);
+			send_email_basic002($to, $subject, $name, $message);
 
 			
 		notify()->flash('Successfully Submit!', 'success', [

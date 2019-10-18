@@ -7,7 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class resetPassword extends Mailable
+class emailBasic extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -31,7 +31,7 @@ class resetPassword extends Mailable
     {
         $address = 'info@pinkexc.com';
         $name = 'Dorado Support';
-        $subject= 'Dorado Reset password';
+        $subject = $this->msgData['subject'];
         return $this->view('email.template_email_basic')
                 ->with($this->msgData)
                 ->from($address,$name)

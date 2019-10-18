@@ -38,19 +38,20 @@ class UserController extends Controller
 		
 		$message = 'Hello, '.$row->username.'<p></p>
 		
-We received a request to reset secret PIN in our website. To change it click on link below.<p></p>
-'.$link_reset.'<p></p>
+		We received a request to reset secret PIN in our website. To change it click on link below.<p></p>
+		'.$link_reset.'<p></p>
 
-If this email was not requested by you, please ignore it.<p></p>
-	
-If you have some problems please feel free to contact with us on '.settings('supportemail');
+		If this email was not requested by you, please ignore it.<p></p>
+			
+		If you have some problems please feel free to contact with us on '.settings('supportemail');
 		  
-		send_email_basic($mreceiver, 'DORADO', settings('infoemail'), $msubject, $message);
+		//send_email_basic($mreceiver, 'DORADO', settings('infoemail'), $msubject, $message);
+		send_email_basic002($mreceiver, $msubject, $row->username, $message);
 		
 		notify()->flash('Reset secret Pin!', 'success', [
-		'timer' => 3000,
-		'text' => '',
-		'buttons' => true
+			'timer' => 3000,
+			'text' => '',
+			'buttons' => true
 		]);			 
 		  
 		return redirect()->back();

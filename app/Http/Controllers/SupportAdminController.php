@@ -115,21 +115,20 @@ class SupportAdminController extends Controller
 			$ticketU->status = 'closed';
 			$ticketU->save();
 		
-		}else{
-		notify()->flash('Sorry, Error!!', 'error', [
-		'timer' => 3000,
-		'text' => '',
-		'buttons' => true
-		]);
-		
+		}
+		else {
+			notify()->flash('Sorry, Error!!', 'error', [
+				'timer' => 3000,
+				'text' => '',
+				'buttons' => true
+			]);
 		}
 		return redirect()->back();
 	}
 		
 	#################Delete Support#########################
-	public function support_delete(Request $request) 
-	{ 
-	$uid = Auth::guard('admin')->user()->id;
+	public function support_delete(Request $request)  {
+		$uid = Auth::guard('admin')->user()->id;
 	
 		$ticket = Ticket::where('id', $request->id)->first(); 
 		 
@@ -138,16 +137,14 @@ class SupportAdminController extends Controller
 			$ticketU->status = 'delete';
 			$ticketU->save();
 		
-		}else{
-		notify()->flash('Sorry, Error!!', 'error', [
-		'timer' => 3000,
-		'text' => '',
-		'buttons' => true
-		]);
-		
+		}
+		else{
+			notify()->flash('Sorry, Error!!', 'error', [
+				'timer' => 3000,
+				'text' => '',
+				'buttons' => true
+			]);
 		}
 		return redirect()->back();
-	}
-	 
-	
+	}	
 }  // tag

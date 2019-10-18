@@ -909,8 +909,9 @@ class ApiController extends Controller{
 		if(isset($user)){
 			$hash = $user->email_hash;
 			$id = $user->id;
-            $email_msj = ucwords($user->username).'<p> We received a request to reset your DORADO wallet. Below is your username to login Dorado Wallet: <p></p>Username: '.$user->username.' <p></p>Please click link below.</p><p><a href="'.settings('url').'password/reset/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Pasword</a></p>';
-            send_email_basic002($user->email, 'DORADO Account Reset Wallet', $user->username, $email_msj);  
+ 
+			  $email_msj = ucwords($user->username).'<p> We received a request to reset your DORADO wallet. Below is your username to login Dorado Wallet: <p></p>Username: '.$user->username.' <p></p>Please click link below.</p><p><a href="'.settings('url').'password/reset/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Pasword</a></p>';
+		  	  send_email_basic($user->email, 'DORADO', settings('infoemail'), 'DORADO Account Reset Wallet', $email_msj);  
 
 			$msg = array(
 				"display_msj"=>"Please check your inbox, to get back your Dorado Wallet.",
@@ -1073,7 +1074,7 @@ class ApiController extends Controller{
 				/*Inserting user values*/
 				$hash = sha1($email);
 				$email_msj = 'To activate your account, please click link below.<p><a href="'.settings('url').'verify/email/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
-                send_email_basic002($email, 'DORADO Account Verification', $username, $email_msj);
+				send_email_basic($email, 'DORADO', settings('infoemail'), 'DORADO Account Verification', $email_msj);
  
 				$user = User::create([
 					'name' => $fullname,
@@ -1199,7 +1200,10 @@ class ApiController extends Controller{
 		if(isset($user)){
 			$hash = $user->email_hash;
 			$id = $user->id;
+ 
 			$email_msj = $user->username.'<p> We received a request to reset your DORADO password, please click link below.</p><p><a href="'.settings('url').'password/reset/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Reset Pasword</a></p>';
+		  	// send_email_basic($user->email, 'DORADO', settings('infoemail'), 'DORADO Account Reset Password', $email_msj); 
+		  	//send_reset_password($user->email, 'DORADO Account Reset Password', $user->username, $cont, $hash); 
 		  	send_email_basic002($user->email, 'DORADO Account Reset Password', $user->username, $email_msj);
 		 
 			$msg = array(
@@ -1231,11 +1235,14 @@ class ApiController extends Controller{
 				'data' => $msg
 			]);		
 		}
-		else if(isset($users) && $users->email_verify=='0'){
+		else if(isset($users) && $users->email_verify=='1'){
 			$hash = $users->email_hash;
 			$url = settings('url').'verify/email/'.$hash;
 			$email_msj = 'Hai '.$users->username.' <p> To activate your account, please click link below.</p><p> <a href="'.$url.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
+			//$replace1 = str_replace("{{username}}",$username,$email_msj); 
+			//$replace2 = str_replace("{{url}}",settings('url').'verify/email/'.$hash , $replace1);
 		 	$email = $users->email;
+			//send_email_basic($email, 'DORADO', settings('infoemail'), 'DORADO Account Verification', $replace2);
 			send_email_basic002($users->email, 'DORADO Account Verification', $users->username, $email_msj);
 		 
 			$msg = array(
