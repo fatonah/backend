@@ -38,6 +38,7 @@ class ApiController extends Controller{
 	
 	#################Debug #########################
 	public function debug(){
+        dd(apiToken('27'));
 		dd(getbalance_lndbtc('usr_niha_pinkexc'));
 		// ########################TXUpdate COMMAND####################################
         //update all other crypto txid and details

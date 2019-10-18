@@ -8,6 +8,8 @@ use App\User;
 use App\Withdrawal;
 use App\TransLND;
 use App\TransUser;
+use App\Currency;
+use Carbon\Carbon;
 
 use App\Mail\emailBasic;
  
@@ -550,6 +552,126 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
         $user = WalletAddress::where('label', $label)->first();
         $userid = $user->uid; 
         //GET label transaction
+        $alltransbtc[] = bitcoind()->client($crycode)->listtransactions($label, 1000000, 0)->get();
+        foreach ($alltransbtc as $transbtc) {
+            if(!array_key_exists('address', $transbtc)){
+                foreach ($transbtc as $tbtc) {
+                    if(isset($tbtc['label'])){$label = $tbtc['label'];}
+                    if(isset($tbtc['confirmations'])){$confirmations = $tbtc['confirmations'];}
+                    if(isset($tbtc['txid'])){$txid = $tbtc['txid'];}
+                    if(isset($tbtc['timereceived'])){$timereceived = $tbtc['timereceived'];}
+
+                    $crosscheck = TransUser::where('category', 'send')->where('txid', $txid)->count();
+                    if($crosscheck == 0) {
+                        $checktx = TransUser::where('category', 'receive')->where('txid', $txid)->count();
+                        if($checktx == 0) {
+                            $userdet = WalletAddress::where('crypto', $crypto)->where('label', $label)->first();
+                            $recvuid = $userdet->uid;
+                            $amount = number_format($tbtc['amount'], 8, '.', '');
+                            $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                            $after_bal = $before_bal + $amount;
+
+                            $useruid = User::where('label', $label)->first();   
+                            $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                            $currency = Currency::where('id', $useruid->currency)->first();
+                            $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                            $jsondata = file_get_contents($json_string);
+                            $obj = json_decode($jsondata, TRUE); 
+                            $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                            $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                            $btctx = TransUser::create([
+                                'uid' => $userdet->uid,
+                                'type' => 'external',
+                                'crypto' => $crypto,
+                                'category' => $tbtc['category'],
+                                'using' => 'mobile',
+                                'status' => 'success',
+                                'error_code' => '',
+                                'recipient' => $tbtc['address'],
+                                'recipient_id' => $label,
+                                'txid' => $txid,
+                                'confirmations' => $tbtc['confirmations'],
+                                'amount' => $amount,
+                                'before_bal' => $before_bal,
+                                'after_bal' => $after_bal,
+                                'myr_amount' => $myr_amt,
+                                'rate' => $price,
+                                'currency' => $useruid->currency,
+                                'netfee' => 0.00000000,
+                                'walletfee' => 0.00000000,
+                                'remarks' => 'RECEIVE',
+                                'time' => $timereceived,
+                                'timereceived' => $timereceived,
+                                'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                                'vout' => $tbtc['vout'],
+                                'blockhash' => $tbtc['blockhash'],
+                                'blockindex' => $tbtc['blockindex'],
+                                'blocktime' => date_format(Carbon::createFromTimestamp($tbtc['blocktime']), "Y-m-d H:i:s"),
+                                'walletconflicts' => ''
+                            ]);
+                        }
+                        else {$btctx = TransUser::where('category', 'receive')->where('txid', $txid)->update(['confirmation' => $confirmations]);}
+                    }           
+                }
+            }
+            else {
+                $crosscheck = TransUser::where('category', 'send')->where('txid', $transbtc['txid'])->count();
+                if($crosscheck == 0) {
+                    $checktx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->count();
+                    if($checktx == 0) {
+                        $userdet = WalletAddress::where('crypto', $crypto)->where('label', $transbtc['label'])->first();
+                        $recvuid = $userdet->uid;
+                        $amount = number_format($tbtc['amount'], 8, '.', '');
+                        $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                        $after_bal = $before_bal + $amount;
+
+                        $useruid = User::where('label',$transbtc['label'])->first();   
+                        $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                        $currency = Currency::where('id',$useruid->currency)->first();
+                        $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                        $jsondata = file_get_contents($json_string);
+                        $obj = json_decode($jsondata, TRUE); 
+                        $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                        $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                        $btctx = TransUser::create([
+                            'uid' => $userdet->uid,
+                            'type' => 'external',
+                            'crypto' => $crypto,
+                            'category' => $transbtc['category'],
+                            'using' => 'mobile',
+                            'status' => 'success',
+                            'error_code' => '',
+                            'recipient' => $transbtc['address'],
+                            'recipient_id' => $label,
+                            'txid' => $txid,
+                            'confirmations' => $transbtc['confirmations'],
+                            'amount' => $amount,
+                            'before_bal' => $before_bal,
+                            'after_bal' => $after_bal,
+                            'myr_amount' => $myr_amt,
+                            'rate' => $price,
+                            'currency' => $useruid->currency,
+                            'netfee' => 0.00000000,
+                            'walletfee' => 0.00000000,
+                            'remarks' => 'RECEIVE',
+                            'time' => $timereceived,
+                            'timereceived' => $timereceived,
+                            'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                            'vout' => $transbtc['vout'],
+                            'blockhash' => $transbtc['blockhash'],
+                            'blockindex' => $transbtc['blockindex'],
+                            'blocktime' => date_format(Carbon::createFromTimestamp($transbtc['blocktime']), "Y-m-d H:i:s"),
+                            'walletconflicts' => ''
+                        ]);
+                    }
+                    else{
+                        $btctx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->update(['confirmation' => $transbtc['confirmations']]);
+                    }
+                }
+            }
+        }
         $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->get();
         $transaction_count = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->count();
 
@@ -609,6 +731,8 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $jsondata = file_get_contents($json_string);
                     $obj = json_decode($jsondata, TRUE); 
                     $priceA = $obj['prices'];
+
+                    //echo count($priceA);
 
                     for($i=0;$i<count($priceA);$i++){
                         $price[] = $priceA[$i][0];
@@ -730,11 +854,136 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
         // else{return null;} 
     }elseif($crypto == 'BCH'){
         $crycode = 'bitabc';
+        $user = WalletAddress::where('label', $label)->first();
+        $userid = $user->uid; 
         //GET label transaction
-        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-       // return $transaction['time'];
-        if($transaction){ 
-           if(!isset($transaction[0]['time'])){
+        $alltransbtc[] = bitcoind()->client($crycode)->listtransactions($label, 1000000, 0)->get();
+        foreach ($alltransbtc as $transbtc) {
+            if(!array_key_exists('address', $transbtc)){
+                foreach ($transbtc as $tbtc) {
+                    if(isset($tbtc['label'])){$label = $tbtc['label'];}
+                    if(isset($tbtc['confirmations'])){$confirmations = $tbtc['confirmations'];}
+                    if(isset($tbtc['txid'])){$txid = $tbtc['txid'];}
+                    if(isset($tbtc['timereceived'])){$timereceived = $tbtc['timereceived'];}
+
+                    $crosscheck = TransUser::where('category', 'send')->where('txid', $txid)->count();
+                    if($crosscheck == 0) {
+                        $checktx = TransUser::where('category', 'receive')->where('txid', $txid)->count();
+                        if($checktx == 0) {
+                            $userdet = WalletAddress::where('crypto', $crypto)->where('label', $label)->first();
+                            $recvuid = $userdet->uid;
+                            $amount = number_format($tbtc['amount'], 8, '.', '');
+                            $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                            $after_bal = $before_bal + $amount;
+
+                            $useruid = User::where('label', $label)->first();   
+                            $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                            $currency = Currency::where('id', $useruid->currency)->first();
+                            $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                            $jsondata = file_get_contents($json_string);
+                            $obj = json_decode($jsondata, TRUE); 
+                            $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                            $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                            $btctx = TransUser::create([
+                                'uid' => $userdet->uid,
+                                'type' => 'external',
+                                'crypto' => $crypto,
+                                'category' => $tbtc['category'],
+                                'using' => 'mobile',
+                                'status' => 'success',
+                                'error_code' => '',
+                                'recipient' => substr($tbtc['address'],12),
+                                'recipient_id' => $label,
+                                'txid' => $txid,
+                                'confirmations' => $tbtc['confirmations'],
+                                'amount' => $amount,
+                                'before_bal' => $before_bal,
+                                'after_bal' => $after_bal,
+                                'myr_amount' => $myr_amt,
+                                'rate' => $price,
+                                'currency' => $useruid->currency,
+                                'netfee' => 0.00000000,
+                                'walletfee' => 0.00000000,
+                                'remarks' => 'RECEIVE',
+                                'time' => $timereceived,
+                                'timereceived' => $timereceived,
+                                'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                                'vout' => $tbtc['vout'],
+                                'blockhash' => $tbtc['blockhash'],
+                                'blockindex' => $tbtc['blockindex'],
+                                'blocktime' => date_format(Carbon::createFromTimestamp($tbtc['blocktime']), "Y-m-d H:i:s"),
+                                'walletconflicts' => ''
+                            ]);
+                        }
+                        else {$btctx = TransUser::where('category', 'receive')->where('txid', $txid)->update(['confirmation' => $confirmations]);}
+                    }           
+                }
+            }
+            else {
+                $crosscheck = TransUser::where('category', 'send')->where('txid', $transbtc['txid'])->count();
+                if($crosscheck == 0) {
+                    $checktx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->count();
+                    if($checktx == 0) {
+                        $userdet = WalletAddress::where('crypto', $crypto)->where('label', $transbtc['label'])->first();
+                        $recvuid = $userdet->uid;
+                        $amount = number_format($tbtc['amount'], 8, '.', '');
+                        $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                        $after_bal = $before_bal + $amount;
+
+                        $useruid = User::where('label',$transbtc['label'])->first();   
+                        $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                        $currency = Currency::where('id',$useruid->currency)->first();
+                        $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                        $jsondata = file_get_contents($json_string);
+                        $obj = json_decode($jsondata, TRUE); 
+                        $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                        $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                        $btctx = TransUser::create([
+                            'uid' => $userdet->uid,
+                            'type' => 'external',
+                            'crypto' => $crypto,
+                            'category' => $transbtc['category'],
+                            'using' => 'mobile',
+                            'status' => 'success',
+                            'error_code' => '',
+                            'recipient' => substr($transbtc['address'],12),
+                            'recipient_id' => $label,
+                            'txid' => $txid,
+                            'confirmations' => $transbtc['confirmations'],
+                            'amount' => $amount,
+                            'before_bal' => $before_bal,
+                            'after_bal' => $after_bal,
+                            'myr_amount' => $myr_amt,
+                            'rate' => $price,
+                            'currency' => $useruid->currency,
+                            'netfee' => 0.00000000,
+                            'walletfee' => 0.00000000,
+                            'remarks' => 'RECEIVE',
+                            'time' => $timereceived,
+                            'timereceived' => $timereceived,
+                            'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                            'vout' => $transbtc['vout'],
+                            'blockhash' => $transbtc['blockhash'],
+                            'blockindex' => $transbtc['blockindex'],
+                            'blocktime' => date_format(Carbon::createFromTimestamp($transbtc['blocktime']), "Y-m-d H:i:s"),
+                            'walletconflicts' => ''
+                        ]);
+                    }
+                    else{
+                        $btctx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->update(['confirmation' => $transbtc['confirmations']]);
+                    }
+                }
+            }
+        }
+        $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->get();
+        $transaction_count = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->count();
+
+        if($transaction_count>0){ 
+            if(!isset($transaction[0]['time'])){
+                $userdetfromuid = WalletAddress::where('uid', $transaction['uid'])->where('crypto', $crypto)->first();
+
                 if(array_key_exists('time',$transaction)){
                     $starT = $transaction['time'] - 10000;
                     $endT = $transaction['time'] + 10000;                
@@ -747,9 +996,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $jsondata = file_get_contents($json_string);
                 $obj = json_decode($jsondata, TRUE); 
                 $priceA = $obj['prices'];
+                
                 for($i=0;$i<count($priceA);$i++){
                     $price[] = $priceA[$i][0];
                 }
+                
                 foreach ($price as $i) {
                     if(array_key_exists('time',$transaction)){
                     $smallest[$i] = abs($i - $transaction['time']);
@@ -757,12 +1008,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $smallest[$i] = abs($i - $transaction['timereceived']);    
                     }
                 }
+
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
-
-                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
                 $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
-            
+
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
@@ -773,49 +1023,157 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
             }
             else{
                 foreach($transaction as $key => $trans){ 
-                if(array_key_exists('time',$trans)){
-                    $starT = $trans['time'] - 10000;
-                    $endT = $trans['time'] + 10000;                
-                }else{
-                    $starT = $trans['timereceived'] - 10000;
-                    $endT = $trans['timereceived'] + 10000;
-                }
-
-                $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
-                $jsondata = file_get_contents($json_string);
-                $obj = json_decode($jsondata, TRUE); 
-                $priceA = $obj['prices'];
-                for($i=0;$i<count($priceA);$i++){
-                    $price[] = $priceA[$i][0];
-                }
-                foreach ($price as $i) {
                     if(array_key_exists('time',$trans)){
-                    $smallest[$i] = abs($i - $trans['time']);
-                    }else{
-                    $smallest[$i] = abs($i - $trans['timereceived']);    
+                        $starT = $trans['time'] - 10000;
+                        $endT = $trans['time'] + 10000;                
                     }
-                }
-                asort($smallest); 
-                $ids = array_search(key($smallest),$price);
+                    else{
+                        $starT = $trans['timereceived'] - 10000;
+                        $endT = $trans['timereceived'] + 10000;
+                    }
+
+                    $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+                    $jsondata = file_get_contents($json_string);
+                    $obj = json_decode($jsondata, TRUE); 
+                    $priceA = $obj['prices'];
+
+                    //echo count($priceA);
+
+                    for($i=0;$i<count($priceA);$i++){
+                        $price[] = $priceA[$i][0];
+                    }
+
+                    foreach ($price as $i) {
+                        if(array_key_exists('time',$trans)){
+                            $smallest[$i] = abs($i - $trans['time']);
+                        }
+                        else{
+                            $smallest[$i] = abs($i - $trans['timereceived']);    
+                        }
+                    }
+
+                    asort($smallest); 
+                    $ids = array_search(key($smallest),$price);
+
+                    $userdetfromuid = WalletAddress::where('uid', $trans['uid'])->where('crypto', $crypto)->first();
+                    $initlabel = $userdetfromuid->label;
                 
-                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
-                $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
-            
-                $info[] = array(
-                    'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
-                    'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
-                    'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
-                    'value_display' => $userdetfromuid->value_display,
-                    'tran' => $trans,
-                );
+                    $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+
+                    $info[] = array(
+                        'price_lock' => number_format($priceA[0][1], 2, '.', ''),
+                        'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+                        'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+                        'value_display' => $userdetfromuid->value_display,
+                        'tran' => array(
+                            'account' => $initlabel,
+                            'address' =>  $trans['recipient'],
+                            'category' =>  $trans['category'],
+                            'amount' => floatval($trans['amount']),
+                            'label' =>  $trans['recipient_id'],
+                            'vout' => 3,
+                            'confirmations' =>  intval($trans['confirmation']),
+                            'blockhash' => '0000000000000000005fca13b9f9fe8a5763730f15cc41182f0ea4bf90789564',
+                            'blockindex' => 89,
+                            'blocktime' => 1567400116,
+                            'txid' => $trans['txid'],
+                            'walletconflicts' => [],
+                            'time' =>  intval($trans['time']),
+                            'timereceived' =>  intval($trans['timereceived'])
+                        ),
+                    );
                 
                 }
             }
-            //dd($ids, $smallest, $priceA);
-            //return $transaction;
             return $info;
         }
         else{return null;}
+       //  //GET label transaction
+       //  $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+       // // return $transaction['time'];
+       //  if($transaction){ 
+       //     if(!isset($transaction[0]['time'])){
+       //          if(array_key_exists('time',$transaction)){
+       //              $starT = $transaction['time'] - 10000;
+       //              $endT = $transaction['time'] + 10000;                
+       //          }else{
+       //              $starT = $transaction['timereceived'] - 10000;
+       //              $endT = $transaction['timereceived'] + 10000;
+       //          }
+
+       //          $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+       //          $jsondata = file_get_contents($json_string);
+       //          $obj = json_decode($jsondata, TRUE); 
+       //          $priceA = $obj['prices'];
+       //          for($i=0;$i<count($priceA);$i++){
+       //              $price[] = $priceA[$i][0];
+       //          }
+       //          foreach ($price as $i) {
+       //              if(array_key_exists('time',$transaction)){
+       //              $smallest[$i] = abs($i - $transaction['time']);
+       //              }else{
+       //              $smallest[$i] = abs($i - $transaction['timereceived']);    
+       //              }
+       //          }
+       //          asort($smallest); 
+       //          $ids = array_search(key($smallest),$price);
+
+       //          $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+       //          $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
+            
+       //          $info = array(
+       //              'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+       //              'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+       //              'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+       //              'value_display' => $userdetfromuid->value_display,
+       //              'tran' => $transaction,
+       //          );
+       //      }
+       //      else{
+       //          foreach($transaction as $key => $trans){ 
+       //          if(array_key_exists('time',$trans)){
+       //              $starT = $trans['time'] - 10000;
+       //              $endT = $trans['time'] + 10000;                
+       //          }else{
+       //              $starT = $trans['timereceived'] - 10000;
+       //              $endT = $trans['timereceived'] + 10000;
+       //          }
+
+       //          $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+       //          $jsondata = file_get_contents($json_string);
+       //          $obj = json_decode($jsondata, TRUE); 
+       //          $priceA = $obj['prices'];
+       //          for($i=0;$i<count($priceA);$i++){
+       //              $price[] = $priceA[$i][0];
+       //          }
+       //          foreach ($price as $i) {
+       //              if(array_key_exists('time',$trans)){
+       //              $smallest[$i] = abs($i - $trans['time']);
+       //              }else{
+       //              $smallest[$i] = abs($i - $trans['timereceived']);    
+       //              }
+       //          }
+       //          asort($smallest); 
+       //          $ids = array_search(key($smallest),$price);
+                
+       //          $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+       //          $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+            
+       //          $info[] = array(
+       //              'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+       //              'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+       //              'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+       //              'value_display' => $userdetfromuid->value_display,
+       //              'tran' => $trans,
+       //          );
+                
+       //          }
+       //      }
+       //      //dd($ids, $smallest, $priceA);
+       //      //return $transaction;
+       //      return $info;
+       //  }
+       //  else{return null;}
     }
     elseif($crypto == 'DASH'){
         $crycode = 'dashcoin';
@@ -826,10 +1184,136 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
     }
     elseif($crypto == 'DOGE'){
         $crycode = 'dogecoin';
+        $user = WalletAddress::where('label', $label)->first();
+        $userid = $user->uid; 
         //GET label transaction
-        $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
-        if($transaction){
+        $alltransbtc[] = bitcoind()->client($crycode)->listtransactions($label, 1000000, 0)->get();
+        foreach ($alltransbtc as $transbtc) {
+            if(!array_key_exists('address', $transbtc)){
+                foreach ($transbtc as $tbtc) {
+                    if(isset($tbtc['label'])){$label = $tbtc['label'];}
+                    if(isset($tbtc['confirmations'])){$confirmations = $tbtc['confirmations'];}
+                    if(isset($tbtc['txid'])){$txid = $tbtc['txid'];}
+                    if(isset($tbtc['timereceived'])){$timereceived = $tbtc['timereceived'];}
+
+                    $crosscheck = TransUser::where('category', 'send')->where('txid', $txid)->count();
+                    if($crosscheck == 0) {
+                        $checktx = TransUser::where('category', 'receive')->where('txid', $txid)->count();
+                        if($checktx == 0) {
+                            $userdet = WalletAddress::where('crypto', $crypto)->where('label', $label)->first();
+                            $recvuid = $userdet->uid;
+                            $amount = number_format($tbtc['amount'], 8, '.', '');
+                            $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                            $after_bal = $before_bal + $amount;
+
+                            $useruid = User::where('label', $label)->first();   
+                            $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                            $currency = Currency::where('id', $useruid->currency)->first();
+                            $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                            $jsondata = file_get_contents($json_string);
+                            $obj = json_decode($jsondata, TRUE); 
+                            $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                            $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                            $btctx = TransUser::create([
+                                'uid' => $userdet->uid,
+                                'type' => 'external',
+                                'crypto' => $crypto,
+                                'category' => $tbtc['category'],
+                                'using' => 'mobile',
+                                'status' => 'success',
+                                'error_code' => '',
+                                'recipient' => $tbtc['address'],
+                                'recipient_id' => $label,
+                                'txid' => $txid,
+                                'confirmations' => $tbtc['confirmations'],
+                                'amount' => $amount,
+                                'before_bal' => $before_bal,
+                                'after_bal' => $after_bal,
+                                'myr_amount' => $myr_amt,
+                                'rate' => $price,
+                                'currency' => $useruid->currency,
+                                'netfee' => 0.00000000,
+                                'walletfee' => 0.00000000,
+                                'remarks' => 'RECEIVE',
+                                'time' => $timereceived,
+                                'timereceived' => $timereceived,
+                                'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                                'vout' => $tbtc['vout'],
+                                'blockhash' => $tbtc['blockhash'],
+                                'blockindex' => $tbtc['blockindex'],
+                                'blocktime' => date_format(Carbon::createFromTimestamp($tbtc['blocktime']), "Y-m-d H:i:s"),
+                                'walletconflicts' => ''
+                            ]);
+                        }
+                        else {$btctx = TransUser::where('category', 'receive')->where('txid', $txid)->update(['confirmation' => $confirmations]);}
+                    }           
+                }
+            }
+            else {
+                $crosscheck = TransUser::where('category', 'send')->where('txid', $transbtc['txid'])->count();
+                if($crosscheck == 0) {
+                    $checktx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->count();
+                    if($checktx == 0) {
+                        $userdet = WalletAddress::where('crypto', $crypto)->where('label', $transbtc['label'])->first();
+                        $recvuid = $userdet->uid;
+                        $amount = number_format($tbtc['amount'], 8, '.', '');
+                        $before_bal = number_format($userdet->balance/100000000, 8, '.', '');
+                        $after_bal = $before_bal + $amount;
+
+                        $useruid = User::where('label',$transbtc['label'])->first();   
+                        $priceApi = PriceCrypto::where('crypto', $crypto)->first();     
+                        $currency = Currency::where('id',$useruid->currency)->first();
+                        $json_string = settings('url_gecko').'simple/price?ids='.$priceApi->id_gecko.'&vs_currencies='.strtolower($currency->code);
+                        $jsondata = file_get_contents($json_string);
+                        $obj = json_decode($jsondata, TRUE); 
+                        $price = number_format($obj[$priceApi->id_gecko][strtolower($currency->code)], 2, '.', '');
+                        $myr_amt = number_format($amount*$price, 2, '.', '');
+
+                        $btctx = TransUser::create([
+                            'uid' => $userdet->uid,
+                            'type' => 'external',
+                            'crypto' => $crypto,
+                            'category' => $transbtc['category'],
+                            'using' => 'mobile',
+                            'status' => 'success',
+                            'error_code' => '',
+                            'recipient' => $transbtc['address'],
+                            'recipient_id' => $label,
+                            'txid' => $txid,
+                            'confirmations' => $transbtc['confirmations'],
+                            'amount' => $amount,
+                            'before_bal' => $before_bal,
+                            'after_bal' => $after_bal,
+                            'myr_amount' => $myr_amt,
+                            'rate' => $price,
+                            'currency' => $useruid->currency,
+                            'netfee' => 0.00000000,
+                            'walletfee' => 0.00000000,
+                            'remarks' => 'RECEIVE',
+                            'time' => $timereceived,
+                            'timereceived' => $timereceived,
+                            'txdate' => date_format(Carbon::createFromTimestamp($timereceived), "Y-m-d H:i:s"),
+                            'vout' => $transbtc['vout'],
+                            'blockhash' => $transbtc['blockhash'],
+                            'blockindex' => $transbtc['blockindex'],
+                            'blocktime' => date_format(Carbon::createFromTimestamp($transbtc['blocktime']), "Y-m-d H:i:s"),
+                            'walletconflicts' => ''
+                        ]);
+                    }
+                    else{
+                        $btctx = TransUser::where('category', 'receive')->where('txid', $transbtc['txid'])->update(['confirmation' => $transbtc['confirmations']]);
+                    }
+                }
+            }
+        }
+        $transaction = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->get();
+        $transaction_count = TransUser::where('crypto', $crypto)->where('uid', $userid)->orderBy('txdate','asc')->count();
+
+        if($transaction_count>0){ 
             if(!isset($transaction[0]['time'])){
+                $userdetfromuid = WalletAddress::where('uid', $transaction['uid'])->where('crypto', $crypto)->first();
+
                 if(array_key_exists('time',$transaction)){
                     $starT = $transaction['time'] - 10000;
                     $endT = $transaction['time'] + 10000;                
@@ -842,9 +1326,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                 $jsondata = file_get_contents($json_string);
                 $obj = json_decode($jsondata, TRUE); 
                 $priceA = $obj['prices'];
+                
                 for($i=0;$i<count($priceA);$i++){
                     $price[] = $priceA[$i][0];
                 }
+                
                 foreach ($price as $i) {
                     if(array_key_exists('time',$transaction)){
                     $smallest[$i] = abs($i - $transaction['time']);
@@ -852,12 +1338,11 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $smallest[$i] = abs($i - $transaction['timereceived']);    
                     }
                 }
+
                 asort($smallest); 
                 $ids = array_search(key($smallest),$price);
-
-                $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
                 $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
-            
+
                 $info = array(
                     'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
                     'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
@@ -865,12 +1350,14 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     'value_display' => $userdetfromuid->value_display,
                     'tran' => $transaction,
                 );
-            }else{
-                foreach($transaction as $trans){
+            }
+            else{
+                foreach($transaction as $key => $trans){ 
                     if(array_key_exists('time',$trans)){
                         $starT = $trans['time'] - 10000;
                         $endT = $trans['time'] + 10000;                
-                    }else{
+                    }
+                    else{
                         $starT = $trans['timereceived'] - 10000;
                         $endT = $trans['timereceived'] + 10000;
                     }
@@ -879,35 +1366,140 @@ function listransaction($crypto, $label, $idcurrency, $id_gecko) {
                     $jsondata = file_get_contents($json_string);
                     $obj = json_decode($jsondata, TRUE); 
                     $priceA = $obj['prices'];
+
+                    //echo count($priceA);
+
                     for($i=0;$i<count($priceA);$i++){
                         $price[] = $priceA[$i][0];
                     }
+
                     foreach ($price as $i) {
                         if(array_key_exists('time',$trans)){
-                        $smallest[$i] = abs($i - $trans['time']);
-                        }else{
-                        $smallest[$i] = abs($i - $trans['timereceived']);    
+                            $smallest[$i] = abs($i - $trans['time']);
+                        }
+                        else{
+                            $smallest[$i] = abs($i - $trans['timereceived']);    
                         }
                     }
+
                     asort($smallest); 
                     $ids = array_search(key($smallest),$price);
 
-                    $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
-                    $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+                    $userdetfromuid = WalletAddress::where('uid', $trans['uid'])->where('crypto', $crypto)->first();
+                    $initlabel = $userdetfromuid->label;
                 
+                    $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+
                     $info[] = array(
-                        'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+                        'price_lock' => number_format($priceA[0][1], 2, '.', ''),
                         'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
                         'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
                         'value_display' => $userdetfromuid->value_display,
-                        'tran' => $trans,
+                        'tran' => array(
+                            'account' => $initlabel,
+                            'address' =>  $trans['recipient'],
+                            'category' =>  $trans['category'],
+                            'amount' => floatval($trans['amount']),
+                            'label' =>  $trans['recipient_id'],
+                            'vout' => 3,
+                            'confirmations' =>  intval($trans['confirmation']),
+                            'blockhash' => '0000000000000000005fca13b9f9fe8a5763730f15cc41182f0ea4bf90789564',
+                            'blockindex' => 89,
+                            'blocktime' => 1567400116,
+                            'txid' => $trans['txid'],
+                            'walletconflicts' => [],
+                            'time' =>  intval($trans['time']),
+                            'timereceived' =>  intval($trans['timereceived'])
+                        ),
                     );
+                
                 }
             }
-             //return $transaction;
-             return $info;
+            return $info;
         }
         else{return null;}
+        // //GET label transaction
+        // $transaction = bitcoind()->client($crycode)->listtransactions($label)->get(); 
+        // if($transaction){
+        //     if(!isset($transaction[0]['time'])){
+        //         if(array_key_exists('time',$transaction)){
+        //             $starT = $transaction['time'] - 10000;
+        //             $endT = $transaction['time'] + 10000;                
+        //         }else{
+        //             $starT = $transaction['timereceived'] - 10000;
+        //             $endT = $transaction['timereceived'] + 10000;
+        //         }
+
+        //         $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+        //         $jsondata = file_get_contents($json_string);
+        //         $obj = json_decode($jsondata, TRUE); 
+        //         $priceA = $obj['prices'];
+        //         for($i=0;$i<count($priceA);$i++){
+        //             $price[] = $priceA[$i][0];
+        //         }
+        //         foreach ($price as $i) {
+        //             if(array_key_exists('time',$transaction)){
+        //             $smallest[$i] = abs($i - $transaction['time']);
+        //             }else{
+        //             $smallest[$i] = abs($i - $transaction['timereceived']);    
+        //             }
+        //         }
+        //         asort($smallest); 
+        //         $ids = array_search(key($smallest),$price);
+
+        //         $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+        //         $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$transaction['amount']);
+            
+        //         $info = array(
+        //             'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+        //             'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+        //             'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+        //             'value_display' => $userdetfromuid->value_display,
+        //             'tran' => $transaction,
+        //         );
+        //     }else{
+        //         foreach($transaction as $trans){
+        //             if(array_key_exists('time',$trans)){
+        //                 $starT = $trans['time'] - 10000;
+        //                 $endT = $trans['time'] + 10000;                
+        //             }else{
+        //                 $starT = $trans['timereceived'] - 10000;
+        //                 $endT = $trans['timereceived'] + 10000;
+        //             }
+
+        //             $json_string = settings('url_gecko').'coins/'.$id_gecko.'/market_chart/range?vs_currency='.$idcurrency.'&from='.$starT.'&to='.$endT;
+        //             $jsondata = file_get_contents($json_string);
+        //             $obj = json_decode($jsondata, TRUE); 
+        //             $priceA = $obj['prices'];
+        //             for($i=0;$i<count($priceA);$i++){
+        //                 $price[] = $priceA[$i][0];
+        //             }
+        //             foreach ($price as $i) {
+        //                 if(array_key_exists('time',$trans)){
+        //                 $smallest[$i] = abs($i - $trans['time']);
+        //                 }else{
+        //                 $smallest[$i] = abs($i - $trans['timereceived']);    
+        //                 }
+        //             }
+        //             asort($smallest); 
+        //             $ids = array_search(key($smallest),$price);
+
+        //             $userdetfromuid = WalletAddress::where('label', $label)->where('crypto', $crypto)->first();
+        //             $totaldis = disply_convert($crypto,$userdetfromuid->value_display,$trans['amount']);
+                
+        //             $info[] = array(
+        //                 'price_lock' => number_format($priceA[$ids][1], 2, '.', ''),
+        //                 'totaldis' => number_format($totaldis, 8, '.', '').' '.$userdetfromuid->value_display,
+        //                 'totaldis5D' => sprintf("%.5f", $totaldis).' '.$userdetfromuid->value_display,
+        //                 'value_display' => $userdetfromuid->value_display,
+        //                 'tran' => $trans,
+        //             );
+        //         }
+        //     }
+        //      //return $transaction;
+        //      return $info;
+        // }
+        // else{return null;}
     }
     elseif($crypto == 'LTC'){
         $crycode = 'litecoin';
