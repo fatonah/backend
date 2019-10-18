@@ -31,7 +31,8 @@ use App\Appver;
 use App\TransLND; 
 use App\InvoiceLND; 
 use App\Exports\TransExport; 
-use App\TransUser; 
+use App\TransUser;
+use App\AuthDebugUsers; 
 
 class ApiController extends Controller{ 
 	
@@ -1051,7 +1052,7 @@ class ApiController extends Controller{
 			  
 		$secret_pin2 = preg_match('/^[0-9]{6}$/', $secretpin);
 		$pword1 = preg_match("/[a-zA-Z0-9]/", $password); 
-		$pword2 = preg_match("/[^\da-zA-Z]/", $password); 
+		$pword2 = preg_match("/[^\da-zA-Z]/", $password);
 	  
 		if(strlen($username)<6) { echo '{"data":{"mesej":"Username must be more than 6 characters."}}'; }
 		elseif(strlen($secretpin)!=6) { echo '{"data":{"mesej":"Secret PIN must be 6 digits."}}'; }
@@ -1067,44 +1068,54 @@ class ApiController extends Controller{
 			$created=time();
 			
 			if($mainCount==0){
-				$ga = new GoogleAuthenticator();	  
-				$secret = $ga->createSecret();
-		
-				/*Inserting user values*/
-				$hash = sha1($email);
-				$email_msj = 'To activate your account, please click link below.<p><a href="'.settings('url').'verify/email/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
-                send_email_basic002($email, 'DORADO Account Verification', $username, $email_msj);
- 
-				$user = User::create([
-					'name' => $fullname,
-					'username' => $username,
-					'secretpin' => $secretpin,
-					'label' => 'usr_'.$username,
-					'password' => bcrypt($password),
-					'email' => $email,
-					'email_hash' => $hash,
-					'ip' => \Request::ip(),
-					'google_auth_code' => $secret,
-				]);
+                $auth_debug = AuthDebugUsers::where('email', $email)->first(); 
+                if ($auth_debug) {
+    				$ga = new GoogleAuthenticator();	  
+    				$secret = $ga->createSecret();
+    		
+    				/*Inserting user values*/
+    				$hash = sha1($email);
+    				$email_msj = 'To activate your account, please click link below.<p><a href="'.settings('url').'verify/email/'.$hash.'"  style="display: inline-block; padding: 11px 30px; margin: 20px 0px 30px; font-size: 15px; color: #fff; background: #4fc3f7; border-radius: 60px; text-decoration:none;">Link Activate</a></p>';
+                    send_email_basic002($email, 'DORADO Account Verification', $username, $email_msj);
+     
+    				$user = User::create([
+    					'name' => $fullname,
+    					'username' => $username,
+    					'secretpin' => $secretpin,
+    					'label' => 'usr_'.$username,
+    					'password' => bcrypt($password),
+    					'email' => $email,
+    					'email_hash' => $hash,
+    					'ip' => \Request::ip(),
+    					'google_auth_code' => $secret,
+    				]);
 
-				$userData = User::where('email',$request->email)->first();
-				$systemToken = apiToken($userData->id);
+    				$userData = User::where('email',$request->email)->first();
+    				$systemToken = apiToken($userData->id);
 
-				$msg = array(
-					"id"=>$userData->id, 
-					"name"=>$userData->name,
-					 "username"=>$userData->username, 
-					 "secretpin"=>$userData->secretpin, 
-					 "email"=>$userData->email,
-					 "token"=>$systemToken,
-					 'display_msj'=>'Registration Successfull!',
-					 'mesej'=>'jaya'
-				);
+    				$msg = array(
+    					"id"=>$userData->id, 
+    					"name"=>$userData->name,
+    					 "username"=>$userData->username, 
+    					 "secretpin"=>$userData->secretpin, 
+    					 "email"=>$userData->email,
+    					 "token"=>$systemToken,
+    					 'display_msj'=>'Registration Successfull!',
+    					 'mesej'=>'jaya'
+    				);
 
-				$datamsg = response()->json([
-					'data' => $msg
-				]);
-				return $datamsg->content();
+    				$datamsg = response()->json([
+    					'data' => $msg
+    				]);
+    				return $datamsg->content();
+                }
+                else {
+                    $msg = array("mesej"=>"This username or email were not authorized to register. Please enter another.");
+                    $datamsg = response()->json([
+                        'data' => $msg
+                    ]);
+                    return $datamsg->content();
+                }
 			}
 			else {					 
 				$msg = array("mesej"=>"This username or email has already been used. Please enter another.");
