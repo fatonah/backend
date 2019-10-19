@@ -32,7 +32,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:InvoiceUpdate')->everyMinute();
         $schedule->command('command:CloseChanUpdate')->everyMinute();
         $schedule->command('command:RefillLNDUpdate')->everyMinute();
-        $schedule->command('command:TXUpdate')->everyFiveMinutes();
+        $schedule->command('command:TXUpdate')->everyMinutes();
     }
 
     /**
