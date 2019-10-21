@@ -3307,18 +3307,12 @@ class ApiController extends Controller{
 					}
 
 					$export = new TransExport($customer_array);
+					Excel::store($export, $file_name, 'public');
 
-					Excel::store($export, $file_name, 'public');	
-			
 					$storage_path = 'app/public/'.$file_name;
-
-					$data = array('messages'=>$msj);
-					Mail::send('mail', $data, function($message) use($storage_path,$sendto,$subject,$user) {
-						$message->to($sendto, 'Users')->subject
-						($subject);
-						$message->attach(storage_path($storage_path)); 
-						$message->from($user->email,ucwords($user->name));
-					});
+                    $attachment = storage_path($storage_path);
+                    
+                    send_email_attach($sendto, $subject, $user->email, ucwords($user->name), $msj, $attachment, $file_name);
 					unlink(storage_path($storage_path));
 
 					$datamsg = response()->json([ 
