@@ -44,8 +44,7 @@ class UserController extends Controller
 		If this email was not requested by you, please ignore it.<p></p>
 			
 		If you have some problems please feel free to contact with us on '.settings('supportemail');
-		  
-		//send_email_basic($mreceiver, 'DORADO', settings('infoemail'), $msubject, $message);
+		   
 		send_email_basic002($mreceiver, $msubject, $row->username, $message);
 		
 		notify()->flash('Reset secret Pin!', 'success', [

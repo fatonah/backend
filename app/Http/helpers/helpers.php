@@ -30,19 +30,7 @@ function settings($value){
 ///////////////////////////////////////////////////////////////
 /// SEND EMAIL /////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-
-function send_email_basic($to, $from_name, $from_email, $subject, $message){
-  $headers = "From: ".$from_name." <".$from_email."> \r\n"; 
-  $headers .= "MIME-Version: 1.0\r\n";
-  $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-  $template1 = settings('template_email');
-  $template2 = str_replace("{{title}}",settings('title'),$template1);
-  $template3 = str_replace("{{logo}}",asset('asset/assets/images/logo.png'),$template2); 
-  $template4 = str_replace("{{logotext}}",asset('asset/assets/images/logo-text.png'),$template3); 
-  $template = str_replace("{{message}}",$message,$template4);
-  mail($to, $subject, $template, $headers);
-}
-
+ 
 function send_email_basic002($to, $subject, $name, $message){
   $msgData = array(
     "uname" => $name,
