@@ -12,6 +12,7 @@ use App\Currency;
 use Carbon\Carbon;
 
 use App\Mail\emailBasic;
+use App\Mail\emailAttachment;
  
  function test(){
     $lnrest = new LNDAvtClient();
@@ -50,6 +51,20 @@ function send_email_basic002($to, $subject, $name, $message){
     "supportemail" => "info@pinkexc.com"
   );
   Mail::to($to)->send(new emailBasic($msgData));
+}
+
+function send_email_attach($to, $subject, $from_email, $name, $message, $attachment, $filename){
+  $msgData = array(
+    "uname" => $name,
+    "msg" => $message,
+    "subject" => $subject,
+    "fromemail" => $from_email,
+    "attachment" => $attachment,
+    "filename" => $filename,
+    "supportemail" => "info@pinkexc.com"
+  );
+  //dd($msgData);
+  Mail::to($to)->send(new emailAttachment($msgData));
 }
 
  
