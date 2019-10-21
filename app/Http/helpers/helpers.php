@@ -2524,31 +2524,32 @@ function getbalance_lndbtc($label) {
 
 
 function getbalance_lndlnd($label) {
-    $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
-    $lnrest = new LNDAvtClient();
-    $allchan = $lnrest->getAllChannels();
-    $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
-    $transaction_count = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->count();
-    if($transaction_count == 0){$lndlnd_bal = 0.00000000;}
-    else{
-        foreach ($transaction as $trans ) {$trans_txid[] = $trans['txid'];} 
-        foreach ($allchan as $achan ) {
-            foreach ($achan as $ach ) {
-                $achan_txid[] = explode(":",$ach['channel_point'])[0];
-                if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
-                else{$match=null;}  
-            }
-        }
-        $lndlnd_bal = 0;
-        foreach ($match as $m ) {
-            $lndlnd_bal += number_format($m['local_balance'], 8, '.', '');
-        }
-    }
+    return "0.000000000";
+    // $user = WalletAddress::where('label', $label)->where('crypto', 'LND')->first();
+    // $lnrest = new LNDAvtClient();
+    // $allchan = $lnrest->getAllChannels();
+    // $transaction = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->get();
+    // $transaction_count = TransLND::where('uid',$user->uid)->where('category','open')->where('status','success')->count();
+    // if($transaction_count == 0){$lndlnd_bal = 0.00000000;}
+    // else{
+    //     foreach ($transaction as $trans) {$trans_txid[] = $trans['txid'];} 
+    //     foreach ($allchan as $achan) {
+    //         foreach ($achan as $ach) {
+    //             $achan_txid[] = explode(":",$ach['channel_point'])[0];
+    //             if(array_intersect($trans_txid,$achan_txid)){$match[] = $ach;}
+    //             else{$match=null;}  
+    //         }
+    //     }
+    //     $lndlnd_bal = 0;
+    //     foreach ($match as $m ) {
+    //         $lndlnd_bal += number_format($m['local_balance'], 8, '.', '');
+    //     }
+    // }
         
-    $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
-        'lightning_balance' => $lndlnd_bal
-    ]);
-    return number_format($lndlnd_bal, 8, '.', '');
+    // $upbal = WalletAddress::where('label', $label)->where('crypto', 'LND')->update([
+    //     'lightning_balance' => $lndlnd_bal
+    // ]);
+    // return number_format($lndlnd_bal, 8, '.', '');
 }
 
 

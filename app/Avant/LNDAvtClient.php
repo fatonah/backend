@@ -15,14 +15,18 @@ class LNDAvtClient
     
     function __construct($mac = '', $url = '' ) {
         $this->macaroon = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-access002.macaroon");
-        $this->rest_url = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-endpt.txt");
+        //$this->rest_url = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-endpt.txt");
+        $this->rest_url = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-endpt-002.txt");
+        //$this->rest_url = "https://lateral4.pinkexc.com:8443";
     }
-
     private function LnRest($add,$post= ""){
         $url = $this->rest_url.$add;
-        //$capath = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-tls.cert");
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CAINFO, getcwd() . Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-tls-002.crt"));
+
         //curl_setopt($ch, CURLOPT_CAPATH, $capath);
         curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);
@@ -38,10 +42,31 @@ class LNDAvtClient
         curl_close($ch);
         return $data;
     }
+    // private function LnRest($add,$post= ""){
+    //     $url = $this->rest_url.$add;
+    //     //$capath = Storage::disk('spaces')->get("lateralblk-004-conf/lateralblk-004-tls.cert");
+    //     $ch = curl_init($url);
+    //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    //     //curl_setopt($ch, CURLOPT_CAPATH, $capath);
+    //     curl_setopt($ch, CURLOPT_TIMEOUT, 25);
+    //     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);
+    //     $machex = bin2hex($this->macaroon);
+    //     $payload = 'Grpc-Metadata-macaroon : '.$machex;
+    //     curl_setopt($ch, CURLOPT_HTTPHEADER, array($payload,'Accept: application/json','Content-Type: application/json')); 
+    //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    //     if(!empty($post)){
+    //         curl_setopt($ch,CURLOPT_POST, 1);
+    //         curl_setopt($ch,CURLOPT_POSTFIELDS, $post);
+    //     }
+    //     $data = curl_exec($ch);
+    //     curl_close($ch);
+    //     dd($data);
+    //     return $data;
+    // }
     private function LnRestDEL($add){
         $url = $this->rest_url.$add;
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         //curl_setopt($ch, CURLOPT_CAPATH, $capath);
         curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 25);

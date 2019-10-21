@@ -40,7 +40,7 @@ class ApiController extends Controller{
 	public function debug(){
         //dd(get_label_crypto('BCH', 'qrhldt4mq43ra7x9ud69mf6tnn0egje29ymvsw05ca'));
         //dd(apiToken('27'));
-		dd(getbalance('BTC', 'usr_bsod666'));
+		dd(getconnection('LND'));
 		// ########################TXUpdate COMMAND####################################
         //update all other crypto txid and details
         $sendtrans = Withdrawal::whereNotNull('txid')->get();
