@@ -3272,9 +3272,9 @@ class ApiController extends Controller{
 							'Invoice'  => $data->recipient,
 							'Txid'   => $data->txid,
 							'Amount'   => $data->amount.' '.$val_crypto,
-							'Balance'   => $data->after_bal,
+							'Balance'   => $data->after_bal.' '.$val_crypto,
 							'Rate'   => $data->rate.' '.$currency->code,
-							'Fees'   => $fees,
+							'Fees'   => $fees.' '.$val_crypto,
 							'Remarks'   => $data->remarks,
 							'Created At'   => $data->created_at
 							);
@@ -3296,9 +3296,9 @@ class ApiController extends Controller{
 							'Invoice'  => $data->recipient,
 							'Txid'   => $data->txid,
 							'Amount'   => $data->amount.' '.$val_crypto,
-							'Balance'   => $data->after_bal,
+							'Balance'   => $data->after_bal.' '.$val_crypto,
 							'Rate'   => $data->rate.' '.$currency->code,
-							'Fees'   => $fees,
+							'Fees'   => $fees.' '.$val_crypto,
 							'Remarks'   => $data->remarks,
 							'Created At'   => $data->created_at
 							);
