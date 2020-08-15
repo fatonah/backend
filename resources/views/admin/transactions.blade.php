@@ -30,32 +30,22 @@
                                         </thead>
                                         <tbody>
 										<?php  
-                                        $i=1; 
+                                        $i=1; $no=0;
                                         if($trans!=null){ 
                                             
                                             if(isset($trans[0])){ 
                                     foreach ( $trans as $key => $arr_datas) {
-
-									if(isset($arr_datas['fee'])){$fee = $arr_datas['fee'];}else{$fee=0;}
-									 
+ 
                                             ?>  
 											
                                             <tr>
                                                 <td><?php echo $i; ?></td> 
-                                          <?php if($arr_datas['category']=='receive'){ 
-					 $trans = gettransaction_crypto(strtoupper($crypto), $arr_datas['txid']); 
-					 ?>
-                                         <td><?php echo $trans['details'][0]['account']; ?></td>
-                     <?php }else{ ?>
-                                         <td><?php echo $arr_datas['account']; ?></td>
-					 <?php } ?>
-
-					
-                                            <td><?php if(isset($arr_datas['label'])){echo $arr_datas['label'];}elseif(isset($arr_datas['otheraccount'])){echo $arr_datas['otheraccount'];}else{echo $arr_datas['address'];} ?></td>
+                                         <td><?php echo $arr_datas['account']; ?></td> 
+                                            <td><?php echo $arr_datas['label']; ?></td>
                                             <td><?php echo $arr_datas['category']; ?></td>
-                                             <td><?php echo $fee; ?></td>
+                                             <td><?php echo $arr_datas['fees']; ?></td>
                                              <td><?php echo $arr_datas['amount']; ?></td> 
-                                              <td><?php if(isset($arr_datas['confirmations'])){echo $arr_datas['confirmations'];} ?></td>
+                                              <td><?php echo $arr_datas['confirmations']; ?></td>
                                                <td><?php if(isset($arr_datas['txid'])){
 												   if($crypto!='BCH'){ ?>
 								  <a target="_blank" href="https://live.blockcypher.com/{{strtolower($crypto)}}/tx/{{ $arr_datas['txid'] }}">{{ $arr_datas['txid'] }}</a>

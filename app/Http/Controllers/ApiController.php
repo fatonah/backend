@@ -982,7 +982,7 @@ class ApiController extends Controller{
 			"label"=>$user->label,
 			"username"=>$user->username,
 			"tokenAPI"=>$tokenAPI, 
-		);
+		); 
 		$datamsg = response()->json([
 			'data' => $msg
 		]);
@@ -1050,7 +1050,7 @@ class ApiController extends Controller{
 		$password = $request->password;
 		$cpassword = $request->cpassword;
 		$secretpin = $request->secretpin;
-		$boxagree = $request->boxagree;
+		$boxagree = $request->boxagree; 
 			  
 		$secret_pin2 = preg_match('/^[0-9]{6}$/', $secretpin);
 		$pword1 = preg_match("/[a-zA-Z0-9]/", $password); 
@@ -1502,7 +1502,7 @@ class ApiController extends Controller{
 		$json_string = settings('url_gecko').'ping'; 
 		$headers = get_headers($json_string,1); 
         $http_code = explode(' ',$headers[0]);
-
+ 
 		if($http_code[1]!=200){
 			// $array_move1 = str_replace($http_code[0]." ","",$headers[0]);
 			// $array_move2 = str_replace($http_code[1]." ","",$array_move1);
@@ -3322,7 +3322,7 @@ class ApiController extends Controller{
 				}
 				else{
 					$datamsg = response()->json([ 
-						'mesej' => 'Lightning user does not exist',
+						'mesej' => 'Crypto user does not exist',
 					]);
 				}
 			}

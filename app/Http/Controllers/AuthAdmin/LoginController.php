@@ -67,7 +67,8 @@ class LoginController extends Controller
 			} 
 			else{
                 Auth::guard('admin')->login($users); 
-                    return redirect('admin/authy/admin'); 
+                    //return redirect('admin/authy/admin'); 
+					return redirect('admin/dashboard');
 			} 
 		}else{
 			return redirect()->back()->with('error','Wrong Email or Username.'); 
